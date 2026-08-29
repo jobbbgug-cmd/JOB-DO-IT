@@ -8,7 +8,7 @@ const DashboardPage = () => {
 
   useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [fetchTasks]);
 
   useEffect(() => {
     if (tasks.length > 0) {

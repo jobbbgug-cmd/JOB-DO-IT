@@ -33,9 +33,9 @@ const Layout = ({ children }) => {
       >
         {/* Logo */}
         <div className="p-4 border-b border-gray-200">
-          <Link to="/" className="flex items-center gap-3 text-xl font-bold text-teal-600">
-            <span>🐕</span>
-            {sidebarOpen && <span>DevTracker</span>}
+          <Link to="/" className="flex items-center gap-3">
+            <img src="/images/logo.png" alt="JOB DO IT" className="w-10 h-10 rounded" />
+            {sidebarOpen && <span className="text-lg font-bold text-teal-600">JOB DO IT</span>}
           </Link>
         </div>
 

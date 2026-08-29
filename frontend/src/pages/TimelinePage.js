@@ -9,7 +9,7 @@ const TimelinePage = () => {
 
   useEffect(() => {
     fetchTasks({ project: projectId });
-  }, [projectId]);
+  }, [projectId, fetchTasks]);
 
   const sortedTasks = tasks.sort((a, b) => {
     if (!a.dueDate) return 1;

@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Task = require('../models/Task');
+const { authMiddleware } = require('../middleware/auth');
 
 // Get all tasks
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
     const { project, status, assignee } = req.query;
     const filter = {};
@@ -37,9 +38,12 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create task
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   try {
-    const task = new Task(req.body);
+    const task = new Task({
+      ...req.body,
+      createdBy: req.userId,
+    });
     await task.save();
     await task.populate('assignee', 'name email');
     res.status(201).json(task);
@@ -49,7 +53,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update task
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const task = await Task.findByIdAndUpdate(
       req.params.id,
@@ -64,7 +68,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Add comment
-router.post('/:id/comments', async (req, res) => {
+router.post('/:id/comments', authMiddleware, async (req, res) => {
   try {
     const { userId, text } = req.body;
     const task = await Task.findByIdAndUpdate(
@@ -87,7 +91,7 @@ router.post('/:id/comments', async (req, res) => {
 });
 
 // Delete task
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const task = await Task.findByIdAndDelete(req.params.id);
     if (!task) return res.status(404).json({ message: 'Task not found' });

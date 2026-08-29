@@ -46,8 +46,10 @@ const taskSchema = new mongoose.Schema({
   tags: [String],
   attachments: [String],
   comments: [{
-    user: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
     text: String,
     createdAt: {
       type: Date,

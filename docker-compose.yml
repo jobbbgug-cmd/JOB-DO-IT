@@ -11,6 +11,41 @@ services:
     volumes:
       - mongodb_data:/data/db
     restart: unless-stopped
+    networks:
+      - app-network
+
+  backend:
+    build: ./backend
+    container_name: dev-task-tracker-backend
+    ports:
+      - "5000:5000"
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/dev-task-tracker
+      JWT_SECRET: ${JWT_SECRET:-your_secret_key_here}
+      NODE_ENV: production
+      CORS_ORIGIN: http://localhost:3000
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  frontend:
+    build: ./frontend
+    container_name: dev-task-tracker-frontend
+    ports:
+      - "80:80"
+    environment:
+      REACT_APP_API_URL: http://localhost:5000/api
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   mongodb_data:

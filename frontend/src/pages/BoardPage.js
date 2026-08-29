@@ -10,7 +10,7 @@ const BoardPage = () => {
 
   useEffect(() => {
     fetchTasks({ project: projectId });
-  }, [projectId]);
+  }, [projectId, fetchTasks]);
 
   useEffect(() => {
     const organized = {

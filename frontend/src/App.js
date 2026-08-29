@@ -15,11 +15,11 @@ import SettingsPage from './pages/SettingsPage';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
-  const { isAuthenticated, initAuth } = useAuthStore();
+  const { initAuth } = useAuthStore();
 
   useEffect(() => {
     initAuth();
-  }, []);
+  }, [initAuth]);
 
   return (
     <Router>
