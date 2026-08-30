@@ -49,7 +49,7 @@ const LoginPage = () => {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-12">
-          <img src="/images/logo.png" alt="JOB DO IT" className="max-w-xs mx-auto mb-6 object-contain" />
+          <img src="/logo.png" alt="JOB DO IT" className="max-w-xs mx-auto mb-6 object-contain" />
           <p className="text-teal-100 text-lg font-semibold">{isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}</p>
           <p className="text-teal-100 text-sm mt-2">
             {isLogin ? 'เข้าสู่ระบบเพื่อจัดการงานและโครงการของคุณ' : 'สร้างบัญชีใหม่เพื่อเริ่มต้น'}
