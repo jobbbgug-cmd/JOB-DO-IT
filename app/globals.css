@@ -2,36 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  html {
-    scroll-behavior: smooth;
-  }
+html {
+  scroll-behavior: smooth;
+}
 
-  body {
-    @apply bg-gray-50 text-gray-900;
+body {
+  background-color: #f9fafb;
+  color: #1f2937;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
   }
 }
 
-@layer utilities {
-  @keyframes shake {
-    0%, 100% {
-      transform: translateX(0);
-    }
-    25% {
-      transform: translateX(-5px);
-    }
-    75% {
-      transform: translateX(5px);
-    }
-  }
-
-  .animate-shake {
-    animation: shake 0.5s ease-in-out;
-  }
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
 }
