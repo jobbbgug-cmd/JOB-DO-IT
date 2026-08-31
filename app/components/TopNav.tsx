@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 import { useAuthStore } from '@/app/store/authStore';
 import { useUIStore } from '@/app/store/uiStore';
 import UserMenu from './UserMenu';
@@ -20,6 +21,15 @@ export default function TopNav() {
   const pathname = usePathname();
   const { user } = useAuthStore();
   const { openFeedback, openShortcuts } = useUIStore();
+  const [zoom, setZoom] = useState(150);
+
+  const handleZoomOut = () => {
+    setZoom((prev) => Math.max(100, prev - 10));
+  };
+
+  const handleZoomIn = () => {
+    setZoom((prev) => Math.min(200, prev + 10));
+  };
 
   const getActiveTab = () => {
     const tab = tabs.find((t) => pathname === t.href);
@@ -66,11 +76,21 @@ export default function TopNav() {
 
       {/* Zoom Controls */}
       <div className="flex items-center gap-2 px-3 py-1 bg-gray-700 rounded text-sm text-gray-300">
-        <button className="p-1 hover:text-white" title="ย่อ">
+        <button
+          onClick={handleZoomOut}
+          className="p-1 hover:text-white transition-colors"
+          title="ย่อ"
+          disabled={zoom <= 100}
+        >
           −
         </button>
-        <div className="w-12 text-center text-xs">150%</div>
-        <button className="p-1 hover:text-white" title="ขยาย">
+        <div className="w-12 text-center text-xs">{zoom}%</div>
+        <button
+          onClick={handleZoomIn}
+          className="p-1 hover:text-white transition-colors"
+          title="ขยาย"
+          disabled={zoom >= 200}
+        >
           +
         </button>
       </div>
