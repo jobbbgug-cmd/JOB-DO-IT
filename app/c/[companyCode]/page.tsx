@@ -309,7 +309,7 @@ export default function CompanyPage() {
 
                 {/* Task Count & Actions */}
                 <div className="flex items-center gap-2">
-                  <div className="text-right mr-2 text-lg font-bold text-white border border-gray-600 rounded-lg px-3 py-1">
+                  <div className="text-right mr-2 text-base font-bold text-white border border-gray-600 rounded-lg px-3 py-1">
                     {emp.taskCount} งาน
                   </div>
 
