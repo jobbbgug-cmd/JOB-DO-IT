@@ -70,7 +70,7 @@ export default function TopNav() {
           onClick={zoomOut}
           className="p-1 hover:text-white transition-colors disabled:opacity-50"
           title="ย่อ"
-          disabled={zoom <= 100}
+          disabled={zoom <= 50}
         >
           −
         </button>
@@ -79,7 +79,7 @@ export default function TopNav() {
           onClick={zoomIn}
           className="p-1 hover:text-white transition-colors disabled:opacity-50"
           title="ขยาย"
-          disabled={zoom >= 200}
+          disabled={zoom >= 160}
         >
           +
         </button>
