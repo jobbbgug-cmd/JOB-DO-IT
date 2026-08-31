@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/app/store/authStore';
 import TabNav from './TabNav';
+import Dock from './Dock';
+import SideRail from './SideRail';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -16,9 +18,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-900">
       {/* Top Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
+      <header className="bg-gray-800 border-b border-gray-700 px-6 py-4 shadow-sm">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Image
@@ -30,17 +32,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             />
           </Link>
           <div className="flex items-center gap-4">
-            <button className="p-2 hover:bg-gray-100 rounded-lg text-gray-600">
+            <button className="p-2 hover:bg-gray-700 rounded-lg text-gray-400">
               🔔
             </button>
             <div className="flex items-center gap-3">
               <div className="text-sm">
-                <p className="font-medium text-gray-900">{user?.name || 'User'}</p>
-                <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                <p className="font-medium text-gray-100">{user?.name || 'User'}</p>
+                <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="px-3 py-2 text-sm font-semibold text-red-500 hover:bg-red-900/20 rounded-lg transition-colors"
               >
                 ออกจากระบบ
               </button>
@@ -52,8 +54,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Tab Navigation */}
       <TabNav />
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto p-6">{children}</main>
+      {/* Main Content with SideRail */}
+      <main className="flex-1 overflow-auto p-6 pr-24 pb-24 bg-gray-900">{children}</main>
+
+      {/* Dock */}
+      <Dock />
+
+      {/* SideRail */}
+      <SideRail />
     </div>
   );
 }
