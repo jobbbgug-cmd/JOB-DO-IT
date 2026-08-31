@@ -74,6 +74,12 @@ export default function CompanyPage() {
     ? employees.find((e) => e.id === taskDragging.empId)?.tasks.find((t) => t.id === taskDragging.taskId)
     : null;
 
+  const cardPositionsRef = useRef(cardPositions);
+
+  useEffect(() => {
+    cardPositionsRef.current = cardPositions;
+  }, [cardPositions]);
+
   useEffect(() => {
     const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!storedToken) {
@@ -124,21 +130,26 @@ export default function CompanyPage() {
   useEffect(() => {
     if (!dragging) return;
 
+    let lastDragStart = dragStart;
+
     const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - dragStart.x;
-      const deltaY = e.clientY - dragStart.y;
+      const deltaX = e.clientX - lastDragStart.x;
+      const deltaY = e.clientY - lastDragStart.y;
 
-      const currentPos = cardPositions[dragging] || { x: 0, y: 0 };
+      const currentPos = cardPositionsRef.current[dragging] || { x: 0, y: 0 };
 
-      setCardPositions((prev) => ({
-        ...prev,
-        [dragging]: {
-          x: currentPos.x + deltaX,
-          y: currentPos.y + deltaY,
-        },
-      }));
+      const newPos = {
+        x: currentPos.x + deltaX,
+        y: currentPos.y + deltaY,
+      };
 
-      setDragStart({ x: e.clientX, y: e.clientY });
+      cardPositionsRef.current = {
+        ...cardPositionsRef.current,
+        [dragging]: newPos,
+      };
+
+      setCardPositions(cardPositionsRef.current);
+      lastDragStart = { x: e.clientX, y: e.clientY };
     };
 
     const handleMouseUp = () => {
@@ -152,7 +163,7 @@ export default function CompanyPage() {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [dragging, dragStart, cardPositions]);
+  }, [dragging, dragStart]);
 
   const scaleFactor = zoom / 100;
 
