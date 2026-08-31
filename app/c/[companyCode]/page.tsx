@@ -82,6 +82,13 @@ export default function CompanyPage() {
     dragStartRef.current = dragStart;
   }, [cardPositions, dragStart]);
 
+  // Auto-save employees
+  useEffect(() => {
+    if (employees.length > 0 && isHydrated) {
+      saveEmployees();
+    }
+  }, [employees]);
+
   useEffect(() => {
     const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!storedToken) {
@@ -89,8 +96,49 @@ export default function CompanyPage() {
     } else {
       setIsHydrated(true);
       setCompanyCode(params.companyCode as string);
+
+      // Fetch employees from API
+      fetchEmployees();
     }
   }, [router, params.companyCode, setCompanyCode]);
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await fetch(`/api/employees/${params.companyCode}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.length > 0) {
+          setEmployees(data);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch employees:', error);
+    }
+
+    // Fallback to localStorage
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(`employees_${params.companyCode}`);
+      if (stored) {
+        try {
+          setEmployees(JSON.parse(stored));
+        } catch (e) {
+          console.error('Failed to parse stored employees:', e);
+        }
+      }
+    }
+  };
+
+  const saveEmployees = async () => {
+    try {
+      // Save to localStorage as backup
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`employees_${params.companyCode}`, JSON.stringify(employees));
+      }
+    } catch (error) {
+      console.error('Failed to save employees:', error);
+    }
+  };
 
   const handleDragStart = (e: React.MouseEvent, empId: string) => {
     e.preventDefault();
