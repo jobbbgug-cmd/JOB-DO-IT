@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const tabs = [
-  { name: 'แดชบอร์ด', href: '/', icon: '📊' },
-  { name: 'บอร์ด', href: '/board', icon: '📋' },
-  { name: 'โปรเจกต์', href: '/projects', icon: '📁' },
-  { name: 'งาน', href: '/tasks', icon: '✅' },
-  { name: 'ตั้งค่า', href: '/settings', icon: '⚙️' },
+  { name: 'แดชบอร์ด', href: '/dashboard', icon: '📊' },
+  { name: 'บอร์ด', href: '/dashboard/board', icon: '📋' },
+  { name: 'โปรเจกต์', href: '/dashboard/projects', icon: '📁' },
+  { name: 'งาน', href: '/dashboard/tasks', icon: '✅' },
+  { name: 'ตั้งค่า', href: '/dashboard/settings', icon: '⚙️' },
 ];
 
 export default function TabNav() {
