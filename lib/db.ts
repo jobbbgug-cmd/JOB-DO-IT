@@ -22,8 +22,8 @@ async function connectDB() {
       .connect(MONGODB_URI, {
         bufferCommands: false,
       })
-      .then((mongoose) => {
-        return mongoose;
+      .then((conn) => {
+        return conn;
       });
   }
 
