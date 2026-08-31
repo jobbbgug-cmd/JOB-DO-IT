@@ -19,7 +19,7 @@ const tabs = [
 export default function TopNav() {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const { openFeedback, openShortcuts, zoom, zoomIn, zoomOut } = useUIStore();
+  const { openFeedback, openShortcuts, zoom, zoomIn, zoomOut, companyCode } = useUIStore();
 
   const getActiveTab = () => {
     const tab = tabs.find((t) => pathname === t.href);
@@ -35,7 +35,7 @@ export default function TopNav() {
         <Image src="/logo.png" alt="JOB DO IT" width={32} height={32} className="h-8 w-8" />
         <div>
           <div className="font-bold text-white text-sm">JOB DO IT</div>
-          <div className="text-xs text-gray-400">Task Manager</div>
+          <div className="text-xs text-gray-400">{companyCode || 'Task Manager'}</div>
         </div>
       </div>
 

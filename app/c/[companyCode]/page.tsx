@@ -36,7 +36,7 @@ export default function CompanyPage() {
   const router = useRouter();
   const params = useParams();
   const { user } = useAuthStore();
-  const { zoom } = useUIStore();
+  const { zoom, setCompanyCode } = useUIStore();
   const [isHydrated, setIsHydrated] = useState(false);
   const [companyCode] = useState(params.companyCode as string);
   const [employees, setEmployees] = useState<Employee[]>([
@@ -88,8 +88,9 @@ export default function CompanyPage() {
       router.push('/login');
     } else {
       setIsHydrated(true);
+      setCompanyCode(params.companyCode as string);
     }
-  }, [router]);
+  }, [router, params.companyCode, setCompanyCode]);
 
   const handleDragStart = (e: React.MouseEvent, empId: string) => {
     e.preventDefault();

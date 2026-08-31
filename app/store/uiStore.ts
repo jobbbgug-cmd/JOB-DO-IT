@@ -7,6 +7,7 @@ interface UIStore {
   feedbackOpen: boolean;
   shortcutsOpen: boolean;
   zoom: number;
+  companyCode: string;
   openSettings: () => void;
   closeSettings: () => void;
   openFeedback: () => void;
@@ -16,6 +17,7 @@ interface UIStore {
   setZoom: (zoom: number) => void;
   zoomIn: () => void;
   zoomOut: () => void;
+  setCompanyCode: (code: string) => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -23,6 +25,7 @@ export const useUIStore = create<UIStore>((set) => ({
   feedbackOpen: false,
   shortcutsOpen: false,
   zoom: 100,
+  companyCode: '',
   openSettings: () => set({ settingsOpen: true }),
   closeSettings: () => set({ settingsOpen: false }),
   openFeedback: () => set({ feedbackOpen: true }),
@@ -32,4 +35,5 @@ export const useUIStore = create<UIStore>((set) => ({
   setZoom: (zoom: number) => set({ zoom: Math.max(50, Math.min(160, zoom)) }),
   zoomIn: () => set((state) => ({ zoom: Math.min(160, state.zoom + 10) })),
   zoomOut: () => set((state) => ({ zoom: Math.max(50, state.zoom - 10) })),
+  setCompanyCode: (code: string) => set({ companyCode: code }),
 }));
