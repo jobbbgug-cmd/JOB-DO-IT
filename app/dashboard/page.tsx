@@ -31,6 +31,10 @@ export default function TeamBoard() {
 
   if (!isHydrated) return <div className="flex items-center justify-center h-screen">Loading...</div>;
 
+  const handleAddEmployee = () => {
+    router.push('/dashboard/company');
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -43,7 +47,10 @@ export default function TeamBoard() {
         {employees.length === 0 ? (
           <div className="flex items-center justify-center min-h-96 py-12">
             <div className="text-center">
-              <button className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
+              <button 
+                onClick={handleAddEmployee}
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+              >
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -85,7 +92,10 @@ export default function TeamBoard() {
             ))}
 
             {/* Add Employee Button */}
-            <button className="bg-gray-800 border-2 border-dashed border-gray-600 hover:border-blue-500 rounded-lg p-4 flex items-center justify-center min-h-40 transition-colors group">
+            <button 
+              onClick={handleAddEmployee}
+              className="bg-gray-800 border-2 border-dashed border-gray-600 hover:border-blue-500 rounded-lg p-4 flex items-center justify-center min-h-40 transition-colors group"
+            >
               <div className="text-center">
                 <svg
                   viewBox="0 0 24 24"
