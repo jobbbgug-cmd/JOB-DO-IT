@@ -41,7 +41,7 @@ export default function TopNav() {
     <nav className="bg-gray-800 border-b border-gray-700 h-16 flex items-center px-6 gap-6 sticky top-0 z-40">
       {/* Brand */}
       <div className="flex items-center gap-2 flex-shrink-0">
-        <Image src="/logo.png" alt="JOB DO IT" width={32} height={32} className="h-8 w-8" />
+        <Image src="/icon.png" alt="JOB DO IT" width={32} height={32} className="h-8 w-8" />
         <div>
           <div className="font-bold text-white text-sm">JOB DO IT</div>
           <div className="text-xs text-gray-400">{companyCode || 'Task Manager'}</div>

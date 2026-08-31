@@ -47,7 +47,7 @@ export default function LoginPage() {
           <div className="text-center mb-8">
             <div className="mb-4 flex justify-center">
               <Image
-                  src="/logo.png"
+                  src="/icon.png"
                   alt="JOB DO IT"
                   width={100}
                   height={100}
