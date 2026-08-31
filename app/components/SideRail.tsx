@@ -80,7 +80,7 @@ export default function SideRail() {
   ];
 
   return (
-    <nav className="fixed right-0 top-0 bottom-0 w-20 bg-gray-900 border-l border-gray-800 flex flex-col items-center gap-3 py-6" aria-label="เมนูลัด">
+    <nav className="fixed right-0 top-0 bottom-0 w-20 flex flex-col items-center gap-3 py-6" aria-label="เมนูลัด">
       {shortcuts.map((item, i) => (
         <div key={i} className="rail-slot">
           <button
