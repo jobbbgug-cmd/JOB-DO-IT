@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/app/store/authStore';
+import { useUIStore } from '@/app/store/uiStore';
 import UserMenu from './UserMenu';
 
 const tabs = [
@@ -18,11 +19,7 @@ const tabs = [
 export default function TopNav() {
   const pathname = usePathname();
   const { user } = useAuthStore();
-
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  };
+  const { openFeedback } = useUIStore();
 
   const getActiveTab = () => {
     const tab = tabs.find((t) => pathname === t.href);
@@ -111,6 +108,7 @@ export default function TopNav() {
 
       {/* Feedback */}
       <button
+        onClick={openFeedback}
         className="px-3 py-2 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-2"
         title="แจ้งปัญหา"
       >

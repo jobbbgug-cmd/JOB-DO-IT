@@ -7,6 +7,8 @@ import { useAuthStore } from '@/app/store/authStore';
 import TopNav from './TopNav';
 import Dock from './Dock';
 import SideRail from './SideRail';
+import SettingsPanel from './SettingsPanel';
+import FeedbackPanel from './FeedbackPanel';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -30,6 +32,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* SideRail */}
       <SideRail />
+
+      {/* Panels */}
+      <SettingsPanel />
+      <FeedbackPanel />
     </div>
   );
 }

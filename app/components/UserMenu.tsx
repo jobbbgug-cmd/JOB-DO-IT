@@ -3,14 +3,17 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/app/store/authStore';
+import { useUIStore } from '@/app/store/uiStore';
 
 export default function UserMenu() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const { openSettings } = useUIStore();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
+    setIsOpen(false);
     router.push('/login');
   };
 
@@ -44,7 +47,7 @@ export default function UserMenu() {
             {/* Settings */}
             <button
               onClick={() => {
-                router.push('/dashboard/settings');
+                openSettings();
                 setIsOpen(false);
               }}
               className="w-full px-4 py-2 flex items-center gap-3 text-gray-300 hover:text-white hover:bg-gray-700 transition-colors text-sm"
