@@ -55,7 +55,7 @@ export default function CompanyPage() {
   const [cardSizes, setCardSizes] = useState<Record<string, CardSize>>({});
   const [resizing, setResizing] = useState<string | null>(null);
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0 });
-  const resizeRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<Record<string, HTMLDivElement>>({});
 
   useEffect(() => {
     const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -75,13 +75,14 @@ export default function CompanyPage() {
   useEffect(() => {
     if (!resizing) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!resizeRef.current) return;
+    const cardEl = cardRefs.current[resizing];
+    if (!cardEl) return;
 
+    const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - resizeStart.x;
       const deltaY = e.clientY - resizeStart.y;
 
-      const rect = resizeRef.current.getBoundingClientRect();
+      const rect = cardEl.getBoundingClientRect();
       const newWidth = Math.max(400, rect.width + deltaX);
       const newHeight = Math.max(300, rect.height + deltaY);
 
@@ -121,23 +122,27 @@ export default function CompanyPage() {
         {/* Employees Grid */}
         <div className="flex flex-wrap gap-6">
           {employees.map((emp) => {
-            const size = cardSizes[emp.id] || { width: 450, height: 'auto' };
+            const size = cardSizes[emp.id] || { width: 450, height: 500 };
             const isResizing = resizing === emp.id;
 
             return (
               <div
                 key={emp.id}
-                ref={resizing === emp.id ? resizeRef : null}
-                className={`bg-gray-900 border-2 border-cyan-600/40 hover:border-cyan-500/60 rounded-xl p-5 transition-all ${
+                ref={(el) => {
+                  if (el) cardRefs.current[emp.id] = el;
+                }}
+                className={`relative bg-gray-900 border-2 border-cyan-600/40 hover:border-cyan-500/60 rounded-xl p-5 transition-all ${
                   isResizing ? 'border-cyan-500/80 shadow-lg shadow-cyan-900/40' : 'hover:shadow-lg hover:shadow-cyan-900/20'
                 }`}
                 style={{
-                  width: typeof size.width === 'number' ? `${size.width}px` : '450px',
-                  height: typeof size.height === 'number' ? `${size.height}px` : 'auto',
+                  width: `${size.width}px`,
+                  height: `${size.height}px`,
+                  display: 'flex',
+                  flexDirection: 'column',
                 }}
               >
                 {/* Employee Header with Drag Handle */}
-                <div className="flex items-start gap-3 mb-4 pb-4 border-b border-gray-700 group cursor-grab active:cursor-grabbing">
+                <div className="flex items-start gap-3 mb-4 pb-4 border-b border-gray-700 group cursor-grab active:cursor-grabbing flex-shrink-0">
                   {/* Drag Handle */}
                   <div className="text-gray-600 group-hover:text-gray-400 transition-colors pt-1">
                     <svg
@@ -179,7 +184,7 @@ export default function CompanyPage() {
 
                     {/* Board Button */}
                     <button
-                      className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-500 hover:text-cyan-400 transition-colors"
+                      className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-500 hover:text-cyan-400 transition-colors flex-shrink-0"
                       title="ดูบอร์ดงาน"
                     >
                       <svg
@@ -196,7 +201,7 @@ export default function CompanyPage() {
 
                     {/* History Button */}
                     <button
-                      className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-500 hover:text-cyan-400 transition-colors"
+                      className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-500 hover:text-cyan-400 transition-colors flex-shrink-0"
                       title="ประวัติกิจกรรม"
                     >
                       <svg
@@ -215,10 +220,10 @@ export default function CompanyPage() {
                 </div>
 
                 {/* Lanes - 2 Columns Layout */}
-                <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto pr-2">
+                <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto pr-2 min-h-0">
                   {/* Routine Lane (Left) */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between mb-3">
+                  <div className="space-y-3 overflow-y-auto">
+                    <div className="flex items-center justify-between mb-3 flex-shrink-0">
                       <div className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
                         <span className="text-sm font-semibold text-gray-200">งานรูทีน</span>
@@ -233,9 +238,9 @@ export default function CompanyPage() {
                         .map((task) => (
                           <div
                             key={task.id}
-                            className="bg-gray-800/50 border border-gray-700 hover:border-cyan-500/50 rounded-lg p-3 transition-all hover:bg-gray-800/80 cursor-pointer group"
+                            className="bg-gray-800/50 border border-gray-700 hover:border-cyan-500/50 rounded-lg p-3 transition-all hover:bg-gray-800/80 cursor-pointer group text-xs"
                           >
-                            <p className="text-xs text-gray-300 group-hover:text-white transition-colors mb-2 leading-snug line-clamp-2">
+                            <p className="text-gray-300 group-hover:text-white transition-colors mb-2 leading-snug line-clamp-2">
                               {task.title}
                             </p>
                             <div className="space-y-1.5">
@@ -246,13 +251,13 @@ export default function CompanyPage() {
                                     style={{ width: `${task.progress}%` }}
                                   ></div>
                                 </div>
-                                <span className="text-xs font-semibold text-gray-500 whitespace-nowrap ml-1">
+                                <span className="font-semibold text-gray-500 whitespace-nowrap ml-1">
                                   {task.progress}%
                                 </span>
                               </div>
-                              <div className="flex items-center justify-between text-xs">
+                              <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1">
-                                  <div className="w-4 h-4 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                                  <div className="w-4 h-4 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center flex-shrink-0">
                                     {task.assignee.substring(0, 1).toUpperCase()}
                                   </div>
                                   <span className="text-gray-500 line-clamp-1">{task.assignee}</span>
@@ -263,7 +268,7 @@ export default function CompanyPage() {
                           </div>
                         ))}
                       {emp.tasks.filter((t) => t.lane === 'routine').length === 0 && (
-                        <div className="text-xs text-gray-600 text-center py-4 italic">
+                        <div className="text-gray-600 text-center py-4 italic">
                           ว่าง
                         </div>
                       )}
@@ -271,8 +276,8 @@ export default function CompanyPage() {
                   </div>
 
                   {/* Urgent Lane (Right) */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between mb-3">
+                  <div className="space-y-3 overflow-y-auto">
+                    <div className="flex items-center justify-between mb-3 flex-shrink-0">
                       <div className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-red-500"></span>
                         <span className="text-sm font-semibold text-gray-200">งานจิกปะทะ</span>
@@ -287,9 +292,9 @@ export default function CompanyPage() {
                         .map((task) => (
                           <div
                             key={task.id}
-                            className="bg-gray-800/50 border border-gray-700 hover:border-red-500/50 rounded-lg p-3 transition-all hover:bg-gray-800/80 cursor-pointer group"
+                            className="bg-gray-800/50 border border-gray-700 hover:border-red-500/50 rounded-lg p-3 transition-all hover:bg-gray-800/80 cursor-pointer group text-xs"
                           >
-                            <p className="text-xs text-gray-300 group-hover:text-white transition-colors mb-2 leading-snug line-clamp-2">
+                            <p className="text-gray-300 group-hover:text-white transition-colors mb-2 leading-snug line-clamp-2">
                               {task.title}
                             </p>
                             <div className="space-y-1.5">
@@ -300,13 +305,13 @@ export default function CompanyPage() {
                                     style={{ width: `${task.progress}%` }}
                                   ></div>
                                 </div>
-                                <span className="text-xs font-semibold text-gray-500 whitespace-nowrap ml-1">
+                                <span className="font-semibold text-gray-500 whitespace-nowrap ml-1">
                                   {task.progress}%
                                 </span>
                               </div>
-                              <div className="flex items-center justify-between text-xs">
+                              <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1">
-                                  <div className="w-4 h-4 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                                  <div className="w-4 h-4 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center flex-shrink-0">
                                     {task.assignee.substring(0, 1).toUpperCase()}
                                   </div>
                                   <span className="text-gray-500 line-clamp-1">{task.assignee}</span>
@@ -317,7 +322,7 @@ export default function CompanyPage() {
                           </div>
                         ))}
                       {emp.tasks.filter((t) => t.lane === 'urgent').length === 0 && (
-                        <div className="text-xs text-gray-600 text-center py-4 italic">
+                        <div className="text-gray-600 text-center py-4 italic">
                           ลากงานมาวาง
                         </div>
                       )}
@@ -326,12 +331,12 @@ export default function CompanyPage() {
                 </div>
 
                 {/* Resize Handle - Bottom Right */}
-                <div
+                <button
                   onMouseDown={(e) => handleResizeStart(e, emp.id)}
-                  className="absolute bottom-0 right-0 w-5 h-5 bg-gradient-to-tl from-cyan-500 to-cyan-400 rounded-tl cursor-nwse-resize hover:from-cyan-400 hover:to-cyan-300 transition-colors"
+                  className="absolute bottom-0 right-0 w-6 h-6 bg-gradient-to-tl from-cyan-500 to-cyan-400 rounded-tl cursor-se-resize hover:from-cyan-400 hover:to-cyan-300 transition-colors opacity-60 hover:opacity-100"
                   title="ลากเพื่อปรับขนาดการ์ด"
                   style={{
-                    opacity: isResizing ? 1 : 0.6,
+                    pointerEvents: 'auto',
                   }}
                 />
               </div>
