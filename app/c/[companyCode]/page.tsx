@@ -164,7 +164,7 @@ export default function CompanyPage() {
   return (
     <Layout>
       {/* Full Screen Canvas */}
-      <div className="fixed inset-0 top-16 right-20 overflow-hidden" style={{transformOrigin: "top left", transform: `scale(${zoom / 100})`}}>
+      <div className="fixed inset-0 top-16 right-20 overflow-auto" style={{transformOrigin: "top left", transform: `scale(${zoom / 100})`}}>
         {employees.map((emp) => {
           const size = cardSizes[emp.id] || { width: 450, height: 500 };
           const pos = cardPositions[emp.id] || { x: 20, y: 20 };
