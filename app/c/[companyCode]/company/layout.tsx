@@ -16,7 +16,7 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
   const [activeTab, setActiveTab] = useState('employees');
 
   return (
-    <div className="page-inner">
+    <>
       <div className="page-head">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">{companyCode}</h1>
@@ -45,6 +45,6 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
 
       {/* Content */}
       <div className="mw-section">{children}</div>
-    </div>
+    </>
   );
 }
