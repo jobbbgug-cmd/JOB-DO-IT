@@ -333,7 +333,7 @@ export default function CompanyPage() {
               <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto pr-2 min-h-0" onMouseDown={(e) => e.stopPropagation()}>
                 {/* Routine Lane (Left) */}
                 <div
-                  className={`space-y-3 overflow-y-auto border-2 rounded-lg p-3 transition-colors ${
+                  className={`space-y-2 overflow-y-auto border-2 rounded-lg px-2 py-2 transition-colors ${
                     taskDragging && taskDragging.sourceLane === 'urgent' && hoveredLane === 'routine'
                       ? 'border-cyan-500 bg-cyan-900/10'
                       : 'border-transparent'
@@ -399,7 +399,7 @@ export default function CompanyPage() {
 
                 {/* Urgent Lane (Right) */}
                 <div
-                  className={`space-y-3 overflow-y-auto border-2 rounded-lg p-3 transition-colors ${
+                  className={`space-y-2 overflow-y-auto border-2 rounded-lg px-2 py-2 transition-colors ${
                     taskDragging && taskDragging.sourceLane === 'routine' && hoveredLane === 'urgent'
                       ? 'border-red-500 bg-red-900/10'
                       : 'border-transparent'
