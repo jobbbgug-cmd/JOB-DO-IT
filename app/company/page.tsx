@@ -22,6 +22,7 @@ export default function CompanyPage() {
   const [companyName, setCompanyName] = useState('');
   const [companyCode, setCompanyCode] = useState(generateRandomCode());
   const [inviteLink, setInviteLink] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -41,10 +42,28 @@ export default function CompanyPage() {
     setCompanyCode(generateRandomCode());
   };
 
-  const handleCreateCompany = () => {
+  const handleCreateCompany = async () => {
     if (!isCreateFormValid) return;
-    console.log('Create company:', { companyName, companyCode });
-    // TODO: API call
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/company/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyName, companyCode }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        router.push(`/c/${companyCode}`);
+      } else {
+        alert('Failed to create company');
+      }
+    } catch (error) {
+      console.error('Error creating company:', error);
+      alert('Error creating company');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleJoinCompany = () => {
@@ -149,10 +168,10 @@ export default function CompanyPage() {
               {/* Create Button */}
               <button
                 onClick={handleCreateCompany}
-                disabled={!isCreateFormValid}
+                disabled={!isCreateFormValid || isLoading}
                 className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors mt-2"
               >
-                สร้างบริษัท
+                {isLoading ? 'กำลังสร้าง...' : 'สร้างบริษัท'}
               </button>
 
               {/* Back Button */}
