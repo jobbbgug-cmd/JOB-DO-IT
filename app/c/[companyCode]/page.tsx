@@ -26,6 +26,11 @@ interface CardSize {
   height: number;
 }
 
+interface CardPosition {
+  x: number;
+  y: number;
+}
+
 export default function CompanyPage() {
   const router = useRouter();
   const params = useParams();
@@ -53,7 +58,10 @@ export default function CompanyPage() {
   ]);
 
   const [cardSizes, setCardSizes] = useState<Record<string, CardSize>>({});
+  const [cardPositions, setCardPositions] = useState<Record<string, CardPosition>>({});
   const [resizing, setResizing] = useState<string | null>(null);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0 });
   const cardRefs = useRef<Record<string, HTMLDivElement>>({});
 
@@ -66,11 +74,50 @@ export default function CompanyPage() {
     }
   }, [router]);
 
+  const handleDragStart = (e: React.MouseEvent, empId: string) => {
+    e.preventDefault();
+    setDragging(empId);
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
   const handleResizeStart = (e: React.MouseEvent, empId: string) => {
     e.preventDefault();
     setResizing(empId);
     setResizeStart({ x: e.clientX, y: e.clientY });
   };
+
+  useEffect(() => {
+    if (!dragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - dragStart.x;
+      const deltaY = e.clientY - dragStart.y;
+
+      const currentPos = cardPositions[dragging] || { x: 0, y: 0 };
+
+      setCardPositions((prev) => ({
+        ...prev,
+        [dragging]: {
+          x: currentPos.x + deltaX,
+          y: currentPos.y + deltaY,
+        },
+      }));
+
+      setDragStart({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleMouseUp = () => {
+      setDragging(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [dragging, dragStart, cardPositions]);
 
   useEffect(() => {
     if (!resizing) return;
@@ -119,10 +166,12 @@ export default function CompanyPage() {
           <p className="text-gray-400 mt-2">จัดการสมาชิกทีมและงาน</p>
         </div>
 
-        {/* Employees Grid */}
-        <div className="flex flex-wrap gap-6">
+        {/* Employees Canvas */}
+        <div className="relative w-full h-96 bg-gray-900/30 border border-gray-700 rounded-lg overflow-hidden">
           {employees.map((emp) => {
             const size = cardSizes[emp.id] || { width: 450, height: 500 };
+            const pos = cardPositions[emp.id] || { x: 20, y: 20 };
+            const isDragging = dragging === emp.id;
             const isResizing = resizing === emp.id;
 
             return (
@@ -131,18 +180,28 @@ export default function CompanyPage() {
                 ref={(el) => {
                   if (el) cardRefs.current[emp.id] = el;
                 }}
-                className={`relative bg-gray-900 border-2 border-cyan-600/40 hover:border-cyan-500/60 rounded-xl p-5 transition-all ${
-                  isResizing ? 'border-cyan-500/80 shadow-lg shadow-cyan-900/40' : 'hover:shadow-lg hover:shadow-cyan-900/20'
+                className={`absolute bg-gray-900 border-2 border-cyan-600/40 hover:border-cyan-500/60 rounded-xl p-5 transition-all ${
+                  isResizing
+                    ? 'border-cyan-500/80 shadow-lg shadow-cyan-900/40'
+                    : isDragging
+                      ? 'border-cyan-500 shadow-lg shadow-cyan-900/60'
+                      : 'hover:shadow-lg hover:shadow-cyan-900/20'
                 }`}
                 style={{
                   width: `${size.width}px`,
                   height: `${size.height}px`,
+                  transform: `translate(${pos.x}px, ${pos.y}px)`,
                   display: 'flex',
                   flexDirection: 'column',
+                  cursor: isDragging ? 'grabbing' : 'grab',
+                  userSelect: 'none',
                 }}
               >
                 {/* Employee Header with Drag Handle */}
-                <div className="flex items-start gap-3 mb-4 pb-4 border-b border-gray-700 group cursor-grab active:cursor-grabbing flex-shrink-0">
+                <div
+                  className={`flex items-start gap-3 mb-4 pb-4 border-b border-gray-700 group cursor-grab active:cursor-grabbing flex-shrink-0 ${isDragging ? 'opacity-80' : ''}`}
+                  onMouseDown={(e) => handleDragStart(e, emp.id)}
+                >
                   {/* Drag Handle */}
                   <div className="text-gray-600 group-hover:text-gray-400 transition-colors pt-1">
                     <svg
@@ -186,6 +245,7 @@ export default function CompanyPage() {
                     <button
                       className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-500 hover:text-cyan-400 transition-colors flex-shrink-0"
                       title="ดูบอร์ดงาน"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <svg
                         viewBox="0 0 24 24"
@@ -203,6 +263,7 @@ export default function CompanyPage() {
                     <button
                       className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-500 hover:text-cyan-400 transition-colors flex-shrink-0"
                       title="ประวัติกิจกรรม"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <svg
                         viewBox="0 0 24 24"
@@ -220,7 +281,7 @@ export default function CompanyPage() {
                 </div>
 
                 {/* Lanes - 2 Columns Layout */}
-                <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto pr-2 min-h-0">
+                <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto pr-2 min-h-0" onMouseDown={(e) => e.stopPropagation()}>
                   {/* Routine Lane (Left) */}
                   <div className="space-y-3 overflow-y-auto">
                     <div className="flex items-center justify-between mb-3 flex-shrink-0">
