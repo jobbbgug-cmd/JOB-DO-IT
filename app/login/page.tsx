@@ -46,8 +46,7 @@ export default function LoginPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="mb-4 flex justify-center">
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-teal-500 rounded-xl">
-                <Image
+              <Image
                   src="/logo.png"
                   alt="JOB DO IT"
                   width={100}
@@ -55,7 +54,6 @@ export default function LoginPage() {
                   className="h-16 w-auto"
                   priority
                 />
-              </div>
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent mb-2">
               JOB DO IT
