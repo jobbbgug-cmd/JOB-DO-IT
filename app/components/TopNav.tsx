@@ -8,12 +8,12 @@ import { useUIStore } from '@/app/store/uiStore';
 import UserMenu from './UserMenu';
 
 const tabs = [
-  { name: 'บอร์ดทีม', href: '/dashboard', icon: '📊' },
-  { name: 'บอร์ดงาน', href: '/dashboard/board', icon: '📋' },
-  { name: 'โปรเจค', href: '/dashboard/projects', icon: '📁' },
-  { name: 'ไทม์ไลน์', href: '/dashboard/timeline', icon: '📈' },
-  { name: 'โน้ต', href: '/dashboard/notes', icon: '📝' },
-  { name: 'บริษัท', href: '/dashboard/company', icon: '🏢' },
+  { name: 'บอร์ดทีม', href: '/boardteam', icon: '📊' },
+  { name: 'บอร์ดงาน', href: '/board', icon: '📋' },
+  { name: 'โปรเจค', href: '/projects', icon: '📁' },
+  { name: 'ไทม์ไลน์', href: '/timeline', icon: '📈' },
+  { name: 'โน้ต', href: '/notes', icon: '📝' },
+  { name: 'บริษัท', href: '/company', icon: '🏢' },
 ];
 
 export default function TopNav() {
