@@ -85,7 +85,7 @@ export default function SideRail() {
         <div key={i} className="rail-slot">
           <button
             type="button"
-            className="w-12 h-12 flex items-center justify-center rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 text-gray-400 hover:text-cyan-400 transition-all duration-200 group relative hover:shadow-lg hover:shadow-cyan-900/50 hover:-translate-y-1"
+            className="w-10 h-10 flex items-center justify-center rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 text-gray-400 hover:text-cyan-400 transition-all duration-200 group relative hover:shadow-lg hover:shadow-cyan-900/50 hover:-translate-y-1"
             title={item.title}
             aria-label={`${item.label} — ${item.title}`}
             aria-expanded="false"
