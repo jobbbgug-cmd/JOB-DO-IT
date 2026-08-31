@@ -389,12 +389,24 @@ export default function CompanyPage() {
               {/* Resize Handle - Bottom Right */}
               <button
                 onMouseDown={(e) => handleResizeStart(e, emp.id)}
-                className="absolute bottom-0 right-0 w-6 h-6 bg-gradient-to-tl from-cyan-500 to-cyan-400 rounded-tl cursor-se-resize hover:from-cyan-400 hover:to-cyan-300 transition-colors opacity-60 hover:opacity-100"
+                className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize opacity-40 hover:opacity-100 transition-opacity flex items-center justify-center"
                 title="ลากเพื่อปรับขนาดการ์ด"
                 style={{
                   pointerEvents: 'auto',
                 }}
-              />
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-4 h-4 text-gray-400 hover:text-cyan-400"
+                >
+                  <path d="M21 21V9M21 21H9"></path>
+                </svg>
+              </button>
             </div>
           );
         })}
