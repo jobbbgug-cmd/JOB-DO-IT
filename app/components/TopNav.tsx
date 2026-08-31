@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -15,14 +16,19 @@ const getTabsWithCompany = (companyCode: string) => {
     { name: 'โปรเจค', href: companyCode ? `${prefix}/projects` : '/projects', icon: '📁' },
     { name: 'ไทม์ไลน์', href: companyCode ? `${prefix}/timeline` : '/timeline', icon: '📈' },
     { name: 'โน้ต', href: companyCode ? `${prefix}/notes` : '/notes', icon: '📝' },
-    { name: 'บริษัท', href: companyCode ? `${prefix}/company` : '/company', icon: '🏢' },
+    { name: 'บริษัท', href: companyCode ? `${prefix}/company/employees` : '/company', icon: '🏢' },
   ];
 };
 
 export default function TopNav() {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const { openFeedback, openShortcuts, zoom, zoomIn, zoomOut, companyCode } = useUIStore();
+  const { openFeedback, openShortcuts, zoom, zoomIn, zoomOut, companyCode, initializeFromStorage } = useUIStore();
+
+  useEffect(() => {
+    initializeFromStorage();
+  }, [initializeFromStorage]);
+
   const tabs = getTabsWithCompany(companyCode);
 
   const getActiveTab = () => {

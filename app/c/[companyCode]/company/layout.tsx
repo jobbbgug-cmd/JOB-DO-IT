@@ -31,7 +31,7 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
         {TABS.map((tab) => (
           <Link
             key={tab.id}
-            href={`/c/${companyCode}/company/${tab.id === 'employees' ? '' : tab.id}`}
+            href={`/c/${companyCode}/company/${tab.id}`}
             className={`px-4 py-2 font-medium text-sm transition-colors ${
               activeTab === tab.id
                 ? 'text-white border-b-2 border-cyan-500 -mb-[1px]'

@@ -11,7 +11,12 @@ export default function Home() {
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token) {
-      router.replace('/dashboard');
+      const companyCode = typeof window !== 'undefined' ? localStorage.getItem('companyCode') : null;
+      if (companyCode) {
+        router.replace(`/c/${companyCode}/boardteam`);
+      } else {
+        router.replace('/boardteam');
+      }
     }
   }, [router]);
 

@@ -8,6 +8,9 @@ interface IUser extends Document {
   role: 'admin' | 'dev' | 'tester' | 'lead';
   avatar?: string;
   department?: string;
+  isVerified: boolean;
+  verificationCode?: string;
+  verificationCodeExpiry?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(enteredPassword: string): Promise<boolean>;
@@ -38,14 +41,19 @@ const userSchema = new Schema<IUser>(
     },
     avatar: String,
     department: String,
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationCode: String,
+    verificationCodeExpiry: Date,
   },
   { timestamps: true }
 );
 
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
   this.password = await bcryptjs.hash(this.password, 10);
-  next();
 });
 
 userSchema.methods.comparePassword = async function (enteredPassword: string) {

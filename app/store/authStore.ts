@@ -36,7 +36,12 @@ export const useAuthStore = create<AuthStore>((set) => ({
       set({ user, token, error: null });
       return { success: true };
     } catch (error: any) {
-      const message = error.response?.data?.error || 'Login failed';
+      const data = error.response?.data;
+      if (data?.needsVerification) {
+        set({ error: 'Email not verified' });
+        return { success: false, message: data.error, needsVerification: true, email: data.email };
+      }
+      const message = data?.error || 'Login failed';
       set({ error: message });
       return { success: false, message };
     } finally {

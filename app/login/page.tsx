@@ -4,20 +4,20 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuthStore } from '@/app/store/authStore';
+import { useUIStore } from '@/app/store/uiStore';
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
     password: '',
-    role: 'dev',
   });
   const [error, setError] = useState('');
   const { login, register, loading } = useAuthStore();
+  const { setCompanyCode } = useUIStore();
   const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -28,14 +28,27 @@ export default function LoginPage() {
     let result;
     if (isLogin) {
       result = await login(formData.email, formData.password);
+      if (result.success) {
+        const companyCode = localStorage.getItem('companyCode');
+        if (companyCode) {
+          setCompanyCode(companyCode);
+          router.push(`/c/${companyCode}/boardteam`);
+        } else {
+          router.push('/boardteam');
+        }
+      } else if ((result as any).needsVerification) {
+        router.push(`/verify?email=${encodeURIComponent(formData.email)}`);
+      } else {
+        setError(result.message || 'เกิดข้อผิดพลาด');
+      }
     } else {
-      result = await register(formData.name, formData.email, formData.password, formData.role);
-    }
-
-    if (result.success) {
-      router.push('/');
-    } else {
-      setError(result.message || 'เกิดข้อผิดพลาด');
+      const nameFromEmail = formData.email.split('@')[0];
+      result = await register(nameFromEmail, formData.email, formData.password, 'dev');
+      if (result.success) {
+        router.push(`/verify?email=${encodeURIComponent(formData.email)}`);
+      } else {
+        setError(result.message || 'เกิดข้อผิดพลาด');
+      }
     }
   };
 
@@ -55,10 +68,13 @@ export default function LoginPage() {
                   priority
                 />
             </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              {isLogin ? 'เข้าสู่ระบบ' : 'สร้างบัญชีใหม่'}
+            </h1>
             <p className="text-gray-600 text-sm font-medium">
               {isLogin
-                ? 'เข้าสู่ระบบเพื่อจัดการงานและโครงการของคุณ'
-                : 'สร้างบัญชีใหม่เพื่อเริ่มต้น'}
+                ? 'เข้าสู่ระบบเพื่อจัดการงานของทีมต่อ'
+                : 'เข้าสู่ระบบแล้วใช้งานบอร์ดได้ทันที ไม่ต้องตั้งค่าเพิ่มเติม'}
             </p>
           </div>
 
@@ -71,36 +87,20 @@ export default function LoginPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
             <div>
-              <label className="block text-gray-700 font-semibold text-sm mb-2">ชื่อ</label>
+              <label className="block text-gray-700 font-semibold text-sm mb-2">อีเมล</label>
               <input
-                type="text"
-                name="name"
-                placeholder="เช่น สมชาย สมการ"
-                value={formData.name}
+                type="email"
+                name="email"
+                placeholder="you@example.com"
+                value={formData.email}
                 onChange={handleChange}
-                required={!isLogin}
+                required
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition bg-gray-50 hover:bg-white text-gray-900 placeholder-gray-400"
               />
             </div>
-          )}
 
-          <div>
-            <label className="block text-gray-700 font-semibold text-sm mb-2">อีเมล</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="you@example.com"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition bg-gray-50 hover:bg-white text-gray-900 placeholder-gray-400"
-            />
-          </div>
-
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
+            <div>
               <label className="block text-gray-700 font-semibold text-sm mb-2">รหัสผ่าน</label>
               <input
                 type="password"
@@ -112,63 +112,33 @@ export default function LoginPage() {
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition bg-gray-50 hover:bg-white text-gray-900 placeholder-gray-400"
               />
             </div>
-            {isLogin && (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsLogin(false);
-                  setError('');
-                  setFormData({ name: '', email: '', password: '', role: 'dev' });
-                }}
-                className="text-xs text-teal-600 font-semibold hover:text-teal-700 hover:underline whitespace-nowrap pb-1"
-              >
-                สมัครสมาชิก?
-              </button>
-            )}
-          </div>
 
-          {!isLogin && (
-            <div>
-              <label className="block text-gray-700 font-semibold text-sm mb-2">บทบาท</label>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition bg-gray-50 hover:bg-white text-gray-900"
-              >
-                <option value="dev">👨‍💻 นักพัฒนา (Dev)</option>
-                <option value="tester">🧪 ผู้ทดสอบ (Tester)</option>
-                <option value="lead">👔 หัวหน้าทีม (Lead)</option>
-              </select>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 text-white font-bold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 mt-6"
+            >
+              {loading ? 'กำลังดำเนิน...' : isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
+            </button>
+
+            {/* Toggle */}
+            <div className="text-center mt-6 pt-6 border-t border-gray-200">
+              <p className="text-gray-600 text-sm">
+                {isLogin ? 'ยังไม่มีบัญชี?' : 'มีบัญชีแล้ว?'}{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    setError('');
+                    setFormData({ email: '', password: '' });
+                  }}
+                  className="text-teal-600 font-semibold hover:text-teal-700 hover:underline"
+                >
+                  {isLogin ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}
+                </button>
+              </p>
             </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 text-white font-bold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 mt-6"
-          >
-            {loading ? 'กำลังดำเนิน...' : isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
-          </button>
-
-          {/* Toggle */}
-          <div className="text-center mt-6 pt-6 border-t border-gray-200">
-            <p className="text-gray-600 text-sm">
-              {isLogin ? 'ยังไม่มีบัญชี?' : 'มีบัญชีแล้ว?'}{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setError('');
-                  setFormData({ name: '', email: '', password: '', role: 'dev' });
-                }}
-                className="text-teal-600 font-semibold hover:text-teal-700 hover:underline"
-              >
-                {isLogin ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}
-              </button>
-            </p>
-          </div>
-        </form>
+          </form>
         </div>
       </div>
     </div>

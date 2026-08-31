@@ -8,25 +8,33 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'secret');
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
-    const { email, password } = await req.json();
+    const { email, code } = await req.json();
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+    if (!email || !code) {
+      return NextResponse.json({ error: 'Missing email or code' }, { status: 400 });
     }
 
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    if (!user.isVerified) {
-      return NextResponse.json({ error: 'Email not verified', needsVerification: true, email }, { status: 403 });
+    if (user.isVerified) {
+      return NextResponse.json({ error: 'User already verified' }, { status: 400 });
     }
 
-    const isPasswordValid = await user.comparePassword(password);
-    if (!isPasswordValid) {
-      return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
+    if (user.verificationCode !== code) {
+      return NextResponse.json({ error: 'Invalid verification code' }, { status: 400 });
     }
+
+    if (user.verificationCodeExpiry && user.verificationCodeExpiry < new Date()) {
+      return NextResponse.json({ error: 'Verification code expired' }, { status: 400 });
+    }
+
+    user.isVerified = true;
+    user.verificationCode = undefined;
+    user.verificationCodeExpiry = undefined;
+    await user.save();
 
     const token = await new SignJWT({ userId: user._id.toString(), email: user.email })
       .setProtectedHeader({ alg: 'HS256' })
@@ -49,6 +57,7 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error: any) {
+    console.error('Verify error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

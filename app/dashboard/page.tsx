@@ -7,7 +7,12 @@ export default function DashboardRedirect() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/boardteam');
+    const companyCode = typeof window !== 'undefined' ? localStorage.getItem('companyCode') : null;
+    if (companyCode) {
+      router.replace(`/c/${companyCode}/boardteam`);
+    } else {
+      router.replace('/boardteam');
+    }
   }, [router]);
 
   return null;
