@@ -7,14 +7,17 @@ import { useAuthStore } from '@/app/store/authStore';
 import { useUIStore } from '@/app/store/uiStore';
 import UserMenu from './UserMenu';
 
-const getTabsWithCompany = (companyCode: string) => [
-  { name: 'บอร์ดทีม', href: '/boardteam', icon: '📊' },
-  { name: 'บอร์ดงาน', href: '/board', icon: '📋' },
-  { name: 'โปรเจค', href: '/projects', icon: '📁' },
-  { name: 'ไทม์ไลน์', href: '/timeline', icon: '📈' },
-  { name: 'โน้ต', href: '/notes', icon: '📝' },
-  { name: 'บริษัท', href: companyCode ? `/c/${companyCode}` : '/company', icon: '🏢' },
-];
+const getTabsWithCompany = (companyCode: string) => {
+  const prefix = companyCode ? `/c/${companyCode}` : '';
+  return [
+    { name: 'บอร์ดทีม', href: companyCode ? `${prefix}/boardteam` : '/boardteam', icon: '📊' },
+    { name: 'บอร์ดงาน', href: companyCode ? `${prefix}/board` : '/board', icon: '📋' },
+    { name: 'โปรเจค', href: companyCode ? `${prefix}/projects` : '/projects', icon: '📁' },
+    { name: 'ไทม์ไลน์', href: companyCode ? `${prefix}/timeline` : '/timeline', icon: '📈' },
+    { name: 'โน้ต', href: companyCode ? `${prefix}/notes` : '/notes', icon: '📝' },
+    { name: 'บริษัท', href: companyCode ? `${prefix}/company` : '/company', icon: '🏢' },
+  ];
+};
 
 export default function TopNav() {
   const pathname = usePathname();
