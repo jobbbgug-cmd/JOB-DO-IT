@@ -19,7 +19,7 @@ const tabs = [
 export default function TopNav() {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const { openFeedback } = useUIStore();
+  const { openFeedback, openShortcuts } = useUIStore();
 
   const getActiveTab = () => {
     const tab = tabs.find((t) => pathname === t.href);
@@ -96,6 +96,7 @@ export default function TopNav() {
 
       {/* Keyboard Shortcuts */}
       <button
+        onClick={openShortcuts}
         className="px-3 py-2 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-2"
         title="คีย์ลัด"
       >

@@ -9,6 +9,7 @@ import Dock from './Dock';
 import SideRail from './SideRail';
 import SettingsPanel from './SettingsPanel';
 import FeedbackPanel from './FeedbackPanel';
+import KeyboardShortcutsPanel from './KeyboardShortcutsPanel';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -36,6 +37,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Panels */}
       <SettingsPanel />
       <FeedbackPanel />
+      <KeyboardShortcutsPanel />
     </div>
   );
 }
