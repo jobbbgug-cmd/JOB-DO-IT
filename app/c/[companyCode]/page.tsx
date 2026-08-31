@@ -391,7 +391,7 @@ export default function CompanyPage() {
                   <div className="flex items-center justify-between mb-3 flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
-                      <span className="text-base font-semibold text-gray-200">งานรูทีน</span>
+                      <span className="text-lg font-semibold text-gray-200">งานรูทีน</span>
                     </div>
                     <span className="text-xs font-medium text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
                       {emp.tasks.filter((t) => t.lane === 'routine').length}
@@ -457,7 +457,7 @@ export default function CompanyPage() {
                   <div className="flex items-center justify-between mb-3 flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                      <span className="text-sm font-semibold text-gray-200">งานจิกปะทะ</span>
+                      <span className="text-lg font-semibold text-gray-200">งานจิกปะทะ</span>
                     </div>
                     <span className="text-xs font-medium text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
                       {emp.tasks.filter((t) => t.lane === 'urgent').length}
@@ -510,23 +510,23 @@ export default function CompanyPage() {
                 </div>
               </div>
 
-              {/* Resize Handles - 8 Directions */}
+              {/* Invisible Resize Zones - 8 Directions */}
               {/* Top Left */}
-              <div className="absolute top-0 left-0 w-2 h-2 cursor-nw-resize opacity-40 hover:opacity-100 transition-opacity bg-cyan-500 rounded-full" onMouseDown={(e) => handleResizeStart(e, emp.id, 'top-left')} style={{ pointerEvents: 'auto' }} />
+              <div className="absolute top-0 left-0 w-4 h-4 cursor-nw-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'top-left')} style={{ pointerEvents: 'auto' }} />
               {/* Top Center */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 cursor-n-resize opacity-40 hover:opacity-100 transition-opacity bg-cyan-500 rounded-full" onMouseDown={(e) => handleResizeStart(e, emp.id, 'top')} style={{ pointerEvents: 'auto' }} />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-4 cursor-n-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'top')} style={{ pointerEvents: 'auto' }} />
               {/* Top Right */}
-              <div className="absolute top-0 right-0 w-2 h-2 cursor-ne-resize opacity-40 hover:opacity-100 transition-opacity bg-cyan-500 rounded-full" onMouseDown={(e) => handleResizeStart(e, emp.id, 'top-right')} style={{ pointerEvents: 'auto' }} />
+              <div className="absolute top-0 right-0 w-4 h-4 cursor-ne-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'top-right')} style={{ pointerEvents: 'auto' }} />
               {/* Left Center */}
-              <div className="absolute top-1/2 left-0 -translate-y-1/2 w-2 h-2 cursor-w-resize opacity-40 hover:opacity-100 transition-opacity bg-cyan-500 rounded-full" onMouseDown={(e) => handleResizeStart(e, emp.id, 'left')} style={{ pointerEvents: 'auto' }} />
+              <div className="absolute top-1/2 left-0 -translate-y-1/2 w-4 h-8 cursor-w-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'left')} style={{ pointerEvents: 'auto' }} />
               {/* Right Center */}
-              <div className="absolute top-1/2 right-0 -translate-y-1/2 w-2 h-2 cursor-e-resize opacity-40 hover:opacity-100 transition-opacity bg-cyan-500 rounded-full" onMouseDown={(e) => handleResizeStart(e, emp.id, 'right')} style={{ pointerEvents: 'auto' }} />
+              <div className="absolute top-1/2 right-0 -translate-y-1/2 w-4 h-8 cursor-e-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'right')} style={{ pointerEvents: 'auto' }} />
               {/* Bottom Left */}
-              <div className="absolute bottom-0 left-0 w-2 h-2 cursor-sw-resize opacity-40 hover:opacity-100 transition-opacity bg-cyan-500 rounded-full" onMouseDown={(e) => handleResizeStart(e, emp.id, 'bottom-left')} style={{ pointerEvents: 'auto' }} />
+              <div className="absolute bottom-0 left-0 w-4 h-4 cursor-sw-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'bottom-left')} style={{ pointerEvents: 'auto' }} />
               {/* Bottom Center */}
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-2 cursor-s-resize opacity-40 hover:opacity-100 transition-opacity bg-cyan-500 rounded-full" onMouseDown={(e) => handleResizeStart(e, emp.id, 'bottom')} style={{ pointerEvents: 'auto' }} />
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-4 cursor-s-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'bottom')} style={{ pointerEvents: 'auto' }} />
               {/* Bottom Right */}
-              <div className="absolute bottom-0 right-0 w-2 h-2 cursor-se-resize opacity-40 hover:opacity-100 transition-opacity bg-cyan-500 rounded-full" onMouseDown={(e) => handleResizeStart(e, emp.id, 'bottom-right')} style={{ pointerEvents: 'auto' }} />
+              <div className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'bottom-right')} style={{ pointerEvents: 'auto' }} />
             </div>
           );
         })}
