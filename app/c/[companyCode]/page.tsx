@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuthStore } from '@/app/store/authStore';
+import { useUIStore } from '@/app/store/uiStore';
 import Layout from '@/app/components/Layout';
 
 interface Employee {
@@ -35,6 +36,7 @@ export default function CompanyPage() {
   const router = useRouter();
   const params = useParams();
   const { user } = useAuthStore();
+  const { zoom } = useUIStore();
   const [isHydrated, setIsHydrated] = useState(false);
   const [companyCode] = useState(params.companyCode as string);
   const [employees, setEmployees] = useState<Employee[]>([
@@ -159,7 +161,7 @@ export default function CompanyPage() {
   return (
     <Layout>
       {/* Full Screen Canvas */}
-      <div className="fixed inset-0 top-16 right-20 overflow-hidden">
+      <div className="fixed inset-0 top-16 right-20 overflow-hidden" style={{transformOrigin: "top left", transform: `scale(${zoom / 100})`}}>
         {employees.map((emp) => {
           const size = cardSizes[emp.id] || { width: 450, height: 500 };
           const pos = cardPositions[emp.id] || { x: 20, y: 20 };
