@@ -65,6 +65,7 @@ export default function CompanyPage() {
   const [dragging, setDragging] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0 });
+  const [taskDragging, setTaskDragging] = useState<{ empId: string; taskId: string } | null>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement>>({});
 
   useEffect(() => {
@@ -87,6 +88,30 @@ export default function CompanyPage() {
     e.stopPropagation();
     setResizing(empId);
     setResizeStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleTaskDragStart = (e: React.MouseEvent, empId: string, taskId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setTaskDragging({ empId, taskId });
+  };
+
+  const handleTaskLaneDrop = (empId: string, targetLane: 'routine' | 'urgent') => {
+    if (!taskDragging) return;
+    const { empId: sourceEmpId, taskId } = taskDragging;
+
+    setEmployees((prev) =>
+      prev.map((emp) => {
+        if (emp.id !== sourceEmpId) return emp;
+        return {
+          ...emp,
+          tasks: emp.tasks.map((task) =>
+            task.id === taskId ? { ...task, lane: targetLane } : task
+          ),
+        };
+      })
+    );
+    setTaskDragging(null);
   };
 
   useEffect(() => {
@@ -280,7 +305,10 @@ export default function CompanyPage() {
               {/* Lanes - 2 Columns Layout */}
               <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto pr-2 min-h-0" onMouseDown={(e) => e.stopPropagation()}>
                 {/* Routine Lane (Left) */}
-                <div className="space-y-3 overflow-y-auto">
+                <div
+                  className="space-y-3 overflow-y-auto"
+                  onMouseUp={() => taskDragging && handleTaskLaneDrop(emp.id, 'routine')}
+                >
                   <div className="flex items-center justify-between mb-3 flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
@@ -296,7 +324,10 @@ export default function CompanyPage() {
                       .map((task) => (
                         <div
                           key={task.id}
-                          className="bg-gray-800/50 border border-gray-700 hover:border-cyan-500/50 rounded-lg p-3 transition-all hover:bg-gray-800/80 cursor-pointer group text-xs"
+                          onMouseDown={(e) => handleTaskDragStart(e, emp.id, task.id)}
+                          className={`bg-gray-800/50 border border-gray-700 hover:border-cyan-500/50 rounded-lg p-3 transition-all hover:bg-gray-800/80 cursor-grab active:cursor-grabbing group text-xs ${
+                            taskDragging?.taskId === task.id ? 'opacity-50 border-cyan-500' : ''
+                          }`}
                         >
                           <p className="text-gray-300 group-hover:text-white transition-colors mb-2 leading-snug line-clamp-2">
                             {task.title}
@@ -334,7 +365,10 @@ export default function CompanyPage() {
                 </div>
 
                 {/* Urgent Lane (Right) */}
-                <div className="space-y-3 overflow-y-auto">
+                <div
+                  className="space-y-3 overflow-y-auto"
+                  onMouseUp={() => taskDragging && handleTaskLaneDrop(emp.id, 'urgent')}
+                >
                   <div className="flex items-center justify-between mb-3 flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-red-500"></span>
@@ -350,7 +384,10 @@ export default function CompanyPage() {
                       .map((task) => (
                         <div
                           key={task.id}
-                          className="bg-gray-800/50 border border-gray-700 hover:border-red-500/50 rounded-lg p-3 transition-all hover:bg-gray-800/80 cursor-pointer group text-xs"
+                          onMouseDown={(e) => handleTaskDragStart(e, emp.id, task.id)}
+                          className={`bg-gray-800/50 border border-gray-700 hover:border-red-500/50 rounded-lg p-3 transition-all hover:bg-gray-800/80 cursor-grab active:cursor-grabbing group text-xs ${
+                            taskDragging?.taskId === task.id ? 'opacity-50 border-red-500' : ''
+                          }`}
                         >
                           <p className="text-gray-300 group-hover:text-white transition-colors mb-2 leading-snug line-clamp-2">
                             {task.title}
