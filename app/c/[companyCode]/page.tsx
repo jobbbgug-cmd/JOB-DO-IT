@@ -65,8 +65,14 @@ export default function CompanyPage() {
   const [dragging, setDragging] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0 });
-  const [taskDragging, setTaskDragging] = useState<{ empId: string; taskId: string } | null>(null);
+  const [taskDragging, setTaskDragging] = useState<{ empId: string; taskId: string; sourceLane: 'routine' | 'urgent' } | null>(null);
+  const [hoveredLane, setHoveredLane] = useState<'routine' | 'urgent' | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const cardRefs = useRef<Record<string, HTMLDivElement>>({});
+
+  const draggedTask = taskDragging
+    ? employees.find((e) => e.id === taskDragging.empId)?.tasks.find((t) => t.id === taskDragging.taskId)
+    : null;
 
   useEffect(() => {
     const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -90,10 +96,11 @@ export default function CompanyPage() {
     setResizeStart({ x: e.clientX, y: e.clientY });
   };
 
-  const handleTaskDragStart = (e: React.MouseEvent, empId: string, taskId: string) => {
+  const handleTaskDragStart = (e: React.MouseEvent, empId: string, taskId: string, sourceLane: 'routine' | 'urgent') => {
     e.preventDefault();
     e.stopPropagation();
-    setTaskDragging({ empId, taskId });
+    setMousePos({ x: e.clientX, y: e.clientY });
+    setTaskDragging({ empId, taskId, sourceLane });
   };
 
   const handleTaskLaneDrop = (empId: string, targetLane: 'routine' | 'urgent') => {
@@ -183,6 +190,27 @@ export default function CompanyPage() {
       document.removeEventListener('mouseup', handleMouseUp);
     };
   }, [resizing, resizeStart, scaleFactor]);
+
+  useEffect(() => {
+    if (!taskDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleMouseUp = () => {
+      setTaskDragging(null);
+      setHoveredLane(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [taskDragging]);
 
   if (!isHydrated) return <div className="flex items-center justify-center h-screen">Loading...</div>;
 
@@ -306,8 +334,14 @@ export default function CompanyPage() {
               <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto pr-2 min-h-0" onMouseDown={(e) => e.stopPropagation()}>
                 {/* Routine Lane (Left) */}
                 <div
-                  className="space-y-3 overflow-y-auto"
+                  className={`space-y-3 overflow-y-auto border-2 rounded-lg p-3 transition-colors ${
+                    taskDragging && taskDragging.sourceLane === 'urgent' && hoveredLane === 'routine'
+                      ? 'border-cyan-500 bg-cyan-900/10'
+                      : 'border-transparent'
+                  }`}
                   onMouseUp={() => taskDragging && handleTaskLaneDrop(emp.id, 'routine')}
+                  onMouseMove={() => taskDragging && taskDragging.sourceLane === 'urgent' && setHoveredLane('routine')}
+                  onMouseLeave={() => setHoveredLane(null)}
                 >
                   <div className="flex items-center justify-between mb-3 flex-shrink-0">
                     <div className="flex items-center gap-2">
@@ -324,7 +358,7 @@ export default function CompanyPage() {
                       .map((task) => (
                         <div
                           key={task.id}
-                          onMouseDown={(e) => handleTaskDragStart(e, emp.id, task.id)}
+                          onMouseDown={(e) => handleTaskDragStart(e, emp.id, task.id, 'routine')}
                           className={`bg-gray-800/50 border border-gray-700 hover:border-cyan-500/50 rounded-lg p-3 transition-all hover:bg-gray-800/80 cursor-grab active:cursor-grabbing group text-xs ${
                             taskDragging?.taskId === task.id ? 'opacity-50 border-cyan-500' : ''
                           }`}
@@ -366,8 +400,14 @@ export default function CompanyPage() {
 
                 {/* Urgent Lane (Right) */}
                 <div
-                  className="space-y-3 overflow-y-auto"
+                  className={`space-y-3 overflow-y-auto border-2 rounded-lg p-3 transition-colors ${
+                    taskDragging && taskDragging.sourceLane === 'routine' && hoveredLane === 'urgent'
+                      ? 'border-red-500 bg-red-900/10'
+                      : 'border-transparent'
+                  }`}
                   onMouseUp={() => taskDragging && handleTaskLaneDrop(emp.id, 'urgent')}
+                  onMouseMove={() => taskDragging && taskDragging.sourceLane === 'routine' && setHoveredLane('urgent')}
+                  onMouseLeave={() => setHoveredLane(null)}
                 >
                   <div className="flex items-center justify-between mb-3 flex-shrink-0">
                     <div className="flex items-center gap-2">
@@ -384,7 +424,7 @@ export default function CompanyPage() {
                       .map((task) => (
                         <div
                           key={task.id}
-                          onMouseDown={(e) => handleTaskDragStart(e, emp.id, task.id)}
+                          onMouseDown={(e) => handleTaskDragStart(e, emp.id, task.id, 'urgent')}
                           className={`bg-gray-800/50 border border-gray-700 hover:border-red-500/50 rounded-lg p-3 transition-all hover:bg-gray-800/80 cursor-grab active:cursor-grabbing group text-xs ${
                             taskDragging?.taskId === task.id ? 'opacity-50 border-red-500' : ''
                           }`}
@@ -450,6 +490,29 @@ export default function CompanyPage() {
           );
         })}
       </div>
+
+      {/* Task Drag Preview */}
+      {taskDragging && draggedTask && (
+        <div
+          className="fixed bg-gray-800 border-2 border-blue-500 rounded-lg p-3 shadow-2xl shadow-blue-900/50 pointer-events-none z-50 max-w-xs"
+          style={{
+            left: `${mousePos.x + 10}px`,
+            top: `${mousePos.y + 10}px`,
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <p className="text-gray-300 text-xs font-semibold leading-snug line-clamp-2 mb-2">
+            {draggedTask.title}
+          </p>
+          <div className="flex items-center gap-2 text-xs">
+            <div className="w-4 h-4 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center flex-shrink-0">
+              {draggedTask.assignee.substring(0, 1).toUpperCase()}
+            </div>
+            <span className="text-gray-400">{draggedTask.assignee}</span>
+            <span className="text-cyan-400">{draggedTask.progress}%</span>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }
