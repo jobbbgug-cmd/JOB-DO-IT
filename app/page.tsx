@@ -25,7 +25,7 @@ export default function Home() {
     <Layout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user.name}! 👋</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.name || 'User'}! 👋</h1>
           <p className="text-gray-600 mt-2">Here's your task overview for today</p>
         </div>
 
