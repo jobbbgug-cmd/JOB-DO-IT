@@ -122,6 +122,8 @@ export default function CompanyPage() {
     };
   }, [dragging, dragStart, cardPositions]);
 
+  const scaleFactor = zoom / 100;
+
   useEffect(() => {
     if (!resizing) return;
 
@@ -129,7 +131,6 @@ export default function CompanyPage() {
     if (!cardEl) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const scaleFactor = zoom / 100;
       const deltaX = (e.clientX - resizeStart.x) / scaleFactor;
       const deltaY = (e.clientY - resizeStart.y) / scaleFactor;
 
@@ -156,7 +157,7 @@ export default function CompanyPage() {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [resizing, resizeStart, zoom]);
+  }, [resizing, resizeStart, scaleFactor]);
 
   if (!isHydrated) return <div className="flex items-center justify-center h-screen">Loading...</div>;
 
