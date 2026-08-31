@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/app/store/authStore';
 import Layout from '@/app/components/Layout';
@@ -8,14 +8,18 @@ import Layout from '@/app/components/Layout';
 export default function Home() {
   const router = useRouter();
   const { user, token } = useAuthStore();
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    if (!token && !user) {
+    const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!storedToken) {
       router.push('/login');
+    } else {
+      setIsHydrated(true);
     }
-  }, [token, user, router]);
+  }, [router]);
 
-  if (!user) return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  if (!isHydrated) return <div className="flex items-center justify-center h-screen">Loading...</div>;
 
   return (
     <Layout>
