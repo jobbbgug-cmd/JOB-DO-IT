@@ -55,9 +55,6 @@ export default function LoginPage() {
                   priority
                 />
             </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent mb-2">
-              JOB DO IT
-            </h1>
             <p className="text-gray-600 text-sm font-medium">
               {isLogin
                 ? 'เข้าสู่ระบบเพื่อจัดการงานและโครงการของคุณ'
