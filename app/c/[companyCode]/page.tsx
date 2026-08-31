@@ -163,12 +163,9 @@ export default function CompanyPage() {
     };
 
     const handleMouseUp = () => {
-      // Sync state on release
-      if (pendingUpdate) {
-        setCardPositions({ ...cardPositionsRef.current });
-        pendingUpdate = false;
-      }
       setDragging(null);
+      // State stays in sync via ref
+      cardPositionsRef.current = { ...cardPositionsRef.current };
     };
 
     document.addEventListener('mousemove', handleMouseMove);
