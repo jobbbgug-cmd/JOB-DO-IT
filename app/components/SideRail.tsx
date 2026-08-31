@@ -80,12 +80,12 @@ export default function SideRail() {
   ];
 
   return (
-    <nav className="fixed right-0 top-0 bottom-0 w-20 bg-gray-900 border-l border-gray-800 flex flex-col items-center gap-2 py-6" aria-label="เมนูลัด">
+    <nav className="fixed right-0 top-0 bottom-0 w-20 bg-gray-900 border-l border-gray-800 flex flex-col items-center gap-3 py-6" aria-label="เมนูลัด">
       {shortcuts.map((item, i) => (
         <div key={i} className="rail-slot">
           <button
             type="button"
-            className="w-14 h-14 flex items-center justify-center rounded-lg hover:bg-gray-800 text-gray-400 hover:text-cyan-400 transition-colors group relative"
+            className="w-14 h-14 flex items-center justify-center rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 text-gray-400 hover:text-cyan-400 transition-all duration-200 group relative hover:shadow-lg hover:shadow-cyan-900/50 hover:-translate-y-1"
             title={item.title}
             aria-label={`${item.label} — ${item.title}`}
             aria-expanded="false"
@@ -93,7 +93,7 @@ export default function SideRail() {
             {item.icon}
             {/* Tooltip */}
             <div
-              className="absolute right-full mr-2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none"
+              className="absolute right-full mr-3 bg-gray-800 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none shadow-lg"
               role="tooltip"
             >
               {item.label}
