@@ -510,23 +510,8 @@ export default function CompanyPage() {
                 </div>
               </div>
 
-              {/* Invisible Resize Zones - 8 Directions */}
-              {/* Top Left */}
-              <div className="absolute top-0 left-0 w-4 h-4 cursor-nw-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'top-left')} style={{ pointerEvents: 'auto' }} />
-              {/* Top Center */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-4 cursor-n-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'top')} style={{ pointerEvents: 'auto' }} />
-              {/* Top Right */}
-              <div className="absolute top-0 right-0 w-4 h-4 cursor-ne-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'top-right')} style={{ pointerEvents: 'auto' }} />
-              {/* Left Center */}
-              <div className="absolute top-1/2 left-0 -translate-y-1/2 w-4 h-8 cursor-w-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'left')} style={{ pointerEvents: 'auto' }} />
-              {/* Right Center */}
-              <div className="absolute top-1/2 right-0 -translate-y-1/2 w-4 h-8 cursor-e-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'right')} style={{ pointerEvents: 'auto' }} />
-              {/* Bottom Left */}
-              <div className="absolute bottom-0 left-0 w-4 h-4 cursor-sw-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'bottom-left')} style={{ pointerEvents: 'auto' }} />
-              {/* Bottom Center */}
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-4 cursor-s-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'bottom')} style={{ pointerEvents: 'auto' }} />
-              {/* Bottom Right */}
-              <div className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'bottom-right')} style={{ pointerEvents: 'auto' }} />
+              {/* Resize Handle - Bottom Right Only */}
+              <div className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'bottom-right')} style={{ pointerEvents: 'auto' }} />
             </div>
           );
         })}
