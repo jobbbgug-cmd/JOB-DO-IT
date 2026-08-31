@@ -64,7 +64,7 @@ export default function CompanyPage() {
   const [resizing, setResizing] = useState<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0 });
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, side: '' });
   const [taskDragging, setTaskDragging] = useState<{ empId: string; taskId: string; sourceLane: 'routine' | 'urgent' } | null>(null);
   const [hoveredLane, setHoveredLane] = useState<'routine' | 'urgent' | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -97,11 +97,11 @@ export default function CompanyPage() {
     setDragStart({ x: e.clientX, y: e.clientY });
   };
 
-  const handleResizeStart = (e: React.MouseEvent, empId: string) => {
+  const handleResizeStart = (e: React.MouseEvent, empId: string, side: string) => {
     e.preventDefault();
     e.stopPropagation();
     setResizing(empId);
-    setResizeStart({ x: e.clientX, y: e.clientY });
+    setResizeStart({ x: e.clientX, y: e.clientY, side });
   };
 
   const handleTaskDragStart = (e: React.MouseEvent, empId: string, taskId: string, sourceLane: 'routine' | 'urgent') => {
@@ -188,17 +188,40 @@ export default function CompanyPage() {
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = (e.clientX - resizeStart.x) / scaleFactor;
       const deltaY = (e.clientY - resizeStart.y) / scaleFactor;
+      const side = resizeStart.side;
 
       const rect = cardEl.getBoundingClientRect();
-      const newWidth = Math.max(400, rect.width + deltaX);
-      const newHeight = Math.max(300, rect.height + deltaY);
+      const currentSize = cardSizes[resizing] || { width: 450, height: 500 };
+      const currentPos = cardPositionsRef.current[resizing] || { x: 0, y: 0 };
+
+      let newWidth = currentSize.width;
+      let newHeight = currentSize.height;
+      let newPos = { ...currentPos };
+
+      if (side.includes('right')) newWidth = Math.max(400, currentSize.width + deltaX);
+      if (side.includes('left')) {
+        newWidth = Math.max(400, currentSize.width - deltaX);
+        newPos.x = currentPos.x + deltaX;
+      }
+      if (side.includes('bottom')) newHeight = Math.max(300, currentSize.height + deltaY);
+      if (side.includes('top')) {
+        newHeight = Math.max(300, currentSize.height - deltaY);
+        newPos.y = currentPos.y + deltaY;
+      }
 
       setCardSizes((prev) => ({
         ...prev,
         [resizing]: { width: newWidth, height: newHeight },
       }));
 
-      setResizeStart({ x: e.clientX, y: e.clientY });
+      setCardPositions((prev) => ({
+        ...prev,
+        [resizing]: newPos,
+      }));
+
+      cardPositionsRef.current = { ...cardPositionsRef.current, [resizing]: newPos };
+
+      setResizeStart({ x: e.clientX, y: e.clientY, side });
     };
 
     const handleMouseUp = () => {
@@ -487,27 +510,23 @@ export default function CompanyPage() {
                 </div>
               </div>
 
-              {/* Resize Handle - Bottom Right */}
-              <button
-                onMouseDown={(e) => handleResizeStart(e, emp.id)}
-                className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize opacity-40 hover:opacity-100 transition-opacity flex items-center justify-center"
-                title="ลากเพื่อปรับขนาดการ์ด"
-                style={{
-                  pointerEvents: 'auto',
-                }}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-4 h-4 text-gray-400 hover:text-cyan-400"
-                >
-                  <path d="M21 21V9M21 21H9"></path>
-                </svg>
-              </button>
+              {/* Resize Handles - 8 Directions */}
+              {/* Top Left */}
+              <div className="absolute top-0 left-0 w-2 h-2 cursor-nw-resize opacity-40 hover:opacity-100 transition-opacity bg-cyan-500 rounded-full" onMouseDown={(e) => handleResizeStart(e, emp.id, 'top-left')} style={{ pointerEvents: 'auto' }} />
+              {/* Top Center */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 cursor-n-resize opacity-40 hover:opacity-100 transition-opacity bg-cyan-500 rounded-full" onMouseDown={(e) => handleResizeStart(e, emp.id, 'top')} style={{ pointerEvents: 'auto' }} />
+              {/* Top Right */}
+              <div className="absolute top-0 right-0 w-2 h-2 cursor-ne-resize opacity-40 hover:opacity-100 transition-opacity bg-cyan-500 rounded-full" onMouseDown={(e) => handleResizeStart(e, emp.id, 'top-right')} style={{ pointerEvents: 'auto' }} />
+              {/* Left Center */}
+              <div className="absolute top-1/2 left-0 -translate-y-1/2 w-2 h-2 cursor-w-resize opacity-40 hover:opacity-100 transition-opacity bg-cyan-500 rounded-full" onMouseDown={(e) => handleResizeStart(e, emp.id, 'left')} style={{ pointerEvents: 'auto' }} />
+              {/* Right Center */}
+              <div className="absolute top-1/2 right-0 -translate-y-1/2 w-2 h-2 cursor-e-resize opacity-40 hover:opacity-100 transition-opacity bg-cyan-500 rounded-full" onMouseDown={(e) => handleResizeStart(e, emp.id, 'right')} style={{ pointerEvents: 'auto' }} />
+              {/* Bottom Left */}
+              <div className="absolute bottom-0 left-0 w-2 h-2 cursor-sw-resize opacity-40 hover:opacity-100 transition-opacity bg-cyan-500 rounded-full" onMouseDown={(e) => handleResizeStart(e, emp.id, 'bottom-left')} style={{ pointerEvents: 'auto' }} />
+              {/* Bottom Center */}
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-2 cursor-s-resize opacity-40 hover:opacity-100 transition-opacity bg-cyan-500 rounded-full" onMouseDown={(e) => handleResizeStart(e, emp.id, 'bottom')} style={{ pointerEvents: 'auto' }} />
+              {/* Bottom Right */}
+              <div className="absolute bottom-0 right-0 w-2 h-2 cursor-se-resize opacity-40 hover:opacity-100 transition-opacity bg-cyan-500 rounded-full" onMouseDown={(e) => handleResizeStart(e, emp.id, 'bottom-right')} style={{ pointerEvents: 'auto' }} />
             </div>
           );
         })}
