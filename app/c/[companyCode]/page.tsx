@@ -357,7 +357,7 @@ export default function CompanyPage() {
                         </div>
                       ))}
                     {emp.tasks.filter((t) => t.lane === 'routine').length === 0 && (
-                      <div className="text-gray-600 text-center py-4 italic">
+                      <div className="text-gray-600 text-center py-6 italic border-2 border-dashed border-gray-600 rounded-lg">
                         ว่าง
                       </div>
                     )}
@@ -417,7 +417,7 @@ export default function CompanyPage() {
                         </div>
                       ))}
                     {emp.tasks.filter((t) => t.lane === 'urgent').length === 0 && (
-                      <div className="text-gray-600 text-center py-4 italic">
+                      <div className="text-gray-600 text-center py-6 italic border-2 border-dashed border-gray-600 rounded-lg">
                         ลากงานมาวาง
                       </div>
                     )}
