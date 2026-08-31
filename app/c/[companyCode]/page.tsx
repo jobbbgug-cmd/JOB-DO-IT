@@ -286,9 +286,8 @@ export default function CompanyPage() {
 
                 {/* Task Count & Actions */}
                 <div className="flex items-center gap-2">
-                  <div className="text-right mr-2">
-                    <div className="text-xs text-gray-500">งานทั้งหมด</div>
-                    <div className="text-lg font-bold text-white">{emp.taskCount}</div>
+                  <div className="text-right mr-2 text-lg font-bold text-white">
+                    {emp.taskCount} งาน
                   </div>
 
                   {/* Board Button */}
