@@ -19,11 +19,8 @@
     "skipLibCheck": true,
     "noEmit": true,
     "incremental": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     },
     "allowJs": true,
     "isolatedModules": true,
