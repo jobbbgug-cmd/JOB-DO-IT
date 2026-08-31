@@ -66,7 +66,7 @@ export default function CompanyPage() {
         if (typeof window !== 'undefined') {
           localStorage.setItem('companyCode', companyCode);
         }
-        router.push(`/c/${companyCode}`);
+        router.push(`/c/${companyCode}/boardteam`);
       } else {
         alert('Failed to create company');
       }
