@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/app/store/authStore';
+import UserMenu from './UserMenu';
 
 const tabs = [
   { name: 'บอร์ดทีม', href: '/dashboard', icon: '📊' },
@@ -16,8 +17,7 @@ const tabs = [
 
 export default function TopNav() {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
 
   const handleLogout = () => {
     logout();
@@ -121,20 +121,8 @@ export default function TopNav() {
         <span>แจ้งปัญหา</span>
       </button>
 
-      {/* User Avatar */}
-      <div className="flex items-center gap-2">
-        <div className="text-right text-sm">
-          <div className="text-white font-medium">{user?.name}</div>
-          <div className="text-xs text-gray-400">{user?.role}</div>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="w-9 h-9 rounded-full bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition-colors"
-          title="เมนูผู้ใช้"
-        >
-          {user?.name?.substring(0, 2).toUpperCase() || 'U'}
-        </button>
-      </div>
+      {/* User Menu */}
+      <UserMenu />
     </nav>
   );
 }
