@@ -28,6 +28,14 @@ export default function CompanyPage() {
     const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!storedToken) {
       router.push('/login');
+      return;
+    }
+
+    // If user has a companyCode, redirect to company page
+    const storedCompanyCode = typeof window !== 'undefined' ? localStorage.getItem('companyCode') : null;
+    if (storedCompanyCode) {
+      router.replace(`/c/${storedCompanyCode}`);
+      return;
     } else {
       setIsHydrated(true);
     }
@@ -54,6 +62,10 @@ export default function CompanyPage() {
 
       if (response.ok) {
         const data = await response.json();
+        // Store companyCode in localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('companyCode', companyCode);
+        }
         router.push(`/c/${companyCode}`);
       } else {
         alert('Failed to create company');

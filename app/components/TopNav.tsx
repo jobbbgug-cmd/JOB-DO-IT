@@ -7,22 +7,28 @@ import { useAuthStore } from '@/app/store/authStore';
 import { useUIStore } from '@/app/store/uiStore';
 import UserMenu from './UserMenu';
 
-const tabs = [
+const getTabsWithCompany = (companyCode: string) => [
   { name: 'บอร์ดทีม', href: '/boardteam', icon: '📊' },
   { name: 'บอร์ดงาน', href: '/board', icon: '📋' },
   { name: 'โปรเจค', href: '/projects', icon: '📁' },
   { name: 'ไทม์ไลน์', href: '/timeline', icon: '📈' },
   { name: 'โน้ต', href: '/notes', icon: '📝' },
-  { name: 'บริษัท', href: '/company', icon: '🏢' },
+  { name: 'บริษัท', href: companyCode ? `/c/${companyCode}` : '/company', icon: '🏢' },
 ];
 
 export default function TopNav() {
   const pathname = usePathname();
   const { user } = useAuthStore();
   const { openFeedback, openShortcuts, zoom, zoomIn, zoomOut, companyCode } = useUIStore();
+  const tabs = getTabsWithCompany(companyCode);
 
   const getActiveTab = () => {
-    const tab = tabs.find((t) => pathname === t.href);
+    const tab = tabs.find((t) => {
+      if (companyCode && pathname.startsWith(`/c/${companyCode}`)) {
+        return t.name === 'บริษัท';
+      }
+      return pathname === t.href;
+    });
     return tab || tabs[0];
   };
 
