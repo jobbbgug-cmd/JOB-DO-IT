@@ -5,13 +5,13 @@ import Image from 'next/image';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function LandingPage() {
+export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token) {
-      router.push('/');
+      router.push('/dashboard');
     }
   }, [router]);
 
