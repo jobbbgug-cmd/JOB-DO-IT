@@ -153,20 +153,20 @@ export default function CompanyPage() {
                 </div>
               </div>
 
-              {/* Lanes */}
-              <div className="space-y-4">
-                {/* Routine Lane */}
-                <div>
+              {/* Lanes - 2 Columns Layout */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Routine Lane (Left) */}
+                <div className="space-y-3">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
                       <span className="text-sm font-semibold text-gray-200">งานรูทีน</span>
-                      <span className="text-xs font-medium text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
-                        {emp.tasks.filter((t) => t.lane === 'routine').length}
-                      </span>
                     </div>
+                    <span className="text-xs font-medium text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
+                      {emp.tasks.filter((t) => t.lane === 'routine').length}
+                    </span>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 min-h-32">
                     {emp.tasks
                       .filter((t) => t.lane === 'routine')
                       .map((task) => (
@@ -174,89 +174,93 @@ export default function CompanyPage() {
                           key={task.id}
                           className="bg-gray-800/50 border border-gray-700 hover:border-cyan-500/50 rounded-lg p-3 transition-all hover:bg-gray-800/80 cursor-pointer group"
                         >
-                          <p className="text-sm text-gray-300 group-hover:text-white transition-colors mb-2 leading-snug">
+                          <p className="text-xs text-gray-300 group-hover:text-white transition-colors mb-2 leading-snug line-clamp-2">
                             {task.title}
                           </p>
                           <div className="space-y-1.5">
                             <div className="flex items-center gap-2 justify-between">
-                              <div className="w-full bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                              <div className="w-full bg-gray-700 rounded-full h-1 overflow-hidden">
                                 <div
-                                  className="bg-gradient-to-r from-cyan-500 to-cyan-400 h-1.5 rounded-full transition-all"
+                                  className="bg-gradient-to-r from-cyan-500 to-cyan-400 h-1 rounded-full transition-all"
                                   style={{ width: `${task.progress}%` }}
                                 ></div>
                               </div>
-                              <span className="text-xs font-semibold text-gray-500 whitespace-nowrap ml-2">
+                              <span className="text-xs font-semibold text-gray-500 whitespace-nowrap ml-1">
                                 {task.progress}%
                               </span>
                             </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-5 h-5 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                            <div className="flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-1">
+                                <div className="w-4 h-4 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
                                   {task.assignee.substring(0, 1).toUpperCase()}
                                 </div>
-                                <span className="text-xs text-gray-500">{task.assignee}</span>
+                                <span className="text-gray-500 line-clamp-1">{task.assignee}</span>
                               </div>
-                              <time className="text-xs text-gray-600">{task.time}</time>
+                              <time className="text-gray-600">{task.time}</time>
                             </div>
                           </div>
                         </div>
                       ))}
+                    {emp.tasks.filter((t) => t.lane === 'routine').length === 0 && (
+                      <div className="text-xs text-gray-600 text-center py-8 italic">
+                        ว่าง
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Urgent Lane */}
-                <div>
+                {/* Urgent Lane (Right) */}
+                <div className="space-y-3">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-red-500"></span>
                       <span className="text-sm font-semibold text-gray-200">งานจิกปะทะ</span>
-                      <span className="text-xs font-medium text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
-                        {emp.tasks.filter((t) => t.lane === 'urgent').length}
-                      </span>
                     </div>
+                    <span className="text-xs font-medium text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
+                      {emp.tasks.filter((t) => t.lane === 'urgent').length}
+                    </span>
                   </div>
-                  {emp.tasks.filter((t) => t.lane === 'urgent').length === 0 ? (
-                    <div className="text-xs text-gray-600 text-center py-6 italic border-2 border-dashed border-gray-700 rounded-lg">
-                      ลากงานมาวาง
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {emp.tasks
-                        .filter((t) => t.lane === 'urgent')
-                        .map((task) => (
-                          <div
-                            key={task.id}
-                            className="bg-gray-800/50 border border-gray-700 hover:border-red-500/50 rounded-lg p-3 transition-all hover:bg-gray-800/80 cursor-pointer group"
-                          >
-                            <p className="text-sm text-gray-300 group-hover:text-white transition-colors mb-2 leading-snug">
-                              {task.title}
-                            </p>
-                            <div className="space-y-1.5">
-                              <div className="flex items-center gap-2 justify-between">
-                                <div className="w-full bg-gray-700 rounded-full h-1.5 overflow-hidden">
-                                  <div
-                                    className="bg-gradient-to-r from-red-500 to-red-400 h-1.5 rounded-full transition-all"
-                                    style={{ width: `${task.progress}%` }}
-                                  ></div>
-                                </div>
-                                <span className="text-xs font-semibold text-gray-500 whitespace-nowrap ml-2">
-                                  {task.progress}%
-                                </span>
+                  <div className="space-y-2 min-h-32">
+                    {emp.tasks
+                      .filter((t) => t.lane === 'urgent')
+                      .map((task) => (
+                        <div
+                          key={task.id}
+                          className="bg-gray-800/50 border border-gray-700 hover:border-red-500/50 rounded-lg p-3 transition-all hover:bg-gray-800/80 cursor-pointer group"
+                        >
+                          <p className="text-xs text-gray-300 group-hover:text-white transition-colors mb-2 leading-snug line-clamp-2">
+                            {task.title}
+                          </p>
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2 justify-between">
+                              <div className="w-full bg-gray-700 rounded-full h-1 overflow-hidden">
+                                <div
+                                  className="bg-gradient-to-r from-red-500 to-red-400 h-1 rounded-full transition-all"
+                                  style={{ width: `${task.progress}%` }}
+                                ></div>
                               </div>
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-1.5">
-                                  <div className="w-5 h-5 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
-                                    {task.assignee.substring(0, 1).toUpperCase()}
-                                  </div>
-                                  <span className="text-xs text-gray-500">{task.assignee}</span>
+                              <span className="text-xs font-semibold text-gray-500 whitespace-nowrap ml-1">
+                                {task.progress}%
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-1">
+                                <div className="w-4 h-4 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                                  {task.assignee.substring(0, 1).toUpperCase()}
                                 </div>
-                                <time className="text-xs text-gray-600">{task.time}</time>
+                                <span className="text-gray-500 line-clamp-1">{task.assignee}</span>
                               </div>
+                              <time className="text-gray-600">{task.time}</time>
                             </div>
                           </div>
-                        ))}
-                    </div>
-                  )}
+                        </div>
+                      ))}
+                    {emp.tasks.filter((t) => t.lane === 'urgent').length === 0 && (
+                      <div className="text-xs text-gray-600 text-center py-8 italic">
+                        ลากงานมาวาง
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
