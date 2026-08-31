@@ -302,8 +302,8 @@ export default function CompanyPage() {
                     )}
                   </div>
                   <div>
-                    <h3 className="font-bold text-white text-base">{emp.name}</h3>
-                    <p className="text-xs text-gray-400">{emp.role}</p>
+                    <h3 className="font-bold text-white text-lg">{emp.name}</h3>
+                    <p className="text-sm text-gray-400">{emp.role}</p>
                   </div>
                 </div>
 
@@ -368,7 +368,7 @@ export default function CompanyPage() {
                   <div className="flex items-center justify-between mb-3 flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
-                      <span className="text-sm font-semibold text-gray-200">งานรูทีน</span>
+                      <span className="text-base font-semibold text-gray-200">งานรูทีน</span>
                     </div>
                     <span className="text-xs font-medium text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
                       {emp.tasks.filter((t) => t.lane === 'routine').length}
