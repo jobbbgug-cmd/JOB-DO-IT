@@ -132,6 +132,11 @@ export default function CompanyPage() {
   useEffect(() => {
     if (!dragging) return;
 
+    const cardEl = cardRefs.current[dragging];
+    if (!cardEl) return;
+
+    let pendingUpdate = false;
+
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - dragStartRef.current.x;
       const deltaY = e.clientY - dragStartRef.current.y;
@@ -148,11 +153,21 @@ export default function CompanyPage() {
         [dragging]: newPos,
       };
 
-      setCardPositions(cardPositionsRef.current);
+      // Direct DOM update for smooth motion
+      if (cardEl) {
+        cardEl.style.transform = `translate(${newPos.x}px, ${newPos.y}px)`;
+      }
+
       dragStartRef.current = { x: e.clientX, y: e.clientY };
+      pendingUpdate = true;
     };
 
     const handleMouseUp = () => {
+      // Sync state on release
+      if (pendingUpdate) {
+        setCardPositions({ ...cardPositionsRef.current });
+        pendingUpdate = false;
+      }
       setDragging(null);
     };
 
