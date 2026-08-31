@@ -40,40 +40,45 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="mb-4 flex justify-center">
-            <Image
-              src="/logo.png"
-              alt="JOB DO IT"
-              width={100}
-              height={100}
-              className="h-20 w-auto"
-              priority
-            />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl shadow-xl p-8 backdrop-blur">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="mb-4 flex justify-center">
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-teal-500 rounded-xl">
+                <Image
+                  src="/logo.png"
+                  alt="JOB DO IT"
+                  width={100}
+                  height={100}
+                  className="h-16 w-auto"
+                  priority
+                />
+              </div>
+            </div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent mb-2">
+              JOB DO IT
+            </h1>
+            <p className="text-gray-600 text-sm font-medium">
+              {isLogin
+                ? 'เข้าสู่ระบบเพื่อจัดการงานและโครงการของคุณ'
+                : 'สร้างบัญชีใหม่เพื่อเริ่มต้น'}
+            </p>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">เข้าสู่ระบบ</h1>
-          <p className="text-gray-600 text-sm">
-            {isLogin
-              ? 'เข้าสู่ระบบเพื่อจัดการงานและโครงการของคุณ'
-              : 'สร้างบัญชีใหม่เพื่อเริ่มต้น'}
-          </p>
-        </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-5 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded text-sm">
-            {error}
-          </div>
-        )}
+          {/* Error Message */}
+          {error && (
+            <div className="mb-5 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm font-medium">
+              ⚠️ {error}
+            </div>
+          )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div>
-              <label className="block text-gray-700 font-semibold text-sm mb-1.5">ชื่อ</label>
+              <label className="block text-gray-700 font-semibold text-sm mb-2">ชื่อ</label>
               <input
                 type="text"
                 name="name"
@@ -81,13 +86,13 @@ export default function LoginPage() {
                 value={formData.name}
                 onChange={handleChange}
                 required={!isLogin}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition text-gray-900 placeholder-gray-500"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition bg-gray-50 hover:bg-white text-gray-900 placeholder-gray-400"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-gray-700 font-semibold text-sm mb-1.5">อีเมล</label>
+            <label className="block text-gray-700 font-semibold text-sm mb-2">อีเมล</label>
             <input
               type="email"
               name="email"
@@ -95,13 +100,13 @@ export default function LoginPage() {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition text-gray-900 placeholder-gray-500"
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition bg-gray-50 hover:bg-white text-gray-900 placeholder-gray-400"
             />
           </div>
 
           <div className="flex items-end gap-2">
             <div className="flex-1">
-              <label className="block text-gray-700 font-semibold text-sm mb-1.5">รหัสผ่าน</label>
+              <label className="block text-gray-700 font-semibold text-sm mb-2">รหัสผ่าน</label>
               <input
                 type="password"
                 name="password"
@@ -109,7 +114,7 @@ export default function LoginPage() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition text-gray-900 placeholder-gray-500"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition bg-gray-50 hover:bg-white text-gray-900 placeholder-gray-400"
               />
             </div>
             {isLogin && (
@@ -120,7 +125,7 @@ export default function LoginPage() {
                   setError('');
                   setFormData({ name: '', email: '', password: '', role: 'dev' });
                 }}
-                className="text-xs text-teal-600 font-semibold hover:text-teal-700 whitespace-nowrap"
+                className="text-xs text-teal-600 font-semibold hover:text-teal-700 hover:underline whitespace-nowrap pb-1"
               >
                 สมัครสมาชิก?
               </button>
@@ -129,12 +134,12 @@ export default function LoginPage() {
 
           {!isLogin && (
             <div>
-              <label className="block text-gray-700 font-semibold text-sm mb-1.5">บทบาท</label>
+              <label className="block text-gray-700 font-semibold text-sm mb-2">บทบาท</label>
               <select
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition text-gray-900 bg-white"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition bg-gray-50 hover:bg-white text-gray-900"
               >
                 <option value="dev">👨‍💻 นักพัฒนา (Dev)</option>
                 <option value="tester">🧪 ผู้ทดสอบ (Tester)</option>
@@ -146,28 +151,29 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 mt-6"
+            className="w-full bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 text-white font-bold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 mt-6"
           >
             {loading ? 'กำลังดำเนิน...' : isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
           </button>
-        </form>
 
-        {/* Toggle */}
-        <div className="text-center mt-6">
-          <p className="text-gray-600 text-sm">
-            {isLogin ? 'ยังไม่มีบัญชี?' : 'มีบัญชีแล้ว?'}{' '}
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError('');
-                setFormData({ name: '', email: '', password: '', role: 'dev' });
-              }}
-              className="text-teal-600 font-semibold hover:text-teal-700"
-            >
-              {isLogin ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}
-            </button>
-          </p>
+          {/* Toggle */}
+          <div className="text-center mt-6 pt-6 border-t border-gray-200">
+            <p className="text-gray-600 text-sm">
+              {isLogin ? 'ยังไม่มีบัญชี?' : 'มีบัญชีแล้ว?'}{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setError('');
+                  setFormData({ name: '', email: '', password: '', role: 'dev' });
+                }}
+                className="text-teal-600 font-semibold hover:text-teal-700 hover:underline"
+              >
+                {isLogin ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}
+              </button>
+            </p>
+          </div>
+        </form>
         </div>
       </div>
     </div>
