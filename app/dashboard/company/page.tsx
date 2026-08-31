@@ -18,8 +18,10 @@ export default function CompanyPage() {
   const router = useRouter();
   const [isHydrated, setIsHydrated] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showJoinForm, setShowJoinForm] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [companyCode, setCompanyCode] = useState(generateRandomCode());
+  const [inviteLink, setInviteLink] = useState('');
 
   useEffect(() => {
     const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -32,15 +34,22 @@ export default function CompanyPage() {
 
   if (!isHydrated) return <div className="flex items-center justify-center h-screen">Loading...</div>;
 
-  const isFormValid = companyName.trim().length > 0 && companyCode.trim().length > 0;
+  const isCreateFormValid = companyName.trim().length > 0 && companyCode.trim().length > 0;
+  const isJoinFormValid = inviteLink.trim().length > 0;
 
   const handleRandomCode = () => {
     setCompanyCode(generateRandomCode());
   };
 
   const handleCreateCompany = () => {
-    if (!isFormValid) return;
+    if (!isCreateFormValid) return;
     console.log('Create company:', { companyName, companyCode });
+    // TODO: API call
+  };
+
+  const handleJoinCompany = () => {
+    if (!isJoinFormValid) return;
+    console.log('Join company:', { inviteLink });
     // TODO: API call
   };
 
@@ -55,7 +64,7 @@ export default function CompanyPage() {
           </p>
         </div>
 
-        {!showCreateForm ? (
+        {!showCreateForm && !showJoinForm ? (
           <>
             {/* Choice Cards */}
             <div className="grid gap-4 max-w-md">
@@ -74,7 +83,10 @@ export default function CompanyPage() {
               </button>
 
               {/* Join Company */}
-              <button className="p-6 bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-gray-600 rounded-lg text-left transition-all hover:shadow-lg">
+              <button
+                onClick={() => setShowJoinForm(true)}
+                className="p-6 bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-gray-600 rounded-lg text-left transition-all hover:shadow-lg"
+              >
                 <div className="flex flex-col gap-2">
                   <b className="text-xl text-white flex items-center gap-2">
                     <span className="text-2xl">🔗</span>
@@ -93,7 +105,7 @@ export default function CompanyPage() {
               </p>
             </div>
           </>
-        ) : (
+        ) : showCreateForm ? (
           <>
             {/* Create Form */}
             <div className="max-w-md bg-gray-800 border border-gray-700 rounded-lg p-6 space-y-4">
@@ -137,7 +149,7 @@ export default function CompanyPage() {
               {/* Create Button */}
               <button
                 onClick={handleCreateCompany}
-                disabled={!isFormValid}
+                disabled={!isCreateFormValid}
                 className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors mt-2"
               >
                 สร้างบริษัท
@@ -149,6 +161,46 @@ export default function CompanyPage() {
                   setShowCreateForm(false);
                   setCompanyName('');
                   setCompanyCode(generateRandomCode());
+                }}
+                className="text-gray-400 hover:text-white transition-colors text-sm"
+              >
+                ← ย้อนกลับ
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Join Form */}
+            <div className="max-w-md bg-gray-800 border border-gray-700 rounded-lg p-6 space-y-4">
+              <h2 className="text-xl font-bold text-white">เข้าร่วมบริษัท</h2>
+              <p className="text-gray-400 text-sm">วางลิงก์เชิญที่ได้รับจากเจ้าของบริษัท — หรือกดลิงก์นั้นตรง ๆ ก็เข้าร่วมได้เลย</p>
+
+              {/* Invite Link */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">ลิงก์เชิญ</label>
+                <input
+                  type="text"
+                  placeholder="เช่น https://dongan.app/join/…"
+                  value={inviteLink}
+                  onChange={(e) => setInviteLink(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Join Button */}
+              <button
+                onClick={handleJoinCompany}
+                disabled={!isJoinFormValid}
+                className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors mt-2"
+              >
+                เข้าร่วมบริษัท
+              </button>
+
+              {/* Back Button */}
+              <button
+                onClick={() => {
+                  setShowJoinForm(false);
+                  setInviteLink('');
                 }}
                 className="text-gray-400 hover:text-white transition-colors text-sm"
               >
