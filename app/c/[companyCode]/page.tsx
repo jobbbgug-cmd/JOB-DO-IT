@@ -84,6 +84,7 @@ export default function CompanyPage() {
 
   const handleResizeStart = (e: React.MouseEvent, empId: string) => {
     e.preventDefault();
+    e.stopPropagation();
     setResizing(empId);
     setResizeStart({ x: e.clientX, y: e.clientY });
   };
