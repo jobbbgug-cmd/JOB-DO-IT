@@ -511,7 +511,23 @@ export default function CompanyPage() {
               </div>
 
               {/* Resize Handle - Bottom Right Only */}
-              <div className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize" onMouseDown={(e) => handleResizeStart(e, emp.id, 'bottom-right')} style={{ pointerEvents: 'auto' }} />
+              <button
+                onMouseDown={(e) => handleResizeStart(e, emp.id, 'bottom-right')}
+                className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize opacity-40 hover:opacity-100 transition-opacity flex items-center justify-center"
+                style={{ pointerEvents: 'auto' }}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-4 h-4 text-gray-400 hover:text-cyan-400"
+                >
+                  <path d="M21 21V9M21 21H9"></path>
+                </svg>
+              </button>
             </div>
           );
         })}
