@@ -5,90 +5,20 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/app/store/authStore';
 import Layout from '@/app/components/Layout';
 
-const mockTasks = [
-  {
-    id: 1,
-    title: 'ดีไซน์หน้าแรกเว็บไซต์',
-    status: 'todo',
-    priority: 'high',
-    assignee: 'Dev',
-    progress: 0,
-    estimatedTime: '8 ชั่วโมง',
-    spentTime: '0 ชั่วโมง',
-  },
-  {
-    id: 2,
-    title: 'ติดตั้ง API endpoint สำหรับ login',
-    status: 'in_progress',
-    priority: 'urgent',
-    assignee: 'Dev',
-    progress: 45,
-    estimatedTime: '6 ชั่วโมง',
-    spentTime: '2.7 ชั่วโมง',
-  },
-  {
-    id: 3,
-    title: 'ทดสอบ responsiveness บนมือถือ',
-    status: 'in_progress',
-    priority: 'medium',
-    assignee: 'Tester',
-    progress: 60,
-    estimatedTime: '4 ชั่วโมง',
-    spentTime: '2.4 ชั่วโมง',
-  },
-  {
-    id: 4,
-    title: 'แก้ไข bug ใน navigation menu',
-    status: 'in_review',
-    priority: 'high',
-    assignee: 'Dev',
-    progress: 85,
-    estimatedTime: '3 ชั่วโมง',
-    spentTime: '2.5 ชั่วโมง',
-  },
-  {
-    id: 5,
-    title: 'เขียน unit tests สำหรับ auth',
-    status: 'done',
-    priority: 'medium',
-    assignee: 'Dev',
-    progress: 100,
-    estimatedTime: '5 ชั่วโมง',
-    spentTime: '4.8 ชั่วโมง',
-  },
-];
+interface Employee {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  department: string;
+  avatar?: string;
+}
 
-const statuses = [
-  { key: 'todo', label: 'ทำได้', color: 'bg-blue-50 border-blue-200' },
-  { key: 'in_progress', label: 'กำลังทำ', color: 'bg-orange-50 border-orange-200' },
-  { key: 'in_review', label: 'รอตรวจสอบ', color: 'bg-yellow-50 border-yellow-200' },
-  { key: 'done', label: 'เสร็จสิ้น', color: 'bg-green-50 border-green-200' },
-];
-
-const getPriorityBadge = (priority: string) => {
-  const colors = {
-    urgent: 'bg-red-100 text-red-800',
-    high: 'bg-orange-100 text-orange-800',
-    medium: 'bg-yellow-100 text-yellow-800',
-    low: 'bg-green-100 text-green-800',
-  };
-  const labels = {
-    urgent: 'ด่วน',
-    high: 'สูง',
-    medium: 'กลาง',
-    low: 'ต่ำ',
-  };
-  return (
-    <span className={`px-2 py-1 rounded text-xs font-semibold ${colors[priority as keyof typeof colors]}`}>
-      {labels[priority as keyof typeof labels]}
-    </span>
-  );
-};
-
-export default function Home() {
+export default function TeamBoard() {
   const router = useRouter();
   const { user } = useAuthStore();
   const [isHydrated, setIsHydrated] = useState(false);
+  const [employees, setEmployees] = useState<Employee[]>([]);
 
   useEffect(() => {
     const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -105,79 +35,76 @@ export default function Home() {
     <Layout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">บอร์ดทีม</h1>
-          <p className="text-gray-600 mt-2">ติดตามความคืบหน้างานของทีม</p>
+          <h1 className="text-3xl font-bold text-white">บอร์ดทีม</h1>
+          <p className="text-gray-400 mt-2">จัดการสมาชิกทีมและพนักงาน</p>
         </div>
 
-        {/* Kanban Board */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 overflow-x-auto pb-6">
-          {statuses.map((status) => (
-            <div key={status.key} className={`flex flex-col gap-4 p-4 rounded-lg border ${status.color} min-w-72`}>
-              <div className="flex items-center justify-between">
-                <h2 className="font-bold text-gray-900">{status.label}</h2>
-                <span className="text-sm font-semibold text-gray-600 bg-white px-2 py-1 rounded">
-                  {mockTasks.filter((t) => t.status === status.key).length}
+        {/* Empty State - Add Employee */}
+        {employees.length === 0 ? (
+          <div className="flex items-center justify-center min-h-96 py-12">
+            <div className="text-center">
+              <button className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-5 h-5"
+                >
+                  <path d="M12 5v14M5 12h14"></path>
+                </svg>
+                เพิ่มพนักงาน
+              </button>
+              <p className="text-gray-400 mt-4">ยังไม่มีพนักงานในทีม — เพิ่มสมาชิกแรกเลย</p>
+            </div>
+          </div>
+        ) : (
+          /* Employee Grid */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {employees.map((emp) => (
+              <div
+                key={emp.id}
+                className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-500 text-white font-semibold flex items-center justify-center">
+                    {emp.name.substring(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">{emp.name}</h3>
+                    <p className="text-xs text-gray-400">{emp.role}</p>
+                  </div>
+                </div>
+                <div className="space-y-1 text-sm">
+                  <p className="text-gray-300">{emp.email}</p>
+                  <p className="text-gray-400">{emp.department}</p>
+                </div>
+              </div>
+            ))}
+
+            {/* Add Employee Button */}
+            <button className="bg-gray-800 border-2 border-dashed border-gray-600 hover:border-blue-500 rounded-lg p-4 flex items-center justify-center min-h-40 transition-colors group">
+              <div className="text-center">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-6 h-6 text-gray-400 group-hover:text-blue-500 mx-auto mb-2 transition-colors"
+                >
+                  <path d="M12 5v14M5 12h14"></path>
+                </svg>
+                <span className="text-gray-300 group-hover:text-white font-medium text-sm transition-colors">
+                  เพิ่มพนักงาน
                 </span>
               </div>
-
-              <div className="space-y-3">
-                {mockTasks
-                  .filter((task) => task.status === status.key)
-                  .map((task) => (
-                    <div
-                      key={task.id}
-                      className="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow cursor-pointer space-y-2"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-semibold text-gray-900 text-sm leading-tight flex-1">
-                          {task.title}
-                        </h3>
-                      </div>
-
-                      <div className="flex gap-2 flex-wrap">
-                        {getPriorityBadge(task.priority)}
-                        <span className="px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800">
-                          {task.assignee}
-                        </span>
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="mt-3">
-                        <div className="flex justify-between text-xs text-gray-500 mb-1">
-                          <span>ความคืบหน้า</span>
-                          <span>{task.progress}%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-gradient-to-r from-blue-500 to-teal-500 h-2 rounded-full"
-                            style={{ width: `${task.progress}%` }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* Time Info */}
-                      <div className="text-xs text-gray-600 space-y-1 pt-2 border-t border-gray-100">
-                        <div className="flex justify-between">
-                          <span>ตั้งไว้:</span>
-                          <span className="font-medium">{task.estimatedTime}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>ใช้ไปแล้ว:</span>
-                          <span className="font-medium">{task.spentTime}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                {mockTasks.filter((t) => t.status === status.key).length === 0 && (
-                  <div className="text-center py-8 text-gray-400">
-                    <p className="text-sm">ไม่มีงาน</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+            </button>
+          </div>
+        )}
       </div>
     </Layout>
   );
