@@ -49,22 +49,9 @@ export default function TeamBoard() {
             onClick={handleAddEmployee}
             className="w-full min-h-96 border-4 border-dashed border-gray-600 hover:border-cyan-500 rounded-xl flex items-center justify-center transition-colors group"
           >
-            <div className="text-center">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-12 h-12 text-gray-400 group-hover:text-cyan-400 mx-auto mb-4 transition-colors"
-              >
-                <path d="M12 5v14M5 12h14"></path>
-              </svg>
-              <p className="text-2xl font-semibold text-gray-300 group-hover:text-white transition-colors">
-                + เพิ่มพนักงาน
-              </p>
-            </div>
+            <p className="text-3xl font-semibold text-gray-300 group-hover:text-white transition-colors">
+              + เพิ่มพนักงาน
+            </p>
           </button>
         ) : (
           /* Employee Grid */
