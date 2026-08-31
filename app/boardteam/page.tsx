@@ -47,7 +47,7 @@ export default function TeamBoard() {
         {employees.length === 0 ? (
           <button
             onClick={handleAddEmployee}
-            className="w-1/2 min-h-96 border-4 border-dashed border-gray-600 hover:border-cyan-500 rounded-xl flex items-center justify-center transition-colors group mx-auto"
+            className="w-1/2 min-h-96 border-4 border-dashed border-gray-600 hover:border-cyan-500 rounded-xl flex items-center justify-center transition-colors group"
           >
             <p className="text-3xl font-semibold text-gray-300 group-hover:text-white transition-colors">
               + เพิ่มพนักงาน
