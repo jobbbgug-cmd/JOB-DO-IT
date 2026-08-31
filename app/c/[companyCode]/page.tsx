@@ -75,10 +75,12 @@ export default function CompanyPage() {
     : null;
 
   const cardPositionsRef = useRef(cardPositions);
+  const dragStartRef = useRef(dragStart);
 
   useEffect(() => {
     cardPositionsRef.current = cardPositions;
-  }, [cardPositions]);
+    dragStartRef.current = dragStart;
+  }, [cardPositions, dragStart]);
 
   useEffect(() => {
     const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -130,11 +132,9 @@ export default function CompanyPage() {
   useEffect(() => {
     if (!dragging) return;
 
-    let lastDragStart = dragStart;
-
     const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - lastDragStart.x;
-      const deltaY = e.clientY - lastDragStart.y;
+      const deltaX = e.clientX - dragStartRef.current.x;
+      const deltaY = e.clientY - dragStartRef.current.y;
 
       const currentPos = cardPositionsRef.current[dragging] || { x: 0, y: 0 };
 
@@ -149,7 +149,7 @@ export default function CompanyPage() {
       };
 
       setCardPositions(cardPositionsRef.current);
-      lastDragStart = { x: e.clientX, y: e.clientY };
+      dragStartRef.current = { x: e.clientX, y: e.clientY };
     };
 
     const handleMouseUp = () => {
@@ -163,7 +163,7 @@ export default function CompanyPage() {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [dragging, dragStart]);
+  }, [dragging]);
 
   const scaleFactor = zoom / 100;
 
