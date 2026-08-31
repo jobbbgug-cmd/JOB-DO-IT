@@ -129,8 +129,9 @@ export default function CompanyPage() {
     if (!cardEl) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - resizeStart.x;
-      const deltaY = e.clientY - resizeStart.y;
+      const scaleFactor = zoom / 100;
+      const deltaX = (e.clientX - resizeStart.x) / scaleFactor;
+      const deltaY = (e.clientY - resizeStart.y) / scaleFactor;
 
       const rect = cardEl.getBoundingClientRect();
       const newWidth = Math.max(400, rect.width + deltaX);
@@ -155,7 +156,7 @@ export default function CompanyPage() {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [resizing, resizeStart]);
+  }, [resizing, resizeStart, zoom]);
 
   if (!isHydrated) return <div className="flex items-center justify-center h-screen">Loading...</div>;
 
