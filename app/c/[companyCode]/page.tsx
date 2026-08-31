@@ -358,14 +358,14 @@ export default function CompanyPage() {
                         <div
                           key={task.id}
                           onMouseDown={(e) => handleTaskDragStart(e, emp.id, task.id, 'routine')}
-                          className={`bg-gray-800/50 border border-gray-700 hover:border-cyan-500/50 rounded-lg p-3 transition-all hover:bg-gray-800/80 cursor-grab active:cursor-grabbing group text-xs ${
+                          className={`bg-gray-800/50 border border-gray-700 hover:border-cyan-500/50 rounded-lg p-4 transition-all hover:bg-gray-800/80 cursor-grab active:cursor-grabbing group text-xs min-h-32 flex flex-col ${
                             taskDragging?.taskId === task.id ? 'opacity-50 border-cyan-500' : ''
                           }`}
                         >
-                          <p className="text-gray-300 group-hover:text-white transition-colors mb-2 leading-snug line-clamp-2">
+                          <p className="text-gray-300 group-hover:text-white transition-colors mb-3 leading-snug line-clamp-3 text-sm">
                             {task.title}
                           </p>
-                          <div className="space-y-1.5">
+                          <div className="space-y-1.5 flex-1 flex flex-col justify-end">
                             <div className="flex items-center gap-2 justify-between">
                               <div className="w-full bg-gray-700 rounded-full h-1 overflow-hidden">
                                 <div
@@ -424,14 +424,14 @@ export default function CompanyPage() {
                         <div
                           key={task.id}
                           onMouseDown={(e) => handleTaskDragStart(e, emp.id, task.id, 'urgent')}
-                          className={`bg-gray-800/50 border border-gray-700 hover:border-red-500/50 rounded-lg p-3 transition-all hover:bg-gray-800/80 cursor-grab active:cursor-grabbing group text-xs ${
+                          className={`bg-gray-800/50 border border-gray-700 hover:border-red-500/50 rounded-lg p-4 transition-all hover:bg-gray-800/80 cursor-grab active:cursor-grabbing group text-xs min-h-32 flex flex-col ${
                             taskDragging?.taskId === task.id ? 'opacity-50 border-red-500' : ''
                           }`}
                         >
-                          <p className="text-gray-300 group-hover:text-white transition-colors mb-2 leading-snug line-clamp-2">
+                          <p className="text-gray-300 group-hover:text-white transition-colors mb-3 leading-snug line-clamp-3 text-sm">
                             {task.title}
                           </p>
-                          <div className="space-y-1.5">
+                          <div className="space-y-1.5 flex-1 flex flex-col justify-end">
                             <div className="flex items-center gap-2 justify-between">
                               <div className="w-full bg-gray-700 rounded-full h-1 overflow-hidden">
                                 <div
