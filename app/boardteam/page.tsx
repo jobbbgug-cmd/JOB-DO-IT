@@ -45,28 +45,27 @@ export default function TeamBoard() {
 
         {/* Empty State - Add Employee */}
         {employees.length === 0 ? (
-          <div className="flex items-center justify-center min-h-96 py-12">
+          <button
+            onClick={handleAddEmployee}
+            className="w-full min-h-96 border-4 border-dashed border-gray-600 hover:border-cyan-500 rounded-xl flex items-center justify-center transition-colors group"
+          >
             <div className="text-center">
-              <button 
-                onClick={handleAddEmployee}
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-12 h-12 text-gray-400 group-hover:text-cyan-400 mx-auto mb-4 transition-colors"
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-5 h-5"
-                >
-                  <path d="M12 5v14M5 12h14"></path>
-                </svg>
-                เพิ่มพนักงาน
-              </button>
-              <p className="text-gray-400 mt-4">ยังไม่มีพนักงานในทีม — เพิ่มสมาชิกแรกเลย</p>
+                <path d="M12 5v14M5 12h14"></path>
+              </svg>
+              <p className="text-2xl font-semibold text-gray-300 group-hover:text-white transition-colors">
+                + เพิ่มพนักงาน
+              </p>
             </div>
-          </div>
+          </button>
         ) : (
           /* Employee Grid */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
