@@ -158,8 +158,8 @@ export default function CompanyPage() {
 
   return (
     <Layout>
-      {/* Full Screen Canvas */}
-      <div className="relative w-full h-screen bg-gray-900/30 border border-gray-700 rounded-lg overflow-hidden -m-6 p-0">
+      {/* Full Screen Canvas - Minimal Background */}
+      <div className="relative w-full h-screen border border-cyan-600/30 rounded-lg overflow-hidden -m-6 p-0">
         {employees.map((emp) => {
           const size = cardSizes[emp.id] || { width: 450, height: 500 };
           const pos = cardPositions[emp.id] || { x: 20, y: 20 };
