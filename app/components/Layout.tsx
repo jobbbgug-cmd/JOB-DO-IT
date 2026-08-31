@@ -33,13 +33,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <button className="p-2 hover:bg-gray-100 rounded-lg text-gray-600">
               🔔
             </button>
-            <div className="flex items-center gap-2 text-sm">
-              <span>{user?.name}</span>
+            <div className="flex items-center gap-3">
+              <div className="text-sm">
+                <p className="font-medium text-gray-900">{user?.name || 'User'}</p>
+                <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+              </div>
               <button
                 onClick={handleLogout}
-                className="p-1 hover:bg-red-50 text-red-600 rounded text-xs"
+                className="px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               >
-                ↪️
+                ออกจากระบบ
               </button>
             </div>
           </div>
