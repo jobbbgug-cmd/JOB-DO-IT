@@ -36,7 +36,7 @@ export default function Home() {
               href="/login"
               className="px-6 py-2 bg-gradient-to-r from-blue-500 to-teal-500 text-white rounded-lg hover:from-blue-600 hover:to-teal-600 font-semibold"
             >
-              สมัครสมาชิก
+              เริ่มใช้ฟรี
             </Link>
           </div>
         </div>
@@ -61,7 +61,7 @@ export default function Home() {
             href="/login"
             className="px-8 py-4 bg-gradient-to-r from-blue-500 to-teal-500 text-white rounded-lg hover:from-blue-600 hover:to-teal-600 font-bold text-lg shadow-lg"
           >
-            เริ่มต้นใช้งาน
+            เริ่มใช้ฟรี
           </Link>
           <Link
             href="#features"
@@ -128,7 +128,7 @@ export default function Home() {
             href="/login"
             className="inline-block px-8 py-4 bg-white text-teal-600 rounded-lg hover:bg-gray-50 font-bold text-lg shadow-lg"
           >
-            สมัครสมาชิก ฟรี
+            เริ่มใช้ฟรี
           </Link>
         </div>
       </section>

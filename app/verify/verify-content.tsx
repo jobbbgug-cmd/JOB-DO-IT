@@ -32,7 +32,7 @@ export default function VerifyContent() {
       const response = await axios.post('/api/auth/verify', { email, code });
       const { token } = response.data;
       localStorage.setItem('token', token);
-      router.push('/boardteam');
+      router.push('/company');
     } catch (err: any) {
       setError(err.response?.data?.error || 'ยืนยันรหัสไม่สำเร็จ');
     } finally {
@@ -45,7 +45,7 @@ export default function VerifyContent() {
     setError('');
     try {
       await axios.post('/api/auth/resend-code', { email });
-      alert('ส่งรหัสใหม่เรียบร้อย ตรวจสอบเซิร์ฟเวอร์ console');
+      alert('ส่งรหัสใหม่เรียบร้อย ตรวจสอบอีเมลของคุณ');
     } catch (err: any) {
       setError(err.response?.data?.error || 'ส่งรหัสใหม่ไม่สำเร็จ');
     } finally {
@@ -72,7 +72,8 @@ export default function VerifyContent() {
 
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 text-sm text-gray-600">
             <p className="mb-2">
-              ตรวจสอบเซิร์ฟเวอร์ console สำหรับรหัสยืนยัน (dev mode)
+              คุณจะได้รับอีเมลที่มีรหัสยืนยัน หากไม่พบในจดหมายเข้า ให้ตรวจสอบโฟลเดอร์
+              Spam หรือ Junk และใช้รหัสในการยืนยัน 15 นาที
             </p>
           </div>
 

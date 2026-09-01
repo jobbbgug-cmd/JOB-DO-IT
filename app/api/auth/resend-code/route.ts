@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import User from '@/lib/models/User';
+import { sendVerificationEmail } from '@/lib/email';
 
 const generateVerificationCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
     user.verificationCodeExpiry = verificationCodeExpiry;
     await user.save();
 
-    console.log(`[DEV] Verification code for ${email}: ${verificationCode}`);
+    await sendVerificationEmail(email, verificationCode);
 
     return NextResponse.json(
       { success: true, message: 'ส่งรหัสยืนยันไปยังอีเมลของคุณแล้ว' },
