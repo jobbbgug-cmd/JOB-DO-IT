@@ -12,16 +12,16 @@ export async function POST(req: NextRequest) {
     const { name, email, password, role } = await req.json();
 
     if (!name || !email || !password) {
-      return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+      return NextResponse.json({ error: 'กรุณากรอกข้อมูลให้ครบถ้วน' }, { status: 400 });
     }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return NextResponse.json({ error: 'User already exists' }, { status: 400 });
+      return NextResponse.json({ error: 'อีเมลนี้ได้ถูกลงทะเบียนแล้ว' }, { status: 400 });
     }
 
     const verificationCode = generateVerificationCode();
-    const verificationCodeExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    const verificationCodeExpiry = new Date(Date.now() + 15 * 60 * 1000);
 
     const user = await User.create({
       name,
@@ -36,11 +36,11 @@ export async function POST(req: NextRequest) {
     console.log(`[DEV] Verification code for ${email}: ${verificationCode}`);
 
     return NextResponse.json(
-      { success: true, email: user.email, message: 'Verification code sent to email' },
+      { success: true, email: user.email, message: 'ส่งรหัสยืนยันไปยังอีเมลของคุณแล้ว' },
       { status: 201 }
     );
   } catch (error: any) {
     console.error('Register error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการสมัครสมาชิก' }, { status: 500 });
   }
 }

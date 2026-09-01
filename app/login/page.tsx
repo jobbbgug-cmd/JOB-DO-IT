@@ -36,8 +36,6 @@ export default function LoginPage() {
         } else {
           router.push('/boardteam');
         }
-      } else if ((result as any).needsVerification) {
-        router.push(`/verify?email=${encodeURIComponent(formData.email)}`);
       } else {
         setError(result.message || 'เกิดข้อผิดพลาด');
       }
@@ -64,11 +62,11 @@ export default function LoginPage() {
                   alt="JOB DO IT"
                   width={100}
                   height={100}
-                  className="h-16 w-auto"
+                  className="h-10 w-auto"
                   priority
                 />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
               {isLogin ? 'เข้าสู่ระบบ' : 'สร้างบัญชีใหม่'}
             </h1>
             <p className="text-gray-600 text-sm font-medium">

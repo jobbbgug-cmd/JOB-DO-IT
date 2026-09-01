@@ -11,21 +11,21 @@ export async function POST(req: NextRequest) {
     const { email, password } = await req.json();
 
     if (!email || !password) {
-      return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+      return NextResponse.json({ error: 'กรุณากรอกอีเมลและรหัสผ่าน' }, { status: 400 });
     }
 
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: 'ไม่พบผู้ใช้นี้' }, { status: 404 });
     }
 
     if (!user.isVerified) {
-      return NextResponse.json({ error: 'Email not verified', needsVerification: true, email }, { status: 403 });
+      return NextResponse.json({ error: 'ยังไม่ได้ยืนยันอีเมล กรุณาตรวจสอบข้อความยืนยันในอีเมล', needsVerification: true, email }, { status: 403 });
     }
 
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
-      return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
+      return NextResponse.json({ error: 'รหัสผ่านไม่ถูกต้อง' }, { status: 401 });
     }
 
     const token = await new SignJWT({ userId: user._id.toString(), email: user.email })
@@ -49,6 +49,6 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }

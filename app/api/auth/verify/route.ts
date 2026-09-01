@@ -11,24 +11,24 @@ export async function POST(req: NextRequest) {
     const { email, code } = await req.json();
 
     if (!email || !code) {
-      return NextResponse.json({ error: 'Missing email or code' }, { status: 400 });
+      return NextResponse.json({ error: 'กรุณากรอกอีเมลและรหัสยืนยัน' }, { status: 400 });
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: 'ไม่พบผู้ใช้นี้' }, { status: 404 });
     }
 
     if (user.isVerified) {
-      return NextResponse.json({ error: 'User already verified' }, { status: 400 });
+      return NextResponse.json({ error: 'อีเมลนี้ได้รับการยืนยันแล้ว' }, { status: 400 });
     }
 
     if (user.verificationCode !== code) {
-      return NextResponse.json({ error: 'Invalid verification code' }, { status: 400 });
+      return NextResponse.json({ error: 'รหัสยืนยันไม่ถูกต้อง' }, { status: 400 });
     }
 
     if (user.verificationCodeExpiry && user.verificationCodeExpiry < new Date()) {
-      return NextResponse.json({ error: 'Verification code expired' }, { status: 400 });
+      return NextResponse.json({ error: 'รหัสยืนยันหมดอายุแล้ว กรุณาขอรหัสใหม่' }, { status: 400 });
     }
 
     user.isVerified = true;
@@ -58,6 +58,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error: any) {
     console.error('Verify error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการยืนยัน' }, { status: 500 });
   }
 }

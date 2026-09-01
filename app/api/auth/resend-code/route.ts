@@ -12,16 +12,16 @@ export async function POST(req: NextRequest) {
     const { email } = await req.json();
 
     if (!email) {
-      return NextResponse.json({ error: 'Missing email' }, { status: 400 });
+      return NextResponse.json({ error: 'กรุณากรอกอีเมล' }, { status: 400 });
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: 'ไม่พบผู้ใช้นี้' }, { status: 404 });
     }
 
     if (user.isVerified) {
-      return NextResponse.json({ error: 'User already verified' }, { status: 400 });
+      return NextResponse.json({ error: 'อีเมลนี้ได้รับการยืนยันแล้ว' }, { status: 400 });
     }
 
     const verificationCode = generateVerificationCode();
@@ -34,11 +34,11 @@ export async function POST(req: NextRequest) {
     console.log(`[DEV] Verification code for ${email}: ${verificationCode}`);
 
     return NextResponse.json(
-      { success: true, message: 'Verification code resent' },
+      { success: true, message: 'ส่งรหัสยืนยันไปยังอีเมลของคุณแล้ว' },
       { status: 200 }
     );
   } catch (error: any) {
     console.error('Resend code error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการส่งรหัสใหม่' }, { status: 500 });
   }
 }

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   title: 'JOB DO IT',
   description: 'ระบบติดตามงานสำหรับทีมพัฒนา',
   icons: {
-    icon: '/logo.png',
+    icon: '/favicon.png',
   },
 };
 
