@@ -34,14 +34,18 @@ export async function POST(req: NextRequest) {
       verificationCodeExpiry,
     });
 
-    await sendVerificationEmail(email, verificationCode);
+    const emailSent = await sendVerificationEmail(email, verificationCode);
+    console.log(`Email sent: ${emailSent}`);
 
     return NextResponse.json(
       { success: true, email: user.email, message: 'ส่งรหัสยืนยันไปยังอีเมลของคุณแล้ว' },
       { status: 201 }
     );
   } catch (error: any) {
-    console.error('Register error:', error);
-    return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการสมัครสมาชิก' }, { status: 500 });
+    console.error('Register error:', error.message || error);
+    return NextResponse.json({ 
+      error: 'เกิดข้อผิดพลาดในการสมัครสมาชิก',
+      details: error.message 
+    }, { status: 500 });
   }
 }

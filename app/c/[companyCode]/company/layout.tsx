@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 const TABS = [
@@ -12,8 +11,10 @@ const TABS = [
 
 export default function CompanyLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
+  const pathname = usePathname();
   const companyCode = params.companyCode as string;
-  const [activeTab, setActiveTab] = useState('employees');
+
+  const activeTab = pathname.includes('/teams') ? 'teams' : pathname.includes('/info') ? 'info' : 'employees';
 
   return (
     <>

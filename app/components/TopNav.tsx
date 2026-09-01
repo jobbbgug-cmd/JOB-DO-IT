@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -23,17 +23,19 @@ const getTabsWithCompany = (companyCode: string) => {
 export default function TopNav() {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const { openFeedback, openShortcuts, zoom, zoomIn, zoomOut, companyCode, initializeFromStorage } = useUIStore();
+  const { openFeedback, openShortcuts, zoom, zoomIn, zoomOut, companyCode } = useUIStore();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    initializeFromStorage();
-  }, [initializeFromStorage]);
+    setMounted(true);
+  }, []);
 
-  const tabs = getTabsWithCompany(companyCode);
+  const displayCompanyCode = mounted ? companyCode : '';
+  const tabs = getTabsWithCompany(displayCompanyCode);
 
   const getActiveTab = () => {
     const tab = tabs.find((t) => {
-      if (companyCode && pathname.startsWith(`/c/${companyCode}`)) {
+      if (displayCompanyCode && pathname.startsWith(`/c/${displayCompanyCode}`)) {
         return t.name === 'บริษัท';
       }
       return pathname === t.href;
@@ -50,7 +52,7 @@ export default function TopNav() {
         <Image src="/icon.png" alt="JOB DO IT" width={32} height={32} className="h-8 w-8" />
         <div>
           <div className="font-bold text-white text-sm">JOB DO IT</div>
-          <div className="text-xs text-gray-400">{companyCode || 'Task Manager'}</div>
+          <div className="text-xs text-gray-400">{displayCompanyCode || 'Task Manager'}</div>
         </div>
       </div>
 

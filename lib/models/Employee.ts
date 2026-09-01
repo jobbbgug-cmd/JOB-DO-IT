@@ -3,7 +3,8 @@ import mongoose, { Schema, Document } from 'mongoose';
 interface IEmployee extends Document {
   companyCode: string;
   name: string;
-  role: string;
+  role?: string | null;
+  color?: string;
   presence: boolean;
   taskCount: number;
   tasks: Array<{
@@ -22,7 +23,8 @@ const employeeSchema = new Schema<IEmployee>(
   {
     companyCode: { type: String, required: true, index: true },
     name: { type: String, required: true },
-    role: { type: String, required: true },
+    role: { type: String, default: null },
+    color: { type: String, default: '#0E9384' },
     presence: { type: Boolean, default: true },
     taskCount: { type: Number, default: 0 },
     tasks: [

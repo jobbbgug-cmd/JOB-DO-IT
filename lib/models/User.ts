@@ -8,6 +8,9 @@ interface IUser extends Document {
   role: 'admin' | 'dev' | 'tester' | 'lead';
   avatar?: string;
   department?: string;
+  companyCode?: string;
+  color?: string;
+  enabled?: boolean;
   isVerified: boolean;
   verificationCode?: string;
   verificationCodeExpiry?: Date;
@@ -41,6 +44,15 @@ const userSchema = new Schema<IUser>(
     },
     avatar: String,
     department: String,
+    companyCode: {
+      type: String,
+      index: true,
+    },
+    color: String,
+    enabled: {
+      type: Boolean,
+      default: true,
+    },
     isVerified: {
       type: Boolean,
       default: false,

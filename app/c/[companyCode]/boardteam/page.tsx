@@ -4,12 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuthStore } from '@/app/store/authStore';
 
-interface Employee {
+interface Team {
   id: string;
   name: string;
-  role: string;
-  presence: boolean;
-  taskCount?: number;
+  description?: string | null;
+  memberCount: number;
+  isDefault: boolean;
 }
 
 export default function TeamBoard() {
@@ -18,7 +18,8 @@ export default function TeamBoard() {
   const companyCode = params.companyCode as string;
   const { user } = useAuthStore();
   const [isHydrated, setIsHydrated] = useState(false);
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -26,69 +27,76 @@ export default function TeamBoard() {
       router.push('/login');
     } else {
       setIsHydrated(true);
-      fetchEmployees();
+      fetchTeams();
     }
   }, [router, companyCode]);
 
-  const fetchEmployees = async () => {
+  const fetchTeams = async () => {
     try {
-      const response = await fetch(`/api/employees/${companyCode}`);
+      const response = await fetch(`/api/company/${companyCode}/teams`);
       if (response.ok) {
         const data = await response.json();
-        setEmployees(data);
+        setTeams(data);
       }
     } catch (error) {
-      console.error('Failed to fetch employees:', error);
+      console.error('Failed to fetch teams:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!isHydrated) return <div className="flex items-center justify-center h-screen">Loading...</div>;
-
-  const handleAddEmployee = () => {
-    router.push(`/c/${companyCode}/company`);
-  };
+  if (!isHydrated || loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-white">บอร์ดทีม</h1>
-        <p className="text-gray-400 mt-2">จัดการสมาชิกทีมและพนักงาน</p>
+        <p className="text-gray-400 mt-2">เลือกทีมเพื่อดูบอร์ด</p>
       </div>
 
-      {employees.length === 0 ? (
-        <button
-          onClick={handleAddEmployee}
-          className="w-1/4 min-h-72 border-4 border-dashed border-gray-600 hover:border-cyan-500 rounded-xl flex items-center justify-center transition-colors group"
-        >
-          <p className="text-3xl font-semibold text-gray-300 group-hover:text-white transition-colors">
-            + เพิ่มพนักงาน
-          </p>
-        </button>
+      {teams.length === 0 ? (
+        <div className="text-center text-gray-400">
+          <p>ยังไม่มีทีม</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {employees.map((emp) => (
-            <div
-              key={emp.id}
-              className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-cyan-500 transition-colors cursor-pointer"
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+          {teams.map((team) => (
+            <button
+              key={team.id}
+              onClick={() => router.push(`/c/${companyCode}/team/${team.id}`)}
+              className="text-left border border-gray-700 rounded-lg p-4 bg-gray-800/30 hover:bg-gray-800/50 transition-colors group"
             >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-blue-500 text-white font-semibold flex items-center justify-center text-sm">
-                  {emp.name.substring(0, 2).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-white truncate">{emp.name}</h3>
-                  <p className="text-xs text-gray-400 truncate">{emp.role}</p>
-                </div>
-                {emp.presence && (
-                  <span className="text-xs font-bold text-green-400 flex-shrink-0">🟢</span>
+              <div className="mb-3">
+                <h3 className="font-semibold text-white text-lg group-hover:text-cyan-400 transition-colors">
+                  {team.name}
+                </h3>
+                {team.isDefault && (
+                  <span className="text-xs font-bold text-cyan-400 inline-block mt-1">
+                    ทีมเริ่มต้น
+                  </span>
                 )}
               </div>
-              {emp.taskCount !== undefined && (
-                <div className="pt-3 border-t border-gray-700">
-                  <p className="text-xs text-gray-500">งานทั้งหมด: {emp.taskCount}</p>
-                </div>
+
+              {team.description && (
+                <p className="text-sm text-gray-400 mb-3 line-clamp-2">
+                  {team.description}
+                </p>
               )}
-            </div>
+
+              <div className="text-xs text-gray-500 mb-4">
+                {team.memberCount === 0 ? (
+                  <p>ยังไม่มีสมาชิกในทีมนี้</p>
+                ) : (
+                  <p>สมาชิก {team.memberCount} คน</p>
+                )}
+              </div>
+
+              <div className="text-cyan-400 text-sm font-medium group-hover:text-cyan-300 transition-colors">
+                เปิดบอร์ดทีม <span aria-hidden="true">→</span>
+              </div>
+            </button>
           ))}
         </div>
       )}
