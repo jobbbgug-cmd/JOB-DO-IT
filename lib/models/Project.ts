@@ -1,48 +1,44 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 interface IProject extends Document {
+  companyCode: string;
   name: string;
-  description: string;
-  owner: mongoose.Types.ObjectId;
-  members: Array<{
-    user: mongoose.Types.ObjectId;
-    role: string;
-  }>;
+  description?: string | null;
   status: 'active' | 'archived' | 'planning';
-  startDate: Date;
-  endDate: Date;
+  taskCount: number;
+  memberCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const projectSchema = new Schema<IProject>(
   {
+    companyCode: {
+      type: String,
+      required: true,
+      index: true,
+    },
     name: {
       type: String,
-      required: [true, 'Project name is required'],
-    },
-    description: String,
-    owner: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
       required: true,
     },
-    members: [
-      {
-        user: {
-          type: Schema.Types.ObjectId,
-          ref: 'User',
-        },
-        role: String,
-      },
-    ],
+    description: {
+      type: String,
+      default: null,
+    },
     status: {
       type: String,
       enum: ['active', 'archived', 'planning'],
-      default: 'active',
+      default: 'planning',
     },
-    startDate: Date,
-    endDate: Date,
+    taskCount: {
+      type: Number,
+      default: 0,
+    },
+    memberCount: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
