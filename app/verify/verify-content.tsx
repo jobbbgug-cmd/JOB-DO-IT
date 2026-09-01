@@ -44,9 +44,8 @@ export default function VerifyContent() {
     setResendLoading(true);
     setError('');
     try {
-      await axios.post('/api/auth/register', { email, name: '', password: '' });
-      setError('');
-      alert('ส่งรหัสใหม่เรียบร้อย ตรวจสอบอีเมลของคุณ');
+      await axios.post('/api/auth/resend-code', { email });
+      alert('ส่งรหัสใหม่เรียบร้อย ตรวจสอบเซิร์ฟเวอร์ console');
     } catch (err: any) {
       setError(err.response?.data?.error || 'ส่งรหัสใหม่ไม่สำเร็จ');
     } finally {
@@ -73,8 +72,7 @@ export default function VerifyContent() {
 
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 text-sm text-gray-600">
             <p className="mb-2">
-              คุณจะได้รับอีเมลที่มีรหัสยืนยัน หากไม่พบในจดหมายเข้า ให้ตรวจสอบโฟลเดอร์
-              Spam หรือ Junk และใช้รหัสในการยืนยัน 45 วินาที
+              ตรวจสอบเซิร์ฟเวอร์ console สำหรับรหัสยืนยัน (dev mode)
             </p>
           </div>
 
