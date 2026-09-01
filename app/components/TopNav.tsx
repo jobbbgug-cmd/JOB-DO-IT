@@ -56,8 +56,8 @@ export default function TopNav() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1" role="tablist">
+      {/* Tabs - Desktop only */}
+      <div className="hidden md:flex items-center gap-1" role="tablist">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;
           return (
@@ -78,11 +78,11 @@ export default function TopNav() {
         })}
       </div>
 
-      {/* Spring (Flex spacer) */}
-      <div className="flex-1"></div>
+      {/* Spring (Flex spacer) - Desktop only */}
+      <div className="hidden md:flex flex-1"></div>
 
-      {/* Zoom Controls */}
-      <div className="flex items-center gap-2 px-3 py-1 bg-gray-700 rounded text-sm text-gray-300">
+      {/* Zoom Controls - Desktop only */}
+      <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-gray-700 rounded text-sm text-gray-300">
         <button
           onClick={zoomOut}
           className="p-1 hover:text-white transition-colors disabled:opacity-50"
@@ -102,9 +102,9 @@ export default function TopNav() {
         </button>
       </div>
 
-      {/* Notification */}
+      {/* Notification - Desktop only */}
       <button
-        className="p-2 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
+        className="hidden md:block p-2 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
         title="แจ้งเตือน"
       >
         <svg
@@ -121,30 +121,33 @@ export default function TopNav() {
         </svg>
       </button>
 
+      {/* Spacer for mobile */}
+      <div className="md:hidden flex-1"></div>
+
       {/* Keyboard Shortcuts */}
       <button
         onClick={openShortcuts}
-        className="px-3 py-2 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-2"
+        className="p-2 md:px-3 md:py-2 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors md:text-sm md:flex md:items-center md:gap-2"
         title="คีย์ลัด"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 md:w-4 md:h-4">
           <rect x="2" y="4" width="20" height="16" rx="2"></rect>
           <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"></path>
         </svg>
-        <span>คีย์ลัด</span>
+        <span className="hidden md:inline">คีย์ลัด</span>
       </button>
 
       {/* Feedback */}
       <button
         onClick={openFeedback}
-        className="px-3 py-2 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-2"
+        className="p-2 md:px-3 md:py-2 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-white transition-colors md:text-sm md:flex md:items-center md:gap-2"
         title="แจ้งปัญหา"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 md:w-4 md:h-4">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           <path d="M8 10h.01M12 10h.01M16 10h.01"></path>
         </svg>
-        <span>แจ้งปัญหา</span>
+        <span className="hidden md:inline">แจ้งปัญหา</span>
       </button>
 
       {/* User Menu */}

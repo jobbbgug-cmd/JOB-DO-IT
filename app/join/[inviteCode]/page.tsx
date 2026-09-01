@@ -25,9 +25,13 @@ export default function JoinPage() {
 
   const verifyAndJoin = async () => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`/api/invite/verify/${inviteCode}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) {

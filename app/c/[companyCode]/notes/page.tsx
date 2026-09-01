@@ -7,6 +7,8 @@ interface Note {
   id: string;
   title: string;
   content: string;
+  x?: number;
+  y?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -18,12 +20,7 @@ export default function NotesPage() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [notes, setNotes] = useState<Note[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newNote, setNewNote] = useState({
-    title: '',
-    content: '',
-  });
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -48,30 +45,57 @@ export default function NotesPage() {
   };
 
   const handleCreateNote = async () => {
-    if (!newNote.title.trim()) {
-      alert('กรุณาใส่ชื่อหมายเหตุ');
-      return;
-    }
-
     try {
       const response = await fetch(`/api/notes/${companyCode}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: newNote.title,
-          content: newNote.content,
+          title: 'โน้ตใหม่',
+          content: '',
         }),
       });
 
       if (response.ok) {
         const created = await response.json();
-        setNotes([created, ...notes]);
-        setNewNote({ title: '', content: '' });
-        setShowCreateForm(false);
+        const newNote = {
+          ...created,
+          x: Math.random() * 300,
+          y: Math.random() * 300,
+        };
+        setNotes([...notes, newNote]);
+        setEditingNote(newNote);
       }
     } catch (error) {
       console.error('Failed to create note:', error);
       alert('สร้างหมายเหตุไม่สำเร็จ');
+    }
+  };
+
+  const handleUpdateNote = async (note: Note) => {
+    try {
+      await fetch(`/api/notes/${companyCode}/${note.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: note.title,
+          content: note.content,
+        }),
+      });
+      setEditingNote(null);
+    } catch (error) {
+      console.error('Failed to update note:', error);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      await fetch(`/api/notes/${companyCode}/${noteId}`, {
+        method: 'DELETE',
+      });
+      setNotes(notes.filter(n => n.id !== noteId));
+      setEditingNote(null);
+    } catch (error) {
+      console.error('Failed to delete note:', error);
     }
   };
 
@@ -84,108 +108,121 @@ export default function NotesPage() {
   if (!isHydrated) return <div className="flex items-center justify-center h-screen">Loading...</div>;
 
   return (
-    <div className="grid grid-cols-3 gap-6 h-screen overflow-hidden">
-      {/* Notes List */}
-      <div className="col-span-1 flex flex-col border-r border-gray-700">
-        <div className="space-y-4 p-6 border-b border-gray-700">
-          <h1 className="text-2xl font-bold text-white">หมายเหตุ</h1>
-          <input
-            type="text"
-            placeholder="ค้นหา..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-          />
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded font-medium transition-colors"
+    <div className="fixed inset-0 bg-gray-950 overflow-hidden">
+      {/* Toolbar */}
+      <div className="fixed top-20 left-6 z-50 flex items-center gap-3">
+        <button
+          onClick={handleCreateNote}
+          className="flex items-center gap-2 px-4 py-3 bg-white hover:bg-gray-100 text-gray-900 rounded-lg font-medium transition-colors shadow-lg"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-5 h-5"
           >
-            + หมายเหตุใหม่
-          </button>
-        </div>
+            <path d="M12 5v14M5 12h14"></path>
+          </svg>
+          โน้ตใหม่
+        </button>
 
-        {/* Notes List Items */}
-        <div className="flex-1 overflow-y-auto space-y-2 p-4">
-          {filteredNotes.length === 0 ? (
-            <p className="text-gray-400 text-center py-8">ไม่มีหมายเหตุ</p>
-          ) : (
-            filteredNotes.map((note) => (
-              <button
-                key={note.id}
-                onClick={() => setSelectedNote(note)}
-                className={`w-full text-left p-3 rounded-lg transition-colors ${
-                  selectedNote?.id === note.id
-                    ? 'bg-gray-700 border border-gray-600'
-                    : 'bg-gray-800/30 hover:bg-gray-800/50 border border-gray-700'
-                }`}
-              >
-                <h3 className="font-medium text-white text-sm truncate">{note.title}</h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  {new Date(note.updatedAt).toLocaleDateString('th-TH')}
-                </p>
-              </button>
-            ))
-          )}
-        </div>
+        <input
+          type="search"
+          placeholder="ค้นหาโน้ต…"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="px-4 py-2 bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 w-64"
+        />
       </div>
 
-      {/* Note Editor or Create Form */}
-      <div className="col-span-2 flex flex-col">
-        {showCreateForm ? (
-          <div className="flex-1 p-6 flex flex-col">
-            <h2 className="text-xl font-bold text-white mb-4">หมายเหตุใหม่</h2>
-            <div className="space-y-4 flex-1">
-              <div>
-                <label className="text-sm font-semibold text-gray-400 block mb-2">ชื่อ</label>
-                <input
-                  type="text"
-                  placeholder="ชื่อหมายเหตุ..."
-                  value={newNote.title}
-                  onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                />
-              </div>
-
-              <div className="flex-1">
-                <label className="text-sm font-semibold text-gray-400 block mb-2">เนื้อหา</label>
-                <textarea
-                  placeholder="เนื้อหาหมายเหตุ..."
-                  value={newNote.content}
-                  onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
-                  className="w-full h-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none"
-                />
-              </div>
+      {/* Notes Canvas */}
+      <div className="absolute inset-0 pt-20">
+        {filteredNotes.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <p className="text-gray-400 text-lg">ไม่มีหมายเหตุ</p>
+              <p className="text-gray-500 text-sm mt-2">กดปุ่ม "โน้ตใหม่" เพื่อสร้างหมายเหตุ</p>
             </div>
-
-            <div className="flex gap-2 pt-4">
-              <button
-                onClick={handleCreateNote}
-                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded font-medium transition-colors"
-              >
-                บันทึก
-              </button>
-              <button
-                onClick={() => {
-                  setShowCreateForm(false);
-                  setNewNote({ title: '', content: '' });
-                }}
-                className="px-4 py-2 text-gray-400 hover:text-gray-300 transition-colors"
-              >
-                ยกเลิก
-              </button>
-            </div>
-          </div>
-        ) : selectedNote ? (
-          <div className="flex-1 p-6 flex flex-col">
-            <h2 className="text-2xl font-bold text-white mb-2">{selectedNote.title}</h2>
-            <p className="text-xs text-gray-500 mb-4">
-              อัปเดต {new Date(selectedNote.updatedAt).toLocaleDateString('th-TH')}
-            </p>
-            <p className="text-gray-300 whitespace-pre-wrap flex-1">{selectedNote.content}</p>
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-gray-400">เลือกหมายเหตุหรือสร้างใหม่</p>
+          <div className="relative w-full h-full">
+            {filteredNotes.map((note) => (
+              <div
+                key={note.id}
+                className="absolute w-64 bg-yellow-300 rounded-lg shadow-lg p-4 cursor-move select-none group hover:shadow-xl transition-shadow"
+                style={{
+                  left: `${note.x || Math.random() * window.innerWidth - 300}px`,
+                  top: `${note.y || Math.random() * window.innerHeight - 300}px`,
+                  minHeight: '300px',
+                }}
+              >
+                {editingNote?.id === note.id ? (
+                  <div className="space-y-3 h-full flex flex-col">
+                    <input
+                      type="text"
+                      value={editingNote.title}
+                      onChange={(e) =>
+                        setEditingNote({ ...editingNote, title: e.target.value })
+                      }
+                      className="w-full px-2 py-1 text-sm font-bold text-gray-900 bg-yellow-100 border border-yellow-400 rounded focus:outline-none"
+                      placeholder="ชื่อโน้ต"
+                    />
+                    <textarea
+                      value={editingNote.content}
+                      onChange={(e) =>
+                        setEditingNote({ ...editingNote, content: e.target.value })
+                      }
+                      className="flex-1 px-2 py-1 text-sm text-gray-900 bg-yellow-100 border border-yellow-400 rounded focus:outline-none resize-none"
+                      placeholder="เขียนเนื้อหาโน้ต..."
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        onClick={() => handleUpdateNote(editingNote)}
+                        className="px-3 py-1 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded transition-colors"
+                      >
+                        บันทึก
+                      </button>
+                      <button
+                        onClick={() => setEditingNote(null)}
+                        className="px-3 py-1 text-xs bg-gray-400 hover:bg-gray-500 text-white rounded transition-colors"
+                      >
+                        ยกเลิก
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="font-bold text-gray-900 text-sm mb-2 pr-8">
+                      {note.title || '(ไม่มีชื่อ)'}
+                    </h3>
+                    <p className="text-gray-800 text-xs whitespace-pre-wrap break-words flex-1">
+                      {note.content || '(ไม่มีข้อ)'}
+                    </p>
+
+                    {/* Hover Actions */}
+                    <div className="absolute top-2 right-2 gap-1 hidden group-hover:flex">
+                      <button
+                        onClick={() => setEditingNote(note)}
+                        className="p-1 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded text-xs"
+                        title="แก้ไข"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => handleDeleteNote(note.id)}
+                        className="p-1 bg-red-400 hover:bg-red-500 text-white rounded text-xs"
+                        title="ลบ"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>

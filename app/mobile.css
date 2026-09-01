@@ -1,0 +1,122 @@
+/* Mobile-Friendly Base Styles */
+
+/* Touch-friendly button sizing */
+.mobile-btn {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 12px 16px;
+  font-size: 16px; /* Prevents iOS zoom on input focus */
+}
+
+/* Touch-friendly input sizing */
+.mobile-input {
+  min-height: 44px;
+  padding: 12px;
+  font-size: 16px;
+}
+
+.mobile-textarea {
+  min-height: 100px;
+  padding: 12px;
+  font-size: 16px;
+}
+
+/* Proper spacing for mobile forms */
+.mobile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Mobile-friendly typography */
+.mobile-heading {
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.mobile-subheading {
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.mobile-body {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Safe area padding for notched devices */
+@supports (padding-top: max(0px)) {
+  .mobile-safe-area {
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+  }
+}
+
+/* Prevent text selection on mobile unless needed */
+.mobile-no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Smooth scrolling on iOS */
+.mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent double-tap zoom on buttons */
+.mobile-tap {
+  touch-action: manipulation;
+}
+
+/* Responsive typography */
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+  
+  h1, .text-3xl, .text-4xl {
+    font-size: 24px !important;
+  }
+  
+  h2, .text-2xl {
+    font-size: 20px !important;
+  }
+  
+  h3, .text-xl {
+    font-size: 18px !important;
+  }
+  
+  /* Ensure inputs are readable */
+  input, textarea, select {
+    font-size: 16px;
+  }
+  
+  /* Better button sizing */
+  button {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  body {
+    font-size: 15px;
+  }
+  
+  h1, .text-4xl {
+    font-size: 28px !important;
+  }
+  
+  h2, .text-3xl {
+    font-size: 24px !important;
+  }
+}

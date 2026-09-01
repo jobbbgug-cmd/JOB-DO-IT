@@ -13,7 +13,7 @@ export default function Dock() {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 px-6 py-4 shadow-2xl">
+    <div className="hidden lg:block fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 px-6 py-4 shadow-2xl">
       <div className="max-w-full mx-auto flex gap-4 items-center">
         {/* Drag handle */}
         <button className="p-2 hover:bg-gray-800 rounded-lg text-gray-400" title="ลากเพื่อย้าย">

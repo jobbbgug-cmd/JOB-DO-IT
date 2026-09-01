@@ -7,6 +7,7 @@ import { useAuthStore } from '@/app/store/authStore';
 import TopNav from './TopNav';
 import Dock from './Dock';
 import SideRail from './SideRail';
+import MobileNav from './MobileNav';
 import SettingsPanel from './SettingsPanel';
 import FeedbackPanel from './FeedbackPanel';
 import KeyboardShortcutsPanel from './KeyboardShortcutsPanel';
@@ -26,13 +27,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <TopNav />
 
       {/* Main Content with SideRail */}
-      <main className="flex-1 overflow-auto p-6 pr-24 pb-24 bg-gray-900">{children}</main>
+      <main className="flex-1 overflow-auto p-4 sm:p-6 pb-28 md:pb-24 lg:pr-24 lg:pb-24 bg-gray-900">{children}</main>
 
       {/* Dock */}
       <Dock />
 
       {/* SideRail */}
       <SideRail />
+
+      {/* Mobile Navigation */}
+      <MobileNav />
 
       {/* Panels */}
       <SettingsPanel />

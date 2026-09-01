@@ -41,7 +41,7 @@ export default function TimelinePage() {
         <select
           value={view}
           onChange={(e) => setView(e.target.value)}
-          className="px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white text-sm"
+          className="px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white text-sm min-h-[44px]"
         >
           <option value="day">รายวัน</option>
           <option value="week">รายสัปดาห์</option>
@@ -51,7 +51,7 @@ export default function TimelinePage() {
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white text-sm"
+          className="px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white text-sm min-h-[44px]"
         >
           <option value="all">ทั้งหมด</option>
           <option value="today">วันนี้</option>
