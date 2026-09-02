@@ -4,10 +4,15 @@ const publicRoutes = ['/login', '/verify', '/api/auth/login', '/api/auth/registe
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const token = request.cookies.get('token')?.value;
+  const token = request.cookies.get('token')?.value || request.headers.get('Authorization')?.replace('Bearer ', '');
 
   // Allow public routes
   if (publicRoutes.includes(pathname)) {
+    return NextResponse.next();
+  }
+
+  // Allow API routes (they manage auth internally)
+  if (pathname.startsWith('/api/')) {
     return NextResponse.next();
   }
 

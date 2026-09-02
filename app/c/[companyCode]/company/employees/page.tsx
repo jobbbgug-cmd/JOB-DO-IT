@@ -32,6 +32,13 @@ interface CompanyMember {
   color?: string;
 }
 
+interface EmployeeOption {
+  _id: string;
+  name: string;
+  userId?: string;
+  role?: string;
+}
+
 const COLORS = [
   '#0E9384',
   '#E4572E',
@@ -49,6 +56,7 @@ export default function EmployeesPage() {
   const companyCode = params.companyCode as string;
   const { user } = useAuthStore();
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [employeeOptions, setEmployeeOptions] = useState<EmployeeOption[]>([]);
   const [inviteLinks, setInviteLinks] = useState<InviteLink[]>([]);
   const [members, setMembers] = useState<CompanyMember[]>([]);
   const [showAddEmployeeForm, setShowAddEmployeeForm] = useState(false);
@@ -64,9 +72,11 @@ export default function EmployeesPage() {
   const [permissionsScope, setPermissionsScope] = useState<'self' | 'all'>('all');
   const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: '', role: '' });
+  const [linkedUsers, setLinkedUsers] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     fetchEmployees();
+    fetchEmployeeOptions();
     fetchMembers();
   }, [companyCode]);
 
@@ -81,6 +91,22 @@ export default function EmployeesPage() {
       }
     }
   }, []);
+
+  // Populate linked users when employeeOptions load
+  useEffect(() => {
+    if (employeeOptions.length > 0 && employees.length > 0) {
+      const linked: { [key: string]: string } = {};
+      employees.forEach((emp: any) => {
+        if (emp.userId) {
+          const linkedEmployee = employeeOptions.find(opt => opt._id === emp.userId);
+          if (linkedEmployee) {
+            linked[emp.id] = linkedEmployee.name;
+          }
+        }
+      });
+      setLinkedUsers(linked);
+    }
+  }, [employeeOptions, employees]);
 
   const fetchMembers = async () => {
     try {
@@ -99,10 +125,40 @@ export default function EmployeesPage() {
       const response = await fetch(`/api/employees/${companyCode}`);
       if (response.ok) {
         const data = await response.json();
-        setEmployees(data);
+        console.log('Fetched employees:', data);
+        const transformed = data.map((emp: any) => ({
+          ...emp,
+          id: emp.id || emp._id,
+          userId: emp.userId,
+        }));
+        setEmployees(transformed);
+
+        // Load linked users from employees that have userId
+        const linked: { [key: string]: string } = {};
+        data.forEach((emp: any) => {
+          if (emp.userId) {
+            const linkedEmployee = employeeOptions.find(opt => opt._id === emp.userId);
+            if (linkedEmployee) {
+              linked[emp.id || emp._id] = linkedEmployee.name;
+            }
+          }
+        });
+        setLinkedUsers(linked);
       }
     } catch (error) {
       console.error('Failed to fetch employees:', error);
+    }
+  };
+
+  const fetchEmployeeOptions = async () => {
+    try {
+      const response = await fetch(`/api/employees/${companyCode}/list`);
+      if (response.ok) {
+        const data = await response.json();
+        setEmployeeOptions(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch employee options:', error);
     }
   };
 
@@ -186,6 +242,35 @@ export default function EmployeesPage() {
     } catch (error) {
       console.error('Failed to add employee:', error);
       alert('เพิ่มพนักงานไม่สำเร็จ');
+    }
+  };
+
+  const handleLinkUser = async (employeeId: string, userId: string) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      await axios.put(`/api/employees/${companyCode}/${employeeId}`, { userId: userId || null }, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      // Update employees state immediately
+      setEmployees(employees.map(emp =>
+        emp.id === employeeId ? { ...emp, userId: userId || null } : emp
+      ));
+
+      // Update linked users
+      if (userId) {
+        const linkedEmployee = employeeOptions.find(opt => opt._id === userId);
+        if (linkedEmployee) {
+          setLinkedUsers({ ...linkedUsers, [employeeId]: linkedEmployee.name });
+        }
+      } else {
+        const newLinked = { ...linkedUsers };
+        delete newLinked[employeeId];
+        setLinkedUsers(newLinked);
+      }
+    } catch (error) {
+      console.error('Failed to link user:', error);
+      alert('ผูกผู้ใช้ไม่สำเร็จ');
     }
   };
 
@@ -301,6 +386,11 @@ export default function EmployeesPage() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium text-white text-sm truncate">{emp.name}</span>
                   {emp.role && <span className="text-xs text-gray-500 truncate">· {emp.role}</span>}
+                  {linkedUsers[emp.id] && (
+                    <span className="text-xs font-bold" style={{ color: 'var(--routine-ink, #0E9384)' }} title={`ผูกกับ ${linkedUsers[emp.id]}`}>
+                      🔗 {linkedUsers[emp.id]}
+                    </span>
+                  )}
                   {permissionsScope === 'all' && (
                     <span className="text-xs text-cyan-400 px-2 py-1 border border-cyan-400 rounded truncate">จัดการงานเพื่อนร่วมทีมได้ (ยกเว้น %/สถานะ)</span>
                   )}
@@ -310,8 +400,15 @@ export default function EmployeesPage() {
               <select
                 className="h-9 px-3 bg-gray-800 border border-gray-600 rounded text-white text-sm outline-none focus:ring-1 focus:ring-cyan-500 flex-shrink-0"
                 title="ผูกผู้เข้าร่วม"
+                value={emp.userId || ''}
+                onChange={(e) => handleLinkUser(emp.id, e.target.value)}
               >
                 <option value="">ไม่ผูก</option>
+                {employeeOptions.map(opt => (
+                  <option key={opt._id} value={opt._id}>
+                    {opt.name} {opt.role ? `(${opt.role})` : ''}
+                  </option>
+                ))}
               </select>
 
               <select

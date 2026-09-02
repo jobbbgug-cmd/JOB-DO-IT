@@ -37,6 +37,14 @@ export async function POST(req: NextRequest) {
     const emailSent = await sendVerificationEmail(email, verificationCode);
     console.log(`Email sent: ${emailSent}`);
 
+    if (!emailSent) {
+      console.error('Failed to send verification email to:', email);
+      return NextResponse.json(
+        { error: 'ไม่สามารถส่งอีเมลได้ กรุณาตรวจสอบ Email Configuration หรือลองอีกครั้ง' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
       { success: true, email: user.email, message: 'ส่งรหัสยืนยันไปยังอีเมลของคุณแล้ว' },
       { status: 201 }

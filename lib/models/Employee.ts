@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 interface IEmployee extends Document {
   companyCode: string;
   name: string;
+  userId?: string;
   role?: string | null;
   color?: string;
   presence: boolean;
@@ -23,6 +24,7 @@ const employeeSchema = new Schema<IEmployee>(
   {
     companyCode: { type: String, required: true, index: true },
     name: { type: String, required: true },
+    userId: { type: String },
     role: { type: String, default: null },
     color: { type: String, default: '#0E9384' },
     presence: { type: Boolean, default: true },

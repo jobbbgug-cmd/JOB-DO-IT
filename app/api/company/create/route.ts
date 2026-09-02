@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import User from '@/lib/models/User';
+import Company from '@/lib/models/Company';
+import Employee from '@/lib/models/Employee';
 import { jwtVerify } from 'jose';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'secret');
@@ -53,16 +55,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Save to database
+    // Save company to database
+    const existingCompany = await Company.findOne({ companyCode });
+    if (existingCompany) {
+      return NextResponse.json(
+        { error: 'Company code already exists' },
+        { status: 400 }
+      );
+    }
+
+    const company = await Company.create({
+      companyCode,
+      companyName,
+      ownerId: userId,
+    });
+
+    // Auto-add owner as employee
+    await Employee.create({
+      companyCode,
+      name: user.name,
+      userId: user._id.toString(),
+      role: 'เจ้าของ',
+      color: user.color || '#0E9384',
+      presence: true,
+      taskCount: 0,
+      tasks: [],
+    });
+
     return NextResponse.json(
       {
         success: true,
         company: {
-          id: Math.random().toString(36).substring(7),
-          name: companyName,
-          code: companyCode,
+          id: company._id,
+          name: company.companyName,
+          code: company.companyCode,
           owner: user.name,
-          createdAt: new Date().toISOString(),
+          createdAt: company.createdAt.toISOString(),
         },
       },
       { status: 201 }

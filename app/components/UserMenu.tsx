@@ -24,6 +24,7 @@ export default function UserMenu() {
         onClick={() => setIsOpen(!isOpen)}
         className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white text-[10px] font-bold hover:from-blue-500 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center leading-none"
         title="เมนูผู้ใช้"
+        suppressHydrationWarning
       >
         {user?.name?.substring(0, 2).toUpperCase() || 'U'}
       </button>
