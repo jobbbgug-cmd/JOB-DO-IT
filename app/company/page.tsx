@@ -54,9 +54,13 @@ export default function CompanyPage() {
     if (!isCreateFormValid) return;
     setIsLoading(true);
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       const response = await fetch('/api/company/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ companyName, companyCode }),
       });
 

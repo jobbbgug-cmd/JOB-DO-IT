@@ -20,7 +20,8 @@ export async function POST(request: NextRequest) {
     }
 
     // ตรวจสอบ authorization
-    const token = request.cookies.get('token')?.value;
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '') || request.cookies.get('token')?.value;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },

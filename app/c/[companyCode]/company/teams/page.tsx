@@ -4,6 +4,14 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 
+interface Employee {
+  id: string;
+  name: string;
+  userId?: string;
+  color?: string;
+  role?: string;
+}
+
 interface Team {
   id: string;
   name: string;
@@ -17,6 +25,7 @@ export default function TeamsPage() {
   const router = useRouter();
   const companyCode = params.companyCode as string;
   const [teams, setTeams] = useState<Team[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [teamForm, setTeamForm] = useState({
@@ -26,6 +35,7 @@ export default function TeamsPage() {
 
   useEffect(() => {
     fetchTeams();
+    fetchEmployees();
   }, [companyCode]);
 
   const fetchTeams = async () => {
@@ -37,6 +47,22 @@ export default function TeamsPage() {
       }
     } catch (error) {
       console.error('Failed to fetch teams:', error);
+    }
+  };
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await fetch(`/api/employees/${companyCode}`);
+      if (response.ok) {
+        const data = await response.json();
+        const transformed = data.map((emp: any) => ({
+          ...emp,
+          id: emp.id || emp._id,
+        }));
+        setEmployees(transformed);
+      }
+    } catch (error) {
+      console.error('Failed to fetch employees:', error);
     }
   };
 
@@ -83,13 +109,26 @@ export default function TeamsPage() {
               key={team.id}
               className="border border-gray-700 rounded-lg p-4 bg-gray-800/30 hover:bg-gray-800/50 transition-colors cursor-pointer flex flex-col"
             >
-              <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="flex items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-white">{team.name}</h3>
                   {team.isDefault && (
                     <span className="text-xs font-bold text-cyan-400 bg-cyan-400/10 px-2 py-1 rounded flex-shrink-0">
                       ทีมเริ่มต้น
                     </span>
+                  )}
+                </div>
+                <div className="flex gap-2 text-xs flex-shrink-0">
+                  <button className="text-cyan-400 hover:text-cyan-300 transition-colors">
+                    แก้ไขสมาชิก
+                  </button>
+                  <button className="text-cyan-400 hover:text-cyan-300 transition-colors">
+                    แก้ไข
+                  </button>
+                  {!team.isDefault && (
+                    <button className="text-red-400 hover:text-red-300 transition-colors">
+                      ลบทีม
+                    </button>
                   )}
                 </div>
               </div>
@@ -100,25 +139,41 @@ export default function TeamsPage() {
                 </p>
               )}
 
-              <div className="text-xs text-gray-500 mb-4 flex-grow">
-                {team.memberCount === 0 ? (
-                  <p>ยังไม่มีสมาชิกในทีมนี้</p>
+              <div className="flex-grow mb-3">
+                {team.isDefault ? (
+                  // Default team - show linked employees
+                  (() => {
+                    const linkedMembers = employees.filter(emp => emp.userId);
+                    return linkedMembers.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {linkedMembers.map(member => (
+                          <div
+                            key={member.id}
+                            className="flex items-center gap-2 bg-gray-700/50 rounded px-2 py-1"
+                          >
+                            <div
+                              className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
+                              style={{ backgroundColor: member.color || '#0E9384' }}
+                            >
+                              {member.name.substring(0, 2).toUpperCase()}
+                            </div>
+                            <span className="text-xs text-gray-300">{member.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-500">ยังไม่มีสมาชิกในทีมนี้</p>
+                    );
+                  })()
                 ) : (
-                  <p>สมาชิก {team.memberCount} คน</p>
-                )}
-              </div>
-
-              <div className="flex gap-2 text-xs">
-                <button className="text-cyan-400 hover:text-cyan-300 transition-colors">
-                  แก้ไขสมาชิก
-                </button>
-                <button className="text-cyan-400 hover:text-cyan-300 transition-colors">
-                  แก้ไข
-                </button>
-                {!team.isDefault && (
-                  <button className="text-red-400 hover:text-red-300 transition-colors">
-                    ลบทีม
-                  </button>
+                  // Other teams - show member count
+                  <div className="text-xs text-gray-500">
+                    {team.memberCount === 0 ? (
+                      <p>ยังไม่มีสมาชิกในทีมนี้</p>
+                    ) : (
+                      <p>สมาชิก {team.memberCount} คน</p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
