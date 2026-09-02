@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
+import { useAuthStore } from '@/app/store/authStore';
 
 interface Employee {
   id: string;
@@ -10,6 +11,7 @@ interface Employee {
   role: string;
   presence: boolean;
   color?: string;
+  enabled?: boolean;
 }
 
 interface InviteLink {
@@ -45,6 +47,7 @@ export default function EmployeesPage() {
   const params = useParams();
   const router = useRouter();
   const companyCode = params.companyCode as string;
+  const { user } = useAuthStore();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [inviteLinks, setInviteLinks] = useState<InviteLink[]>([]);
   const [members, setMembers] = useState<CompanyMember[]>([]);
@@ -57,11 +60,27 @@ export default function EmployeesPage() {
     role: '',
     color: COLORS[0],
   });
+  const [openPermissionsId, setOpenPermissionsId] = useState<string | null>(null);
+  const [permissionsScope, setPermissionsScope] = useState<'self' | 'all'>('all');
+  const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', role: '' });
 
   useEffect(() => {
     fetchEmployees();
     fetchMembers();
   }, [companyCode]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('user');
+    if (stored) {
+      try {
+        const userData = JSON.parse(stored);
+        console.log('Loaded user from localStorage:', userData);
+      } catch (e) {
+        console.error('Failed to parse user data:', e);
+      }
+    }
+  }, []);
 
   const fetchMembers = async () => {
     try {
@@ -138,6 +157,13 @@ export default function EmployeesPage() {
     return `ใช้แล้ว ${usedCount} คน · ไม่จำกัด`;
   };
 
+  const handleToggleEmployeeStatus = (empId: string, currentStatus: boolean) => {
+    setEmployees(employees.map(emp =>
+      emp.id === empId ? { ...emp, enabled: !currentStatus } : emp
+    ));
+    console.log(`Employee ${empId} toggled to ${!currentStatus}`);
+  };
+
   const handleAddEmployee = async () => {
     if (!employeeForm.name.trim()) {
       alert('กรุณากรอกชื่อพนักงาน');
@@ -181,37 +207,6 @@ export default function EmployeesPage() {
           สร้างพนักงานได้อิสระ แล้วค่อยผูกกับผู้เข้าร่วม (บัญชี) ภายหลังถ้าต้องการ
         </p>
 
-        {/* Employees List */}
-        <div className="space-y-3">
-          {employees.map((emp) => (
-            <div
-              key={emp.id}
-              className="flex items-center gap-3 p-3 bg-gray-800/30 border border-gray-700 rounded-lg hover:bg-gray-800/50 transition-colors"
-            >
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                style={{ backgroundColor: emp.color || '#0E9384' }}
-              >
-                {emp.name.substring(0, 2).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-white text-sm truncate">{emp.name}</span>
-                  {emp.role && <span className="text-xs text-gray-500 truncate">· {emp.role}</span>}
-                </div>
-              </div>
-              <div className="flex gap-2 flex-shrink-0">
-                <button className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors">
-                  แก้ไข
-                </button>
-                <button className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors">
-                  ปิดใช้งาน
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Invite Section */}
       <div className="bg-teal-900/20 border border-teal-600 rounded-lg p-6">
@@ -287,6 +282,211 @@ export default function EmployeesPage() {
       <div className="space-y-4">
         <h3 className="font-semibold text-white text-sm">สมาชิกบริษัท</h3>
 
+        {/* Employees List */}
+<div className="space-y-2">
+          {employees.map((emp, idx) => (
+            <div
+              key={emp.id || idx}
+              className={`rounded-lg ${emp.enabled === false ? 'opacity-50 bg-slate-950/40' : ''}`}
+            >
+              <div className="flex items-center gap-2 p-3 flex-wrap">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0"
+                style={{ backgroundColor: emp.color || '#0E9384' }}
+              >
+                {emp.name.substring(0, 2).toUpperCase()}
+              </div>
+
+              <div className="flex-1 min-w-[100px]">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-medium text-white text-sm truncate">{emp.name}</span>
+                  {emp.role && <span className="text-xs text-gray-500 truncate">· {emp.role}</span>}
+                  {permissionsScope === 'all' && (
+                    <span className="text-xs text-cyan-400 px-2 py-1 border border-cyan-400 rounded truncate">จัดการงานเพื่อนร่วมทีมได้ (ยกเว้น %/สถานะ)</span>
+                  )}
+                </div>
+              </div>
+
+              <select
+                className="h-9 px-3 bg-gray-800 border border-gray-600 rounded text-white text-sm outline-none focus:ring-1 focus:ring-cyan-500 flex-shrink-0"
+                title="ผูกผู้เข้าร่วม"
+              >
+                <option value="">ไม่ผูก</option>
+              </select>
+
+              <select
+                defaultValue="lanes"
+                className="h-9 px-3 bg-gray-800 border border-gray-600 rounded text-white text-sm outline-none focus:ring-1 focus:ring-cyan-500 flex-shrink-0"
+              >
+                <option value="lanes">รูทีน+จิกปะทะ</option>
+                <option value="queue">คิวงาน</option>
+              </select>
+
+              <div className="relative">
+                <button
+                  onClick={() => setOpenPermissionsId(openPermissionsId === emp.id ? null : emp.id)}
+                  className={`px-3 h-9 text-sm font-medium rounded transition-colors flex-shrink-0 ${
+                    permissionsScope === 'all'
+                      ? 'bg-white hover:bg-gray-100 text-gray-800'
+                      : 'bg-gray-800 hover:bg-gray-700 text-white'
+                  }`}
+                >
+                  สิทธิ์
+                </button>
+
+                {openPermissionsId === emp.id && (
+                  <div className="absolute right-0 mt-2 w-80 bg-slate-950 border border-gray-700 rounded-lg shadow-xl z-50 p-4 space-y-4">
+                    <div className="text-xs text-gray-400">ทุกคนได้เท่ากันเสมอ ไม่ขึ้นกับตัวเลือกด้านล่าง</div>
+
+                    <ul className="space-y-2 text-xs">
+                      <li className="flex flex-col gap-2">
+                        <span><b className="text-white">งานที่สร้างเอง และยังไม่ได้ยกให้ใคร</b></span>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-green-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                            <span>เพิ่ม แก้ไข ลบ ลากย้าย ปรับ%/สถานะ ได้ทั้งหมด</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-red-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                            <span>ยกให้เพื่อนร่วมทีม — ต้องมีสิทธิ์ระดับ "ทุกอย่าง" เท่านั้น</span>
+                          </div>
+                        </div>
+                      </li>
+                      <li className="flex flex-col gap-2">
+                        <span><b className="text-white">งานที่คนอื่นมอบมาให้ถือ</b></span>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-green-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                            <span>ปรับ % ความคืบหน้า เปลี่ยนสถานะ</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-red-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                            <span>แก้ไข ลบ ส่งต่อ (ระดับ "ทุกอย่าง" ทำได้)</span>
+                          </div>
+                        </div>
+                      </li>
+                    </ul>
+
+                    <div className="text-xs text-gray-400 mt-4">จัดการ "งานของเพื่อนร่วมทีม" ได้แค่ไหน</div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setPermissionsScope('self')}
+                        className={`flex-1 py-2 px-3 rounded text-xs font-medium transition-colors ${
+                          permissionsScope === 'self'
+                            ? 'bg-cyan-600 text-white'
+                            : 'bg-gray-800 text-gray-300 hover:bg-gray-800'
+                        }`}
+                      >
+                        เฉพาะตัวเอง
+                      </button>
+                      <button
+                        onClick={() => setPermissionsScope('all')}
+                        className={`flex-1 py-2 px-3 rounded text-xs font-medium transition-colors ${
+                          permissionsScope === 'all'
+                            ? 'bg-cyan-600 text-white'
+                            : 'bg-gray-800 text-gray-300 hover:bg-gray-800'
+                        }`}
+                      >
+                        ทุกอย่าง
+                      </button>
+                    </div>
+
+                    <ul className="space-y-2 text-xs">
+                      {permissionsScope === 'self' && (
+                        <li className="flex flex-col gap-2">
+                          <span><b className="text-white">เฉพาะตัวเอง</b></span>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1 text-red-400">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                              <span>เพิ่ม แก้ไข ลบ ลากย้าย มอบหมาย ปรับ%/สถานะ</span>
+                            </div>
+                          </div>
+                        </li>
+                      )}
+                      {permissionsScope === 'all' && (
+                        <li className="flex flex-col gap-2">
+                          <span><b className="text-white">ทุกอย่าง</b></span>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1 text-green-400">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                              <span>เพิ่ม แก้ไข ลบ ลากย้าย มอบหมาย (ทุกใบในทีมตัวเอง)</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-red-400">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                              <span>ปรับ % / เปลี่ยนสถานะแทนคนอื่น</span>
+                            </div>
+                          </div>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => {
+                  if (editingEmployeeId === emp.id) {
+                    setEditingEmployeeId(null);
+                    setEditForm({ name: '', role: '' });
+                  } else {
+                    setEditingEmployeeId(emp.id);
+                    setEditForm({ name: emp.name, role: emp.role || '' });
+                  }
+                }}
+                className="px-3 h-9 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium rounded transition-colors flex-shrink-0"
+              >
+                {editingEmployeeId === emp.id ? 'ยกเลิก' : 'แก้ไข'}
+              </button>
+
+              <button
+                onClick={() => handleToggleEmployeeStatus(emp.id, emp.enabled !== false)}
+                className="px-3 h-9 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium rounded transition-colors flex-shrink-0"
+              >
+                {emp.enabled === false ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
+              </button>
+              </div>
+
+              {editingEmployeeId === emp.id && (
+                <div className="flex flex-wrap gap-2 p-3">
+                  <label className="flex flex-col gap-1 flex-1 min-w-[160px] text-xs font-semibold text-gray-400">
+                    ชื่อ
+                    <input
+                      type="text"
+                      placeholder="ชื่อพนักงาน"
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      className="px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white text-xs outline-none focus:ring-1 focus:ring-cyan-500"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 flex-1 min-w-[160px] text-xs font-semibold text-gray-400">
+                    ตำแหน่ง
+                    <input
+                      type="text"
+                      placeholder="เช่น กราฟิก (ไม่บังคับ)"
+                      value={editForm.role}
+                      onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                      className="px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white text-xs outline-none focus:ring-1 focus:ring-cyan-500"
+                    />
+                  </label>
+                  <button
+                    onClick={() => {
+                      console.log('บันทึก:', editForm);
+                      setEditingEmployeeId(null);
+                      setEditForm({ name: '', role: '' });
+                    }}
+                    className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-medium rounded transition-colors h-10 self-end"
+                  >
+                    บันทึก
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+
         <div className="space-y-3">
           {members.map((member) => (
             <div
@@ -314,10 +514,10 @@ export default function EmployeesPage() {
                 <div className="text-xs text-gray-500 truncate">{member.email}</div>
               </div>
               <div className="flex gap-2 flex-shrink-0">
-                <button className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors">
+                <button className="px-2 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded transition-colors">
                   แก้ไข
                 </button>
-                <button className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors">
+                <button className="px-2 py-1 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded transition-colors">
                   {member.enabled ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
                 </button>
               </div>

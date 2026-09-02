@@ -4,6 +4,8 @@ interface INote extends Document {
   companyCode: string;
   title: string;
   content: string;
+  links?: string;
+  color?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,6 +24,14 @@ const noteSchema = new Schema<INote>(
     content: {
       type: String,
       default: '',
+    },
+    links: {
+      type: String,
+      default: '',
+    },
+    color: {
+      type: String,
+      default: 'rgb(254, 243, 160)',
     },
   },
   { timestamps: true }

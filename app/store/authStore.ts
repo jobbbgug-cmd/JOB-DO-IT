@@ -21,8 +21,23 @@ interface AuthStore {
   setUser: (user: User | null) => void;
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
-  user: null,
+export const useAuthStore = create<AuthStore>((set) => {
+  const getInitialUser = () => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch (e) {
+          return null;
+        }
+      }
+    }
+    return null;
+  };
+
+  return {
+  user: getInitialUser(),
   token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
   loading: false,
   error: null,
@@ -32,10 +47,17 @@ export const useAuthStore = create<AuthStore>((set) => ({
     try {
       const response = await axios.post('/api/auth/login', { email, password });
       const { user, token } = response.data;
-      localStorage.setItem('token', token);
+      console.log('✅ Login response:', { user, token });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        console.log('✅ Token and user saved to localStorage');
+      }
       set({ user, token, error: null });
+      console.log('✅ User state updated in store');
       return { success: true };
     } catch (error: any) {
+      console.error('❌ Login error:', error);
       const data = error.response?.data;
       if (data?.needsVerification) {
         set({ error: 'Email not verified' });
@@ -54,7 +76,10 @@ export const useAuthStore = create<AuthStore>((set) => ({
     try {
       const response = await axios.post('/api/auth/register', { name, email, password, role });
       const { user, token } = response.data;
-      localStorage.setItem('token', token);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+      }
       set({ user, token, error: null });
       return { success: true };
     } catch (error: any) {
@@ -67,9 +92,13 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   logout: () => {
-    localStorage.removeItem('token');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
     set({ user: null, token: null });
   },
 
   setUser: (user) => set({ user }),
-}));
+  };
+});

@@ -4,13 +4,13 @@ import './globals.css';
 
 const montserrat = Montserrat({
   variable: '--font-montserrat',
-  weight: ['800'],
+  weight: ['400', '600'],
   subsets: ['latin'],
 });
 
 const kanit = Kanit({
   variable: '--font-kanit',
-  weight: ['500'],
+  weight: ['400'],
   subsets: ['thai'],
 });
 
@@ -29,7 +29,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th">
-      <body className={`${montserrat.variable} ${kanit.variable} antialiased`}>
+      <body className={`${montserrat.variable} ${kanit.variable} antialiased bg-slate-950`}>
         {children}
       </body>
     </html>

@@ -45,17 +45,17 @@ export default function FeedbackPanel() {
 
       {/* Feedback Panel */}
       <div
-        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-gray-800 border border-gray-700 rounded-xl shadow-2xl z-50 max-h-[90vh] overflow-y-auto"
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-1rem)] sm:w-full max-w-2xl bg-gray-800 border border-gray-700 rounded-xl shadow-2xl z-50 max-h-[90vh] overflow-y-auto flex flex-col"
         role="dialog"
         aria-modal="true"
         aria-label="แจ้งปัญหา / ข้อเสนอแนะ"
       >
         {/* Header */}
-        <header className="flex items-center justify-between gap-4 px-6 py-4 border-b border-gray-700 sticky top-0 bg-gray-800">
-          <h1 className="text-lg font-bold text-white">แจ้งปัญหา / ข้อเสนอแนะ</h1>
+        <header className="flex items-center justify-between gap-4 px-4 py-2 sticky top-0 bg-gray-800 flex-shrink-0">
+          <h1 className="text-base font-bold text-white">แจ้งปัญหา / ข้อเสนอแนะ</h1>
           <button
             onClick={closeFeedback}
-            className="p-1.5 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-white transition-colors"
+            className="p-1.5 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-white transition-colors flex-shrink-0"
             aria-label="ปิด"
           >
             <svg
@@ -73,30 +73,29 @@ export default function FeedbackPanel() {
         </header>
 
         {/* Content */}
-        <div className="px-6 py-4 space-y-4">
+        <div className="px-4 pt-0 pb-3 space-y-3 flex flex-col flex-1 overflow-y-auto">
           {/* Lead Text */}
-          <p className="text-gray-300">
+          <p className="text-gray-300 text-xs">
             เจอบั๊ก ใช้แล้วติดขัด หรืออยากได้อะไรเพิ่ม — เล่าให้ฟังได้เลย
           </p>
 
           {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">รายละเอียด</label>
+          <div className="flex-1 flex flex-col">
+            <label className="block text-xs font-medium text-gray-300 mb-2">รายละเอียด</label>
             <textarea
               placeholder="เกิดอะไรขึ้น / อยากให้เป็นแบบไหน…"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none resize-none"
-              rows={5}
+              className="flex-1 w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none resize-none"
             />
           </div>
 
           {/* File Attachment */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-xs font-medium text-gray-300 mb-2">
               แนบไฟล์ (สกรีนช็อต ฯลฯ — ไม่เกิน 3 ไฟล์ ไฟล์ละ 5MB)
             </label>
-            <label className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-700 hover:bg-gray-600 border-2 border-dashed border-gray-600 hover:border-gray-500 rounded-lg cursor-pointer transition-colors text-gray-300 hover:text-white font-medium">
+            <label className="flex items-center justify-start gap-2 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 border-2 border-dashed border-gray-600 hover:border-gray-500 rounded-lg cursor-pointer transition-colors text-gray-300 hover:text-white text-sm font-medium w-fit">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -140,7 +139,7 @@ export default function FeedbackPanel() {
           </div>
 
           {/* Note */}
-          <p className="text-xs text-gray-400">
+          <p className="text-[11px] text-gray-500">
             ระบบจะแนบชื่อผู้ส่ง บริษัท และหน้าที่เปิดอยู่ไปด้วย เพื่อช่วยให้ตามเรื่องได้เร็วขึ้น
           </p>
 
@@ -148,7 +147,7 @@ export default function FeedbackPanel() {
           <button
             onClick={handleSubmit}
             disabled={!description.trim() || isSubmitting}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
           >
             {isSubmitting ? 'กำลังส่ง...' : 'ส่งเรื่อง'}
           </button>

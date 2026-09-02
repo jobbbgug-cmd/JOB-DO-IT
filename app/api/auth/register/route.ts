@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       name,
       email,
       password,
-      role: role || 'dev',
+      role: 'owner',
       isVerified: false,
       verificationCode,
       verificationCodeExpiry,

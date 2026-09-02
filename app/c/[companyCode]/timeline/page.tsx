@@ -19,7 +19,10 @@ export default function TimelinePage() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filter, setFilter] = useState('all');
-  const [view, setView] = useState('month');
+  const [view, setView] = useState('week');
+  const [viewType, setViewType] = useState('overview');
+  const [showAll, setShowAll] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -36,28 +39,96 @@ export default function TimelinePage() {
         <p className="text-gray-400 mt-2">โปรเจคและงานของทั้งทีมเรียงตามวันเสร็จ</p>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-2 flex-wrap">
-        <select
-          value={view}
-          onChange={(e) => setView(e.target.value)}
-          className="px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white text-sm min-h-[44px]"
+      {/* Timeline Tools - Single Line */}
+      <div className="flex gap-2 items-center overflow-x-auto pb-2 whitespace-nowrap scrollbar-hide">
+        {/* View Type Buttons */}
+        <button
+          onClick={() => setViewType('overview')}
+          className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+            viewType === 'overview'
+              ? 'bg-cyan-600 text-white'
+              : 'bg-gray-700 text-gray-400 hover:text-white'
+          }`}
+          title="งานทั้งหมดเรียงตามวันเสร็จ ไม่แบ่งตามคน"
         >
-          <option value="day">รายวัน</option>
-          <option value="week">รายสัปดาห์</option>
-          <option value="month">รายเดือน</option>
-        </select>
+          ภาพรวม
+        </button>
+        <button
+          onClick={() => setViewType('employee')}
+          className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+            viewType === 'employee'
+              ? 'bg-cyan-600 text-white'
+              : 'bg-gray-700 text-gray-400 hover:text-white'
+          }`}
+          title="แบ่งตามพนักงาน → โปรเจค → งาน"
+        >
+          รายพนักงาน
+        </button>
 
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white text-sm min-h-[44px]"
+        {/* Time Scale Buttons */}
+        <button
+          onClick={() => setView('day')}
+          className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+            view === 'day'
+              ? 'bg-cyan-600 text-white'
+              : 'bg-gray-700 text-gray-400 hover:text-white'
+          }`}
         >
-          <option value="all">ทั้งหมด</option>
-          <option value="today">วันนี้</option>
-          <option value="week">สัปดาห์นี้</option>
-          <option value="overdue">ล้นวัน</option>
-        </select>
+          รายวัน
+        </button>
+        <button
+          onClick={() => setView('week')}
+          className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+            view === 'week'
+              ? 'bg-cyan-600 text-white'
+              : 'bg-gray-700 text-gray-400 hover:text-white'
+          }`}
+        >
+          รายสัปดาห์
+        </button>
+        <button
+          onClick={() => setView('month')}
+          className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+            view === 'month'
+              ? 'bg-cyan-600 text-white'
+              : 'bg-gray-700 text-gray-400 hover:text-white'
+          }`}
+        >
+          รายเดือน
+        </button>
+
+        {/* Action Buttons */}
+        <button className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded font-medium transition-colors" title="เลื่อนไปวันนี้">
+          วันนี้
+        </button>
+        <button disabled className="px-3 py-1.5 bg-gray-800 text-gray-500 text-xs rounded font-medium opacity-50 cursor-not-allowed" title="กาง/พับงานในทุกโปรเจคพร้อมกัน">
+          กางงานในโปรเจค
+        </button>
+        <button className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded font-medium transition-colors" title="งานรูทีนที่ไม่ได้กำหนดช่วงวัน">
+          งานรูทีน (+1)
+        </button>
+        <button
+          onClick={() => setShowAll(!showAll)}
+          className={`px-3 py-1.5 text-xs rounded font-medium transition-colors ${
+            showAll
+              ? 'bg-cyan-600 text-white'
+              : 'bg-gray-700 hover:bg-gray-600 text-white'
+          }`}
+          title="แสดงทั้งหมด"
+        >
+          แสดงทั้งหมด
+        </button>
+        <button
+          onClick={() => setIsFullscreen(!isFullscreen)}
+          className={`px-3 py-1.5 text-xs rounded font-medium transition-colors ${
+            isFullscreen
+              ? 'bg-cyan-600 text-white'
+              : 'bg-gray-700 hover:bg-gray-600 text-white'
+          }`}
+          title="แสดงตารางเต็มหน้าจอ"
+        >
+          เต็มจอ
+        </button>
       </div>
 
       {/* Timeline Content */}

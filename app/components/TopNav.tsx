@@ -46,7 +46,7 @@ export default function TopNav() {
   const activeTab = getActiveTab();
 
   return (
-    <nav className="bg-gray-800 border-b border-gray-700 h-16 flex items-center px-6 gap-6 sticky top-0 z-40">
+    <nav className="bg-gray-800 border-b border-gray-700 h-14 flex items-center px-6 gap-6 sticky top-0 z-40">
       {/* Brand */}
       <div className="flex items-center gap-2 flex-shrink-0">
         <Image src="/icon.png" alt="JOB DO IT" width={32} height={32} className="h-8 w-8" />

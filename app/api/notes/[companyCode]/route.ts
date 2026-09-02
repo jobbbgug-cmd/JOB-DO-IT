@@ -16,6 +16,8 @@ export async function GET(
       id: note._id?.toString() || '',
       title: note.title,
       content: note.content,
+      links: note.links || '',
+      color: note.color || 'rgb(254, 243, 160)',
       createdAt: note.createdAt,
       updatedAt: note.updatedAt,
     }));
@@ -34,7 +36,9 @@ export async function POST(
   try {
     await connectDB();
     const { companyCode } = await params;
-    const { title, content } = await req.json();
+    const { title, content, links, color } = await req.json();
+
+    console.log('🔵 POST /api/notes - Request data:', { companyCode, title, content, links, color });
 
     if (!title) {
       return NextResponse.json({ error: 'Note title required' }, { status: 400 });
@@ -44,17 +48,32 @@ export async function POST(
       companyCode,
       title,
       content: content || '',
+      links: links || '',
+      color: color || 'rgb(254, 243, 160)',
     });
 
-    return NextResponse.json({
+    console.log('✅ Note created in DB:', {
       id: note._id.toString(),
       title: note.title,
       content: note.content,
+      links: note.links,
+      color: note.color
+    });
+
+    const response = {
+      id: note._id.toString(),
+      title: note.title,
+      content: note.content,
+      links: note.links || '',
+      color: note.color || 'rgb(254, 243, 160)',
       createdAt: note.createdAt,
       updatedAt: note.updatedAt,
-    });
+    };
+
+    console.log('🟢 Response sent to client:', response);
+    return NextResponse.json(response);
   } catch (error) {
-    console.error('Failed to create note:', error);
+    console.error('❌ Failed to create note:', error);
     return NextResponse.json({ error: 'Failed to create note' }, { status: 500 });
   }
 }
