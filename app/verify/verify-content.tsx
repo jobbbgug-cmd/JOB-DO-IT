@@ -45,9 +45,11 @@ export default function VerifyContent() {
     setError('');
     try {
       await axios.post('/api/auth/resend-code', { email });
-      alert('ส่งรหัสใหม่เรียบร้อย ตรวจสอบอีเมลของคุณ');
+      alert('✅ ส่งรหัสยืนยันสำเร็จ\n\nตรวจสอบอีเมลของคุณ\nถ้าไม่พบให้ดูในโฟลเดอร์ Spam หรือ Junk');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'ส่งรหัสใหม่ไม่สำเร็จ');
+      const errorMsg = err.response?.data?.error || 'ส่งรหัสยืนยันไม่สำเร็จ';
+      alert(`❌ ${errorMsg}\n\nกรุณากดปุ่ม "ส่งรหัสใหม่" เพื่อลองอีกครั้ง`);
+      setError(errorMsg);
     } finally {
       setResendLoading(false);
     }
