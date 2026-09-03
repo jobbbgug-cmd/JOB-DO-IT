@@ -16,7 +16,7 @@ const getTabsWithCompany = (companyCode: string) => {
     { name: 'โปรเจค', href: companyCode ? `${prefix}/projects` : '/projects', icon: '📁' },
     { name: 'ไทม์ไลน์', href: companyCode ? `${prefix}/timeline` : '/timeline', icon: '📈' },
     { name: 'โน้ต', href: companyCode ? `${prefix}/notes` : '/notes', icon: '📝' },
-    { name: 'บริษัท', href: companyCode ? `${prefix}/company/employees` : '/company', icon: '🏢' },
+    { name: 'บริษัท', href: companyCode ? `${prefix}/company` : '/company', icon: '🏢' },
   ];
 };
 

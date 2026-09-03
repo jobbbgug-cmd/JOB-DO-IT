@@ -5,7 +5,7 @@ interface IUser extends Document {
   name: string;
   email: string;
   password: string;
-  role: 'owner' | 'admin' | 'dev' | 'tester' | 'lead';
+  role: 'owner' | 'employees';
   avatar?: string;
   department?: string;
   companyCode?: string;
@@ -39,8 +39,8 @@ const userSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ['owner', 'admin', 'dev', 'tester', 'lead'],
-      default: 'dev',
+      enum: ['owner', 'employees'],
+      default: 'employees',
     },
     avatar: String,
     department: String,

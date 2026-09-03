@@ -1,287 +1,593 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-
-interface Team {
-  id: string;
-  name: string;
-  description?: string | null;
-  memberCount: number;
-  isDefault: boolean;
-}
 
 interface Employee {
   id: string;
   name: string;
-  userId?: string;
-  color?: string;
-  role?: string;
+  role: string;
+  presence: boolean;
+  taskCount: number;
+  tasks: Array<{
+    id: string;
+    title: string;
+    progress: number;
+    lane: 'routine' | 'urgent';
+    time: string;
+    assignee: string;
+  }>;
 }
 
-interface Task {
-  id: string;
-  title: string;
-  description?: string | null;
-  status: 'todo' | 'in-progress' | 'in-review' | 'done';
-  priority: 'urgent' | 'high' | 'medium' | 'low';
-  assignee?: string | null;
-  dueDate?: string | null;
+interface CardSize {
+  width: number;
+  height: number;
 }
 
-interface TeamMember {
-  id: string;
-  name: string;
-  role?: string;
-  x?: number;
-  y?: number;
+interface CardPosition {
+  x: number;
+  y: number;
 }
-
-const STATUS_COLORS: { [key: string]: string } = {
-  'todo': '#5B7FB0',
-  'in-progress': '#C98A0E',
-  'in-review': '#8A5CF6',
-  'done': '#0E9384',
-};
-
-const PRIORITY_COLORS: { [key: string]: string } = {
-  'urgent': '#E4572E',
-  'high': '#C98A0E',
-  'medium': '#5B7FB0',
-  'low': '#0E9384',
-};
-
-const getInitials = (name?: string) => {
-  if (!name) return '?';
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-};
 
 export default function TeamBoardPage() {
   const router = useRouter();
   const params = useParams();
   const companyCode = params.companyCode as string;
   const teamId = params.teamId as string;
-  const [team, setTeam] = useState<Team | null>(null);
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [zoom, setZoom] = useState(1);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  const [employees, setEmployees] = useState<Employee[]>([
+    {
+      id: '157ac5bd-a9d5-46f8-a886-fef30626fef3',
+      name: 'jobbbgug',
+      role: 'เจ้าของบริษัท',
+      presence: true,
+      taskCount: 1,
+      tasks: [
+        {
+          id: 'task-1',
+          title: 'งานตัวอย่าง — ลากย้ายได้ กดเปิดดูรายละเอียด ลบทิ้งได้เลย',
+          progress: 0,
+          lane: 'routine',
+          time: '13:36',
+          assignee: 'jobbbgug',
+        },
+      ],
+    },
+  ]);
+
+  const [cardSizes, setCardSizes] = useState<Record<string, CardSize>>({});
+  const [cardPositions, setCardPositions] = useState<Record<string, CardPosition>>({});
+  const [resizing, setResizing] = useState<string | null>(null);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, side: '' });
+  const [taskDragging, setTaskDragging] = useState<{ empId: string; taskId: string; sourceLane: 'routine' | 'urgent' } | null>(null);
+  const [hoveredLane, setHoveredLane] = useState<'routine' | 'urgent' | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const cardRefs = useRef<Record<string, HTMLDivElement>>({});
+  const [zoom] = useState(100);
+
+  const draggedTask = taskDragging
+    ? employees.find((e) => e.id === taskDragging.empId)?.tasks.find((t) => t.id === taskDragging.taskId)
+    : null;
+
+  const cardPositionsRef = useRef(cardPositions);
+  const dragStartRef = useRef(dragStart);
+
+  useEffect(() => {
+    cardPositionsRef.current = cardPositions;
+    dragStartRef.current = dragStart;
+  }, [cardPositions, dragStart]);
+
+  useEffect(() => {
+    if (employees.length > 0 && isHydrated) {
+      saveEmployees();
+    }
+  }, [employees]);
 
   useEffect(() => {
     const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!storedToken) {
       router.push('/login');
     } else {
-      fetchTeamData();
+      setIsHydrated(true);
+      fetchEmployees();
     }
   }, [router, companyCode, teamId]);
 
-  const fetchTeamData = async () => {
+  const fetchEmployees = async () => {
     try {
-      // Fetch team info from the teams API
-      const teamsResponse = await fetch(`/api/company/${companyCode}/teams`);
-      if (teamsResponse.ok) {
-        const teams = await teamsResponse.json();
-        console.log('Teams fetched:', teams);
-        console.log('Looking for teamId:', teamId);
-        const currentTeam = teams.find((t: Team) => t.id === teamId);
-        console.log('Found team:', currentTeam);
-        if (currentTeam) {
-          setTeam(currentTeam);
-        } else {
-          console.warn('Team not found');
+      const response = await fetch(`/api/employees/${companyCode}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.length > 0) {
+          setEmployees(data);
+          return;
         }
       }
-
-      // Fetch employees for linked members
-      const empResponse = await fetch(`/api/employees/${companyCode}`);
-      if (empResponse.ok) {
-        const data = await empResponse.json();
-        const transformed = data.map((emp: any) => ({
-          ...emp,
-          id: emp.id || emp._id,
-        }));
-        setEmployees(transformed);
-      }
-
-      // Fetch tasks
-      const tasksResponse = await fetch(`/api/tasks/${companyCode}`);
-      if (tasksResponse.ok) {
-        const data = await tasksResponse.json();
-        setTasks(data);
-      }
-
-      setLoading(false);
     } catch (error) {
-      console.error('Failed to fetch team data:', error);
-      setLoading(false);
+      console.error('Failed to fetch employees:', error);
+    }
+
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(`employees_${companyCode}`);
+      if (stored) {
+        try {
+          setEmployees(JSON.parse(stored));
+        } catch (e) {
+          console.error('Failed to parse stored employees:', e);
+        }
+      }
     }
   };
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  }
+  const saveEmployees = async () => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`employees_${companyCode}`, JSON.stringify(employees));
+      }
+    } catch (error) {
+      console.error('Failed to save employees:', error);
+    }
+  };
 
-  if (!team) {
-    return <div className="flex items-center justify-center h-screen">Team not found</div>;
-  }
+  const handleDragStart = (e: React.MouseEvent, empId: string) => {
+    e.preventDefault();
+    setDragging(empId);
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleResizeStart = (e: React.MouseEvent, empId: string, side: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizing(empId);
+    setResizeStart({ x: e.clientX, y: e.clientY, side: side });
+  };
+
+  const handleTaskDragStart = (e: React.MouseEvent, empId: string, taskId: string, sourceLane: 'routine' | 'urgent') => {
+    e.preventDefault();
+    e.stopPropagation();
+    setMousePos({ x: e.clientX, y: e.clientY });
+    setTaskDragging({ empId, taskId, sourceLane });
+  };
+
+  const handleTaskLaneDrop = (empId: string, targetLane: 'routine' | 'urgent') => {
+    if (!taskDragging) return;
+    const { empId: sourceEmpId, taskId } = taskDragging;
+
+    setEmployees((prev) =>
+      prev.map((emp) => {
+        if (emp.id !== sourceEmpId) return emp;
+        return {
+          ...emp,
+          tasks: emp.tasks.map((task) =>
+            task.id === taskId ? { ...task, lane: targetLane } : task
+          ),
+        };
+      })
+    );
+    setTaskDragging(null);
+  };
+
+  useEffect(() => {
+    if (!dragging) return;
+
+    const cardEl = cardRefs.current[dragging];
+    if (!cardEl) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - dragStartRef.current.x;
+      const deltaY = e.clientY - dragStartRef.current.y;
+
+      const currentPos = cardPositionsRef.current[dragging] || { x: 0, y: 0 };
+
+      const newPos = {
+        x: currentPos.x + deltaX,
+        y: currentPos.y + deltaY,
+      };
+
+      cardPositionsRef.current = {
+        ...cardPositionsRef.current,
+        [dragging]: newPos,
+      };
+
+      if (cardEl) {
+        cardEl.style.transform = `translate(${newPos.x}px, ${newPos.y}px)`;
+      }
+
+      dragStartRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleMouseUp = () => {
+      setDragging(null);
+      cardPositionsRef.current = { ...cardPositionsRef.current };
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [dragging]);
+
+  const scaleFactor = zoom / 100;
+
+  useEffect(() => {
+    if (!resizing) return;
+
+    const cardEl = cardRefs.current[resizing];
+    if (!cardEl) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = (e.clientX - resizeStart.x) / scaleFactor;
+      const deltaY = (e.clientY - resizeStart.y) / scaleFactor;
+      const side = resizeStart.side;
+
+      const currentSize = cardSizes[resizing] || { width: 450, height: 500 };
+      const currentPos = cardPositionsRef.current[resizing] || { x: 0, y: 0 };
+
+      let newWidth = currentSize.width;
+      let newHeight = currentSize.height;
+      let newPos = { ...currentPos };
+
+      if (side.includes('right')) newWidth = Math.max(400, currentSize.width + deltaX);
+      if (side.includes('left')) {
+        newWidth = Math.max(400, currentSize.width - deltaX);
+        newPos.x = currentPos.x + deltaX;
+      }
+      if (side.includes('bottom')) newHeight = Math.max(300, currentSize.height + deltaY);
+      if (side.includes('top')) {
+        newHeight = Math.max(300, currentSize.height - deltaY);
+        newPos.y = currentPos.y + deltaY;
+      }
+
+      setCardSizes((prev) => ({
+        ...prev,
+        [resizing]: { width: newWidth, height: newHeight },
+      }));
+
+      setCardPositions((prev) => ({
+        ...prev,
+        [resizing]: newPos,
+      }));
+
+      cardPositionsRef.current = { ...cardPositionsRef.current, [resizing]: newPos };
+
+      setResizeStart({ x: e.clientX, y: e.clientY, side });
+    };
+
+    const handleMouseUp = () => {
+      setResizing(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resizing, resizeStart, scaleFactor]);
+
+  useEffect(() => {
+    if (!taskDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleMouseUp = () => {
+      setTaskDragging(null);
+      setHoveredLane(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [taskDragging]);
+
+  if (!isHydrated) return <div className="flex items-center justify-center h-screen">Loading...</div>;
 
   return (
-    <div className="fixed inset-0 bg-gray-950">
-      {/* Team Bar - Floating Top Left */}
-      <div className="fixed top-20 left-4 flex items-center gap-3 z-50">
-        <button
-          onClick={() => router.push(`/c/${companyCode}/boardteam`)}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 bg-gray-800 hover:bg-gray-700 transition-colors rounded-lg font-medium"
-        >
-          <span aria-hidden="true">←</span> ทุกทีม
-        </button>
-        <span className="text-base font-semibold text-white">
-          {team?.name || 'Team'}
-        </span>
-      </div>
+    <div className="fixed inset-0 top-14 left-4 right-4 bottom-4 overflow-visible" style={{transformOrigin: "top left", transform: `scale(${zoom / 100})`}}>
+        {employees.map((emp, idx) => {
+          const empId = emp.id || idx.toString();
+          const size = cardSizes[empId] || { width: 450, height: 500 };
+          const pos = cardPositions[empId] || { x: 20, y: 20 };
+          const isDragging = dragging === empId;
+          const isResizing = resizing === empId;
 
-      {/* Add Employee Button - Show only if no linked members */}
-      {team?.isDefault && employees.filter(emp => emp.userId).length === 0 && (
-        <button
-          onClick={() =>
-            router.push(`/c/${companyCode}/company/employees?team=${teamId}`)
-          }
-          className="fixed left-4 top-44 px-6 py-8 text-gray-400 hover:text-white transition-colors rounded-lg border-2 border-dashed border-gray-600 hover:border-gray-500 flex flex-col items-center gap-3 bg-transparent hover:bg-gray-900/20 z-40"
+          return (
+            <div
+              key={empId}
+              ref={(el) => {
+                if (el) cardRefs.current[empId] = el;
+              }}
+              className={`absolute bg-gray-900 border-2 border-cyan-600/40 hover:border-cyan-500/60 rounded-xl p-5 transition-all ${
+                isResizing
+                  ? 'border-cyan-500/80 shadow-lg shadow-cyan-900/40'
+                  : isDragging
+                    ? 'border-cyan-500 shadow-lg shadow-cyan-900/60'
+                    : 'hover:shadow-lg hover:shadow-cyan-900/20'
+              }`}
+              style={{
+                width: `${size.width}px`,
+                height: `${size.height}px`,
+                transform: `translate(${pos.x}px, ${pos.y}px)`,
+                display: 'flex',
+                flexDirection: 'column',
+                cursor: isDragging ? 'grabbing' : 'grab',
+                userSelect: 'none',
+              }}
+            >
+              {/* Employee Header with Drag Handle */}
+              <div
+                className={`flex items-start gap-3 mb-4 pb-4 border-b border-gray-700 group cursor-grab active:cursor-grabbing flex-shrink-0 ${isDragging ? 'opacity-80' : ''}`}
+                onMouseDown={(e) => handleDragStart(e, empId)}
+              >
+                {/* Drag Handle */}
+                <div className="text-gray-600 group-hover:text-gray-400 transition-colors pt-1">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <circle cx="9" cy="6" r="1.4"></circle>
+                    <circle cx="15" cy="6" r="1.4"></circle>
+                    <circle cx="9" cy="12" r="1.4"></circle>
+                    <circle cx="15" cy="12" r="1.4"></circle>
+                    <circle cx="9" cy="18" r="1.4"></circle>
+                    <circle cx="15" cy="18" r="1.4"></circle>
+                  </svg>
+                </div>
+
+                {/* Avatar & Info */}
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold flex items-center justify-center text-base shadow-lg">
+                      {emp.name.substring(0, 2).toUpperCase()}
+                    </div>
+                    {emp.presence && (
+                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-gray-900 shadow-lg"></span>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-lg">{emp.name}</h3>
+                    <p className="text-sm text-gray-400">{emp.role}</p>
+                  </div>
+                </div>
+
+                {/* Task Count & Actions */}
+                <div className="flex items-center gap-2">
+                  <div className="text-right mr-2 text-base font-bold text-gray-400 border border-gray-600 rounded-lg px-3 py-1">
+                    {emp.taskCount} งาน
+                  </div>
+
+                  {/* Board Button */}
+                  <button
+                    className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-500 hover:text-cyan-400 transition-colors flex-shrink-0"
+                    title="ดูบอร์ดงาน"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="w-4 h-4"
+                    >
+                      <rect x="3" y="4" width="6" height="16" rx="1"></rect>
+                      <rect x="15" y="4" width="6" height="10" rx="1"></rect>
+                    </svg>
+                  </button>
+
+                  {/* History Button */}
+                  <button
+                    className="p-1.5 rounded-lg hover:bg-gray-800 text-gray-500 hover:text-cyan-400 transition-colors flex-shrink-0"
+                    title="ประวัติกิจกรรม"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="w-4 h-4"
+                    >
+                      <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
+                      <path d="M3 3v5h5"></path>
+                      <path d="M12 7v5l3 2"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Lanes - 2 Columns Layout */}
+              <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto pr-2 min-h-0" onMouseDown={(e) => e.stopPropagation()}>
+                {/* Routine Lane (Left) */}
+                <div
+                  className={`space-y-2 overflow-y-auto border-2 rounded-lg px-2 py-2 transition-colors ${
+                    taskDragging && taskDragging.sourceLane === 'urgent' && hoveredLane === 'routine'
+                      ? 'border-cyan-500 bg-cyan-900/10'
+                      : 'border-transparent'
+                  }`}
+                  onMouseUp={() => taskDragging && handleTaskLaneDrop(empId, 'routine')}
+                  onMouseMove={() => taskDragging && taskDragging.sourceLane === 'urgent' && setHoveredLane('routine')}
+                  onMouseLeave={() => setHoveredLane(null)}
+                >
+                  <div className="flex items-center justify-between mb-3 flex-shrink-0">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
+                      <span className="text-lg font-semibold text-gray-200">งานรูทีน</span>
+                    </div>
+                    <span className="text-xs font-medium text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
+                      {emp.tasks.filter((t) => t.lane === 'routine').length}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {emp.tasks
+                      .filter((t) => t.lane === 'routine')
+                      .map((task) => (
+                        <div
+                          key={task.id}
+                          onMouseDown={(e) => handleTaskDragStart(e, empId, task.id, 'routine')}
+                          className={`bg-gray-800/50 border border-gray-700 hover:border-cyan-500/50 rounded-lg p-4 transition-all hover:bg-gray-800/80 cursor-grab active:cursor-grabbing group text-xs min-h-32 flex flex-col ${
+                            taskDragging?.taskId === task.id ? 'opacity-50 border-cyan-500' : ''
+                          }`}
+                        >
+                          <p className="text-gray-300 group-hover:text-white transition-colors mb-3 leading-snug line-clamp-3 text-sm">
+                            {task.title}
+                          </p>
+                          <div className="space-y-1.5 flex-1 flex flex-col justify-end">
+                            <div className="flex items-center gap-2 justify-between">
+                              <div className="w-full bg-gray-700 rounded-full h-1 overflow-hidden">
+                                <div
+                                  className="bg-gradient-to-r from-cyan-500 to-cyan-400 h-1 rounded-full transition-all"
+                                  style={{ width: `${task.progress}%` }}
+                                ></div>
+                              </div>
+                              <span className="font-semibold text-gray-500 whitespace-nowrap ml-1">
+                                {task.progress}%
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1">
+                                <div className="w-4 h-4 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center flex-shrink-0">
+                                  {task.assignee.substring(0, 1).toUpperCase()}
+                                </div>
+                                <span className="text-gray-500 line-clamp-1">{task.assignee}</span>
+                              </div>
+                              <time className="text-gray-600">{task.time}</time>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    {emp.tasks.filter((t) => t.lane === 'routine').length === 0 && (
+                      <div className="text-gray-600 text-center py-6 italic border-2 border-dashed border-gray-600 rounded-lg">
+                        ว่าง
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Urgent Lane (Right) */}
+                <div
+                  className={`space-y-2 overflow-y-auto border-2 rounded-lg px-2 py-2 transition-colors ${
+                    taskDragging && taskDragging.sourceLane === 'routine' && hoveredLane === 'urgent'
+                      ? 'border-red-500 bg-red-900/10'
+                      : 'border-transparent'
+                  }`}
+                  onMouseUp={() => taskDragging && handleTaskLaneDrop(empId, 'urgent')}
+                  onMouseMove={() => taskDragging && taskDragging.sourceLane === 'routine' && setHoveredLane('urgent')}
+                  onMouseLeave={() => setHoveredLane(null)}
+                >
+                  <div className="flex items-center justify-between mb-3 flex-shrink-0">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                      <span className="text-lg font-semibold text-gray-200">งานจิกปะทะ</span>
+                    </div>
+                    <span className="text-xs font-medium text-gray-500 bg-gray-800 px-2 py-0.5 rounded">
+                      {emp.tasks.filter((t) => t.lane === 'urgent').length}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {emp.tasks
+                      .filter((t) => t.lane === 'urgent')
+                      .map((task) => (
+                        <div
+                          key={task.id}
+                          onMouseDown={(e) => handleTaskDragStart(e, empId, task.id, 'urgent')}
+                          className={`bg-gray-800/50 border border-gray-700 hover:border-red-500/50 rounded-lg p-4 transition-all hover:bg-gray-800/80 cursor-grab active:cursor-grabbing group text-xs min-h-32 flex flex-col ${
+                            taskDragging?.taskId === task.id ? 'opacity-50 border-red-500' : ''
+                          }`}
+                        >
+                          <p className="text-gray-300 group-hover:text-white transition-colors mb-3 leading-snug line-clamp-3 text-sm">
+                            {task.title}
+                          </p>
+                          <div className="space-y-1.5 flex-1 flex flex-col justify-end">
+                            <div className="flex items-center gap-2 justify-between">
+                              <div className="w-full bg-gray-700 rounded-full h-1 overflow-hidden">
+                                <div
+                                  className="bg-gradient-to-r from-red-500 to-red-400 h-1 rounded-full transition-all"
+                                  style={{ width: `${task.progress}%` }}
+                                ></div>
+                              </div>
+                              <span className="font-semibold text-gray-500 whitespace-nowrap ml-1">
+                                {task.progress}%
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1">
+                                <div className="w-4 h-4 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center flex-shrink-0">
+                                  {task.assignee.substring(0, 1).toUpperCase()}
+                                </div>
+                                <span className="text-gray-500 line-clamp-1">{task.assignee}</span>
+                              </div>
+                              <time className="text-gray-600">{task.time}</time>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    {emp.tasks.filter((t) => t.lane === 'urgent').length === 0 && (
+                      <div className="text-gray-600 text-center py-6 italic border-2 border-dashed border-gray-600 rounded-lg">
+                        ลากงานมาวาง
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Resize Handle - Bottom Right Only */}
+              <button
+                onMouseDown={(e) => handleResizeStart(e, empId, 'bottom-right')}
+                className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize opacity-40 hover:opacity-100 transition-opacity flex items-center justify-center"
+                style={{ pointerEvents: 'auto' }}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-4 h-4 text-gray-400 hover:text-cyan-400"
+                >
+                  <path d="M21 21V9M21 21H9"></path>
+                </svg>
+              </button>
+            </div>
+          );
+        })}
+
+      {/* Task Drag Preview */}
+      {taskDragging && draggedTask && (
+        <div
+          className="fixed bg-gray-800 border-2 border-blue-500 rounded-lg p-3 shadow-2xl shadow-blue-900/50 pointer-events-none z-50 max-w-xs"
           style={{
-            width: '336px',
+            left: `${mousePos.x + 10}px`,
+            top: `${mousePos.y + 10}px`,
+            transform: 'translate(-50%, -50%)',
           }}
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="w-8 h-8"
-          >
-            <path d="M12 5v14M5 12h14"></path>
-          </svg>
-          <span className="text-sm font-medium">เพิ่มพนักงาน</span>
-        </button>
-      )}
-
-      {/* Canvas Area */}
-      <div className="absolute inset-0 overflow-auto p-8 pt-40">
-        {/* Members Flex Layout */}
-        {team?.isDefault ? (
-          (() => {
-            const linkedMembers = employees.filter(emp => emp.userId);
-            return linkedMembers.length > 0 ? (
-              <div className="flex gap-6 flex-wrap">
-                {linkedMembers.map(member => {
-                  const memberTasks = tasks.filter(task => task.assignee === member.id || task.assignee === member.name);
-                  const routineTasks = memberTasks.filter(t => t.priority === 'urgent' || t.priority === 'high');
-                  const urgentTasks = memberTasks.filter(t => t.priority !== 'urgent' && t.priority !== 'high');
-
-                  return (
-                    <section
-                      key={member.id}
-                      className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden flex-shrink-0"
-                      style={{ width: '437px', minHeight: '328px' }}
-                    >
-                      {/* Member Header */}
-                      <div className="flex items-center gap-3 p-4 pb-3 border-b border-gray-700 bg-gray-800/80">
-                        <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                          style={{ backgroundColor: member.color || '#0E9384' }}
-                        >
-                          {member.name.substring(0, 2).toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-white text-sm truncate">{member.name}</div>
-                          {member.role && <div className="text-xs text-gray-400 truncate">{member.role}</div>}
-                        </div>
-                        <div className="text-xs text-gray-400 flex-shrink-0">
-                          {memberTasks.length} งาน
-                        </div>
-                      </div>
-
-                      {/* Lanes */}
-                      <div className="flex flex-1 overflow-auto">
-                        {/* Routine Lane */}
-                        <div className="flex-1 border-r border-gray-700 p-3 overflow-y-auto">
-                          <div className="text-xs font-semibold text-gray-400 mb-2 flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#0E9384' }}></span>
-                            งานรูทีน ({routineTasks.length})
-                          </div>
-                          <div className="space-y-2">
-                            {routineTasks.length > 0 ? (
-                              routineTasks.map(task => (
-                                <div
-                                  key={task.id}
-                                  className="bg-gray-700/40 border border-gray-600 rounded p-2 text-xs hover:bg-gray-700/60 transition-colors group"
-                                  style={{
-                                    borderTopColor: STATUS_COLORS[task.status] || '#5B7FB0',
-                                    borderTopWidth: '2px',
-                                  }}
-                                >
-                                  <div className="font-medium text-white text-xs mb-1 line-clamp-2">{task.title}</div>
-                                  <div className="flex items-center justify-between text-gray-400 text-[10px] gap-1">
-                                    <span>{task.status}</span>
-                                    <span style={{ color: PRIORITY_COLORS[task.priority] || '#999' }}>● {task.priority}</span>
-                                  </div>
-                                </div>
-                              ))
-                            ) : (
-                              <p className="text-xs text-gray-600 text-center py-4">ไม่มีงาน</p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Urgent Lane */}
-                        <div className="flex-1 p-3 overflow-y-auto">
-                          <div className="text-xs font-semibold text-gray-400 mb-2 flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#E4572E' }}></span>
-                            งานจิกปะทะ ({urgentTasks.length})
-                          </div>
-                          <div className="space-y-2">
-                            {urgentTasks.length > 0 ? (
-                              urgentTasks.map(task => (
-                                <div
-                                  key={task.id}
-                                  className="bg-gray-700/40 border border-gray-600 rounded p-2 text-xs hover:bg-gray-700/60 transition-colors group"
-                                  style={{
-                                    borderTopColor: STATUS_COLORS[task.status] || '#5B7FB0',
-                                    borderTopWidth: '2px',
-                                  }}
-                                >
-                                  <div className="font-medium text-white text-xs mb-1 line-clamp-2">{task.title}</div>
-                                  <div className="flex items-center justify-between text-gray-400 text-[10px] gap-1">
-                                    <span>{task.status}</span>
-                                    <span style={{ color: PRIORITY_COLORS[task.priority] || '#999' }}>● {task.priority}</span>
-                                  </div>
-                                </div>
-                              ))
-                            ) : (
-                              <p className="text-xs text-gray-600 text-center py-4">ไม่มีงาน</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </section>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-gray-500">ยังไม่มีสมาชิกในทีมนี้</p>
-              </div>
-            );
-          })()
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-gray-500">ทีมนี้ยังไม่เสร็จสิ้น</p>
+          <p className="text-gray-300 text-xs font-semibold leading-snug line-clamp-2 mb-2">
+            {draggedTask.title}
+          </p>
+          <div className="flex items-center gap-2 text-xs">
+            <div className="w-4 h-4 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center flex-shrink-0">
+              {draggedTask.assignee.substring(0, 1).toUpperCase()}
+            </div>
+            <span className="text-gray-400">{draggedTask.assignee}</span>
+            <span className="text-cyan-400">{draggedTask.progress}%</span>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

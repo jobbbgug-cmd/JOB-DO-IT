@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/app/store/authStore';
 import { useUIStore } from '@/app/store/uiStore';
 import Layout from '@/app/components/Layout';
@@ -35,10 +35,14 @@ interface CardPosition {
 export default function CompanyPage() {
   const router = useRouter();
   const params = useParams();
+  const pathname = usePathname();
   const { user } = useAuthStore();
   const { zoom, setCompanyCode } = useUIStore();
   const [isHydrated, setIsHydrated] = useState(false);
   const [companyCode] = useState(params.companyCode as string);
+
+  // Hide canvas if on company/* routes
+  const showCanvas = !pathname.includes('/company/');
   const [employees, setEmployees] = useState<Employee[]>([
     {
       id: '157ac5bd-a9d5-46f8-a886-fef30626fef3',
@@ -311,19 +315,21 @@ export default function CompanyPage() {
 
   return (
     <Layout>
-      {/* Full Screen Canvas */}
+      {/* Full Screen Canvas - Hide if on company/* routes */}
+      {showCanvas && (
       <div className="fixed inset-0 top-16 left-4 right-4 bottom-4 overflow-visible" style={{transformOrigin: "top left", transform: `scale(${zoom / 100})`}}>
-        {employees.map((emp) => {
-          const size = cardSizes[emp.id] || { width: 450, height: 500 };
-          const pos = cardPositions[emp.id] || { x: 20, y: 20 };
-          const isDragging = dragging === emp.id;
-          const isResizing = resizing === emp.id;
+        {employees.map((emp, idx) => {
+          const empId = emp.id || emp._id || idx.toString();
+          const size = cardSizes[empId] || { width: 450, height: 500 };
+          const pos = cardPositions[empId] || { x: 20, y: 20 };
+          const isDragging = dragging === empId;
+          const isResizing = resizing === empId;
 
           return (
             <div
-              key={emp.id}
+              key={empId}
               ref={(el) => {
-                if (el) cardRefs.current[emp.id] = el;
+                if (el) cardRefs.current[empId] = el;
               }}
               className={`absolute bg-gray-900 border-2 border-cyan-600/40 hover:border-cyan-500/60 rounded-xl p-5 transition-all ${
                 isResizing
@@ -345,7 +351,7 @@ export default function CompanyPage() {
               {/* Employee Header with Drag Handle */}
               <div
                 className={`flex items-start gap-3 mb-4 pb-4 border-b border-gray-700 group cursor-grab active:cursor-grabbing flex-shrink-0 ${isDragging ? 'opacity-80' : ''}`}
-                onMouseDown={(e) => handleDragStart(e, emp.id)}
+                onMouseDown={(e) => handleDragStart(e, empId)}
               >
                 {/* Drag Handle */}
                 <div className="text-gray-600 group-hover:text-gray-400 transition-colors pt-1">
@@ -433,7 +439,7 @@ export default function CompanyPage() {
                       ? 'border-cyan-500 bg-cyan-900/10'
                       : 'border-transparent'
                   }`}
-                  onMouseUp={() => taskDragging && handleTaskLaneDrop(emp.id, 'routine')}
+                  onMouseUp={() => taskDragging && handleTaskLaneDrop(empId, 'routine')}
                   onMouseMove={() => taskDragging && taskDragging.sourceLane === 'urgent' && setHoveredLane('routine')}
                   onMouseLeave={() => setHoveredLane(null)}
                 >
@@ -452,7 +458,7 @@ export default function CompanyPage() {
                       .map((task) => (
                         <div
                           key={task.id}
-                          onMouseDown={(e) => handleTaskDragStart(e, emp.id, task.id, 'routine')}
+                          onMouseDown={(e) => handleTaskDragStart(e, empId, task.id, 'routine')}
                           className={`bg-gray-800/50 border border-gray-700 hover:border-cyan-500/50 rounded-lg p-4 transition-all hover:bg-gray-800/80 cursor-grab active:cursor-grabbing group text-xs min-h-32 flex flex-col ${
                             taskDragging?.taskId === task.id ? 'opacity-50 border-cyan-500' : ''
                           }`}
@@ -499,7 +505,7 @@ export default function CompanyPage() {
                       ? 'border-red-500 bg-red-900/10'
                       : 'border-transparent'
                   }`}
-                  onMouseUp={() => taskDragging && handleTaskLaneDrop(emp.id, 'urgent')}
+                  onMouseUp={() => taskDragging && handleTaskLaneDrop(empId, 'urgent')}
                   onMouseMove={() => taskDragging && taskDragging.sourceLane === 'routine' && setHoveredLane('urgent')}
                   onMouseLeave={() => setHoveredLane(null)}
                 >
@@ -518,7 +524,7 @@ export default function CompanyPage() {
                       .map((task) => (
                         <div
                           key={task.id}
-                          onMouseDown={(e) => handleTaskDragStart(e, emp.id, task.id, 'urgent')}
+                          onMouseDown={(e) => handleTaskDragStart(e, empId, task.id, 'urgent')}
                           className={`bg-gray-800/50 border border-gray-700 hover:border-red-500/50 rounded-lg p-4 transition-all hover:bg-gray-800/80 cursor-grab active:cursor-grabbing group text-xs min-h-32 flex flex-col ${
                             taskDragging?.taskId === task.id ? 'opacity-50 border-red-500' : ''
                           }`}
@@ -561,7 +567,7 @@ export default function CompanyPage() {
 
               {/* Resize Handle - Bottom Right Only */}
               <button
-                onMouseDown={(e) => handleResizeStart(e, emp.id, 'bottom-right')}
+                onMouseDown={(e) => handleResizeStart(e, empId, 'bottom-right')}
                 className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize opacity-40 hover:opacity-100 transition-opacity flex items-center justify-center"
                 style={{ pointerEvents: 'auto' }}
               >
@@ -581,6 +587,7 @@ export default function CompanyPage() {
           );
         })}
       </div>
+      )}
 
       {/* Task Drag Preview */}
       {taskDragging && draggedTask && (

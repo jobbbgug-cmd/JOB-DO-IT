@@ -32,7 +32,16 @@ export default function VerifyContent() {
       const response = await axios.post('/api/auth/verify', { email, code });
       const { token } = response.data;
       localStorage.setItem('token', token);
-      router.push('/company');
+
+      // Check if user came from invite link
+      const inviteCode = typeof window !== 'undefined' ? localStorage.getItem('inviteCode') : null;
+      if (inviteCode) {
+        // For now, redirect to CONCEPTX boardteam (in future, derive company from invite code)
+        localStorage.removeItem('inviteCode');
+        router.push('/c/CONCEPTX/boardteam');
+      } else {
+        router.push('/company');
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'ยืนยันรหัสไม่สำเร็จ');
     } finally {

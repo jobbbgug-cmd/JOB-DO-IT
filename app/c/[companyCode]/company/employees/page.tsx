@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import axios from 'axios';
-import { useAuthStore } from '@/app/store/authStore';
 
 interface Employee {
   id: string;
@@ -52,9 +51,7 @@ const COLORS = [
 
 export default function EmployeesPage() {
   const params = useParams();
-  const router = useRouter();
   const companyCode = params.companyCode as string;
-  const { user } = useAuthStore();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [employeeOptions, setEmployeeOptions] = useState<EmployeeOption[]>([]);
   const [inviteLinks, setInviteLinks] = useState<InviteLink[]>([]);
@@ -82,7 +79,7 @@ export default function EmployeesPage() {
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
-    if (stored) {
+    if (stored && stored !== 'undefined') {
       try {
         const userData = JSON.parse(stored);
         console.log('Loaded user from localStorage:', userData);

@@ -1,17 +1,11 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendVerificationEmail(email: string, code: string) {
   try {
-    await transporter.sendMail({
-      from: `"JOB DO IT" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+      from: 'JOB DO IT <onboarding@resend.dev>',
       to: email,
       subject: 'รหัสยืนยันอีเมล | JOB DO IT',
       html: `
