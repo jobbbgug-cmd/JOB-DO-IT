@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import CreateTaskModal from '@/app/components/CreateTaskModal';
 
 interface Task {
   id: string;
@@ -31,6 +32,7 @@ export default function BoardPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProject, setSelectedProject] = useState('all');
   const [activeTab, setActiveTab] = useState('todo');
+  const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -348,6 +350,13 @@ export default function BoardPage() {
           })}
         </div>
       </div>
+
+      {/* Create Task Modal */}
+      <CreateTaskModal
+        isOpen={showCreateTaskModal}
+        onClose={() => setShowCreateTaskModal(false)}
+        companyCode={companyCode}
+      />
     </div>
   );
 }

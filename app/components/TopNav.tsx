@@ -36,7 +36,12 @@ export default function TopNav() {
   const getActiveTab = () => {
     const tab = tabs.find((t) => {
       if (displayCompanyCode && pathname.startsWith(`/c/${displayCompanyCode}`)) {
-        return t.name === 'บริษัท';
+        // Check if it's a company sub-page
+        if (pathname.includes('/company')) {
+          return t.name === 'บริษัท';
+        }
+        // Otherwise, it's a regular page, check exact match
+        return pathname === t.href;
       }
       return pathname === t.href;
     });
@@ -59,7 +64,17 @@ export default function TopNav() {
       {/* Tabs - Desktop only */}
       <div className="hidden md:flex items-center gap-1" role="tablist">
         {tabs.map((tab) => {
-          const isActive = pathname === tab.href;
+          let isActive = pathname === tab.href;
+
+          // Mark boardteam as active for boardteam and its sub-pages (team detail)
+          if (tab.name === 'บอร์ดทีม' && (pathname.includes('/boardteam') || pathname.includes('/team/'))) {
+            isActive = true;
+          }
+
+          // Mark company as active for company and its sub-pages
+          if (tab.name === 'บริษัท' && pathname.includes('/company')) {
+            isActive = true;
+          }
           return (
             <Link
               key={tab.href}

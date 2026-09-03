@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
+import { useAuthStore } from '@/app/store/authStore';
 
 interface Employee {
   id: string;
@@ -24,6 +25,8 @@ export default function TeamsPage() {
   const params = useParams();
   const router = useRouter();
   const companyCode = params.companyCode as string;
+  const { user } = useAuthStore();
+  const canManageTeams = user?.role === 'owner';
   const [teams, setTeams] = useState<Team[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
@@ -118,19 +121,21 @@ export default function TeamsPage() {
                     </span>
                   )}
                 </div>
-                <div className="flex gap-2 text-xs flex-shrink-0">
-                  <button className="text-cyan-400 hover:text-cyan-300 transition-colors">
-                    แก้ไขสมาชิก
-                  </button>
-                  <button className="text-cyan-400 hover:text-cyan-300 transition-colors">
-                    แก้ไข
-                  </button>
-                  {!team.isDefault && (
-                    <button className="text-red-400 hover:text-red-300 transition-colors">
-                      ลบทีม
+                {canManageTeams && (
+                  <div className="flex gap-2 text-xs flex-shrink-0">
+                    <button className="text-cyan-400 hover:text-cyan-300 transition-colors">
+                      แก้ไขสมาชิก
                     </button>
-                  )}
-                </div>
+                    <button className="text-cyan-400 hover:text-cyan-300 transition-colors">
+                      แก้ไข
+                    </button>
+                    {!team.isDefault && (
+                      <button className="text-red-400 hover:text-red-300 transition-colors">
+                        ลบทีม
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
               {team.description && (
@@ -180,17 +185,19 @@ export default function TeamsPage() {
           ))}
         </div>
 
-        {/* Add Team Button */}
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm font-medium transition-colors"
-        >
-          + เพิ่มทีม
-        </button>
+        {/* Add Team Button - Only for owners */}
+        {canManageTeams && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm font-medium transition-colors"
+          >
+            + เพิ่มทีม
+          </button>
+        )}
       </div>
 
-      {/* Create Team Modal */}
-      {showModal && (
+      {/* Create Team Modal - Only for owners */}
+      {showModal && canManageTeams && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full space-y-4">
             <h1 className="text-xl font-bold text-white">สร้างทีมใหม่</h1>

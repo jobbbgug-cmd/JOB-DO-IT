@@ -1,9 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import CreateTaskModal from './CreateTaskModal';
 
 export default function Dock() {
+  const pathname = usePathname();
   const [input, setInput] = useState('');
+  const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
+
+  const shouldShow = pathname.includes('/boardteam') || pathname.includes('/team/');
+  const companyCode = pathname.match(/\/c\/([^/]+)/)?.[1] || '';
 
   const handleCreateTask = () => {
     if (input.trim()) {
@@ -12,8 +19,11 @@ export default function Dock() {
     }
   };
 
+  if (!shouldShow) return null;
+
   return (
-    <div className="hidden lg:block fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 px-6 py-4 shadow-2xl">
+    <>
+      <div className="hidden lg:block fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 border border-gray-800 rounded-2xl px-6 py-4 shadow-2xl w-11/12 max-w-4xl z-50">
       <div className="max-w-full mx-auto flex gap-4 items-center">
         {/* Drag handle */}
         <button className="p-2 hover:bg-gray-800 rounded-lg text-gray-400" title="ลากเพื่อย้าย">
@@ -48,7 +58,11 @@ export default function Dock() {
         </div>
 
         {/* Detailed edit button */}
-        <button className="p-2 hover:bg-gray-800 rounded-lg text-gray-400" title="รายละเอียด">
+        <button
+          onClick={() => setShowCreateTaskModal(true)}
+          className="p-2 hover:bg-gray-800 rounded-lg text-gray-400"
+          title="รายละเอียด"
+        >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M4 21V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v16"></path>
             <path d="M9 7h2M9 11h2M9 15h2M14 7h1M14 11h1M14 15h1"></path>
@@ -72,6 +86,13 @@ export default function Dock() {
           </svg>
         </button>
       </div>
-    </div>
+      </div>
+
+      <CreateTaskModal
+        isOpen={showCreateTaskModal}
+        onClose={() => setShowCreateTaskModal(false)}
+        companyCode={companyCode}
+      />
+    </>
   );
 }
