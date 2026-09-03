@@ -9,17 +9,22 @@ export async function PUT(
   try {
     await connectDB();
     const { companyCode, employeeId } = await params;
-    const { userId } = await req.json();
+    const body = await req.json();
 
-    console.log('Updating employee:', { companyCode, employeeId, userId });
+    console.log('API Update Request:', { employeeId, body });
 
-    const employee = await Employee.findByIdAndUpdate(
-      employeeId,
-      { userId: userId || null },
-      { new: true }
-    );
+    const updateData: any = {};
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.role !== undefined) updateData.role = body.role;
+    if (body.userId !== undefined) updateData.userId = body.userId || null;
+    if (body.isActive !== undefined) updateData.isActive = body.isActive;
+    if (body.permissionLevel !== undefined) updateData.permissionLevel = body.permissionLevel;
 
-    console.log('Update result:', employee);
+    console.log('Update Data:', updateData);
+
+    console.log('Before update - updateData:', updateData);
+
+    const employee = await Employee.findById(employeeId);
 
     if (!employee) {
       return NextResponse.json(
@@ -28,7 +33,21 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json(employee);
+    Object.assign(employee, updateData);
+    const savedEmployee = await employee.save();
+
+    const response = savedEmployee.toObject();
+    console.log('After save - Employee object:', response);
+
+    const finalResponse = {
+      ...response,
+      isActive: response.isActive !== undefined ? response.isActive : true,
+      permissionLevel: response.permissionLevel || 'self',
+    };
+
+    console.log('Final Response sent to client:', finalResponse);
+
+    return NextResponse.json(finalResponse);
   } catch (error: any) {
     console.error('Failed to update employee:', error.message || error);
     return NextResponse.json(

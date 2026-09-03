@@ -4,13 +4,14 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import CreateTaskModal from './CreateTaskModal';
 
-export default function Dock() {
+export default function Dock({ onTaskCreated }: { onTaskCreated?: () => void }) {
   const pathname = usePathname();
   const [input, setInput] = useState('');
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
 
-  const shouldShow = pathname.includes('/boardteam') || pathname.includes('/team/');
+  const shouldShow = pathname.includes('/boardteam') || pathname.includes('/team/') || pathname.includes('/sprintId/');
   const companyCode = pathname.match(/\/c\/([^/]+)/)?.[1] || '';
+  const sprintId = pathname.match(/\/sprintId\/([^/]+)/)?.[1] || '';
 
   const handleCreateTask = () => {
     if (input.trim()) {
@@ -92,6 +93,8 @@ export default function Dock() {
         isOpen={showCreateTaskModal}
         onClose={() => setShowCreateTaskModal(false)}
         companyCode={companyCode}
+        sprintId={sprintId}
+        onTaskCreated={onTaskCreated}
       />
     </>
   );

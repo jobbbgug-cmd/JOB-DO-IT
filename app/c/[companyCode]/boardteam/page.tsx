@@ -142,7 +142,7 @@ export default function TeamBoard() {
             {teams.map((team) => (
               <button
                 key={team.id}
-                onClick={() => router.push(`/c/${companyCode}/team/${team.id}`)}
+                onClick={() => router.push(`/c/${companyCode}/sprintId/${team.id}`)}
                 className="text-left border border-gray-700 rounded-lg bg-gray-800/30 hover:bg-gray-800/50 transition-colors p-4 group"
               >
                 {/* Team Card Head */}

@@ -16,6 +16,8 @@ interface IEmployee extends Document {
     time: string;
     assignee: string;
   }>;
+  isActive?: boolean;
+  permissionLevel?: 'self' | 'all';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,6 +41,8 @@ const employeeSchema = new Schema<IEmployee>(
         assignee: String,
       },
     ],
+    isActive: { type: Boolean, default: true },
+    permissionLevel: { type: String, enum: ['self', 'all'], default: 'self' },
   },
   { timestamps: true }
 );

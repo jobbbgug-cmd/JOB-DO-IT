@@ -45,7 +45,12 @@ export default function LoginPage() {
       const nameFromEmail = formData.email.split('@')[0];
       result = await register(nameFromEmail, formData.email, formData.password, 'dev');
       if (result.success) {
-        router.push(`/verify?email=${encodeURIComponent(formData.email)}`);
+        if (inviteCode) {
+          localStorage.setItem('inviteCode', inviteCode);
+          router.push(`/verify?email=${encodeURIComponent(formData.email)}&inviteCode=${inviteCode}`);
+        } else {
+          router.push(`/verify?email=${encodeURIComponent(formData.email)}`);
+        }
       } else {
         setError(result.message || 'เกิดข้อผิดพลาด');
       }

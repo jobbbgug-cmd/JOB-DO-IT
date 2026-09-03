@@ -8,6 +8,9 @@ interface ITask extends Document {
   priority: 'urgent' | 'high' | 'medium' | 'low';
   assignee?: string | null;
   dueDate?: Date | null;
+  sprint?: string | null;
+  lane?: 'routine' | 'urgent';
+  progress?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,10 +43,27 @@ const taskSchema = new Schema<ITask>(
     assignee: {
       type: String,
       default: null,
+      index: true,
     },
     dueDate: {
       type: Date,
       default: null,
+    },
+    sprint: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    lane: {
+      type: String,
+      enum: ['routine', 'urgent'],
+      default: 'routine',
+    },
+    progress: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
     },
   },
   { timestamps: true }

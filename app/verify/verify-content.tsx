@@ -8,6 +8,7 @@ export default function VerifyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get('email') || '';
+  const inviteCode = searchParams.get('inviteCode') || '';
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,15 +31,22 @@ export default function VerifyContent() {
     setError('');
     try {
       const response = await axios.post('/api/auth/verify', { email, code });
-      const { token } = response.data;
+      const { token, userId } = response.data;
       localStorage.setItem('token', token);
 
-      // Check if user came from invite link
-      const inviteCode = typeof window !== 'undefined' ? localStorage.getItem('inviteCode') : null;
+      // Create employee record if user came from invite link
       if (inviteCode) {
-        // For now, redirect to CONCEPTX boardteam (in future, derive company from invite code)
-        localStorage.removeItem('inviteCode');
-        router.push('/c/CONCEPTX/boardteam');
+        try {
+          await axios.post('/api/auth/accept-invite', {
+            inviteCode,
+            userId,
+            email,
+          });
+          router.push('/c/CONCEPTX/boardteam');
+        } catch (inviteErr: any) {
+          console.error('Failed to create employee:', inviteErr);
+          router.push('/company');
+        }
       } else {
         router.push('/company');
       }

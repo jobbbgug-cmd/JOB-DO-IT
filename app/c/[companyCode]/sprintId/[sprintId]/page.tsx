@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Dock from '@/app/components/Dock';
 
 interface Employee {
   id: string;
@@ -27,14 +28,15 @@ interface EmployeeCard {
 
 const COLORS = ['#0E9384', '#E4572E', '#5B7FB0', '#B4479A', '#C98A0E', '#3F6E4B', '#8A5CF6', '#D2504F'];
 
-export default function TeamPage() {
+export default function SprintPage() {
   const router = useRouter();
   const params = useParams();
   const companyCode = params.companyCode as string;
-  const teamId = params.teamId as string;
+  const sprintId = params.sprintId as string;
 
   const [cards, setCards] = useState<EmployeeCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const fetchDataRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,17 +44,24 @@ export default function TeamPage() {
         // Fetch employees
         const empRes = await fetch(`/api/employees/${companyCode}`);
         const employees = await empRes.json();
+        console.log('Fetched employees:', employees);
+        if (employees.length > 0) {
+          console.log('First employee:', employees[0]);
+        }
 
-        // Fetch tasks
-        const tasksRes = await fetch(`/api/tasks?teamId=${teamId}&companyCode=${companyCode}`);
+        // Fetch tasks for sprint
+        const tasksRes = await fetch(`/api/tasks?sprintId=${sprintId}&companyCode=${companyCode}`);
         const tasks = await tasksRes.json();
+        console.log('Fetched tasks:', tasks);
 
         // Group tasks by employee and lane
         const cardData: EmployeeCard[] = employees.map((emp: any) => {
-          const empTasks = tasks.filter((t: any) => t.assignee === emp.id);
+          const empId = emp.id || emp._id;
+          const empTasks = tasks.filter((t: any) => t.assignee === empId);
+          console.log(`Tasks for employee ${empId} (${emp.name}):`, empTasks);
           return {
             employee: {
-              id: emp.id || emp._id,
+              id: empId,
               name: emp.name,
               role: emp.role,
               color: emp.color || COLORS[0],
@@ -62,6 +71,7 @@ export default function TeamPage() {
           };
         });
 
+        console.log('Final card data:', cardData);
         setCards(cardData);
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -70,10 +80,12 @@ export default function TeamPage() {
       }
     };
 
-    if (companyCode && teamId) {
+    fetchDataRef.current = fetchData;
+
+    if (companyCode && sprintId) {
       fetchData();
     }
-  }, [companyCode, teamId]);
+  }, [companyCode, sprintId]);
 
   if (loading) {
     return (
@@ -84,8 +96,15 @@ export default function TeamPage() {
   }
 
   return (
-    <div className="fixed inset-0 w-screen h-screen bg-slate-950">
-      <div className="absolute top-20 left-6 z-50 flex items-center gap-4">
+    <>
+      <Dock
+        onTaskCreated={() => {
+          console.log('onTaskCreated called, refetching...');
+          fetchDataRef.current?.();
+        }}
+      />
+      <div className="fixed inset-0 w-screen h-screen bg-slate-950">
+        <div className="absolute top-20 left-6 z-50 flex items-center gap-4">
         <button
           onClick={() => router.push(`/c/${companyCode}/boardteam`)}
           className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-cyan-400 transition-colors"
@@ -173,9 +192,26 @@ export default function TeamPage() {
                       ว่าง
                     </div>
                   ) : (
-                    card.routineTasks.map((task) => (
-                      <div key={task.id} className="bg-gray-800 rounded p-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors">
-                        {task.title}
+                    card.routineTasks.map((task: any) => (
+                      <div key={task.id} className="bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <span className="inline-block px-2 py-1 rounded-md text-xs font-semibold bg-cyan-500/25 text-cyan-300 flex-shrink-0">
+                            {task.priority}
+                          </span>
+                        </div>
+                        <div className="font-semibold text-gray-100 mb-2 line-clamp-2 text-sm leading-tight">{task.title}</div>
+                        {task.dueDate && (
+                          <div className="text-gray-400 text-xs mb-2">📅 {task.dueDate}</div>
+                        )}
+                        <div className="space-y-1">
+                          <div className="w-full bg-gray-700/50 rounded-full h-1.5 overflow-hidden border border-gray-600/30">
+                            <div
+                              className="bg-gradient-to-r from-cyan-500 to-cyan-400 h-1.5 transition-all rounded-full"
+                              style={{ width: `${task.progress}%` }}
+                            ></div>
+                          </div>
+                          <div className="text-xs text-gray-500">{task.progress}% เสร็จสิ้น</div>
+                        </div>
                       </div>
                     ))
                   )}
@@ -199,9 +235,26 @@ export default function TeamPage() {
                       ลากงานมาวาง
                     </div>
                   ) : (
-                    card.urgentTasks.map((task) => (
-                      <div key={task.id} className="bg-gray-800 rounded p-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors">
-                        {task.title}
+                    card.urgentTasks.map((task: any) => (
+                      <div key={task.id} className="bg-gradient-to-br from-red-900/40 to-red-950/30 rounded-lg p-3 text-xs text-gray-200 hover:from-red-900/60 hover:to-red-950/50 transition-all border border-red-700/40 shadow-sm hover:shadow-md">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <span className="inline-block px-2 py-1 rounded-md text-xs font-semibold bg-red-500/30 text-red-300 flex-shrink-0">
+                            {task.priority}
+                          </span>
+                        </div>
+                        <div className="font-semibold text-gray-100 mb-2 line-clamp-2 text-sm leading-tight">{task.title}</div>
+                        {task.dueDate && (
+                          <div className="text-gray-400 text-xs mb-2">📅 {task.dueDate}</div>
+                        )}
+                        <div className="space-y-1">
+                          <div className="w-full bg-gray-700/50 rounded-full h-1.5 overflow-hidden border border-gray-600/30">
+                            <div
+                              className="bg-gradient-to-r from-red-500 to-red-400 h-1.5 transition-all rounded-full"
+                              style={{ width: `${task.progress}%` }}
+                            ></div>
+                          </div>
+                          <div className="text-xs text-gray-500">{task.progress}% เสร็จสิ้น</div>
+                        </div>
                       </div>
                     ))
                   )}
@@ -230,6 +283,7 @@ export default function TeamPage() {
         ))}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

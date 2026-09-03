@@ -96,26 +96,28 @@ export default function TopNav() {
       {/* Spring (Flex spacer) - Desktop only */}
       <div className="hidden md:flex flex-1"></div>
 
-      {/* Zoom Controls - Desktop only */}
-      <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-gray-700 rounded text-sm text-gray-300">
-        <button
-          onClick={zoomOut}
-          className="p-1 hover:text-white transition-colors disabled:opacity-50"
-          title="ย่อ"
-          disabled={zoom <= 50}
-        >
-          −
-        </button>
-        <div className="w-12 text-center text-xs">{zoom}%</div>
-        <button
-          onClick={zoomIn}
-          className="p-1 hover:text-white transition-colors disabled:opacity-50"
-          title="ขยาย"
-          disabled={zoom >= 160}
-        >
-          +
-        </button>
-      </div>
+      {/* Zoom Controls - Desktop only, Sprint page only */}
+      {pathname.includes('/sprintId/') && (
+        <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-gray-700 rounded text-sm text-gray-300">
+          <button
+            onClick={zoomOut}
+            className="p-1 hover:text-white transition-colors disabled:opacity-50"
+            title="ย่อ"
+            disabled={zoom <= 50}
+          >
+            −
+          </button>
+          <div className="w-12 text-center text-xs">{zoom}%</div>
+          <button
+            onClick={zoomIn}
+            className="p-1 hover:text-white transition-colors disabled:opacity-50"
+            title="ขยาย"
+            disabled={zoom >= 160}
+          >
+            +
+          </button>
+        </div>
+      )}
 
       {/* Notification - Desktop only */}
       <button

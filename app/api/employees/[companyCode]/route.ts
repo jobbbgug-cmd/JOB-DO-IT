@@ -7,7 +7,17 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comp
     await connectDB();
     const { companyCode } = await params;
     const employees = await Employee.find({ companyCode });
-    return NextResponse.json(employees);
+
+    const transformedEmployees = employees.map(emp => {
+      const empObj = emp.toObject ? emp.toObject() : emp;
+      return {
+        ...empObj,
+        isActive: empObj.isActive !== undefined ? empObj.isActive : true,
+        permissionLevel: empObj.permissionLevel || 'self',
+      };
+    });
+
+    return NextResponse.json(transformedEmployees);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch employees' }, { status: 500 });
   }

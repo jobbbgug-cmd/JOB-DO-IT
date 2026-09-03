@@ -8,6 +8,8 @@ interface CreateTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   companyCode?: string;
+  sprintId?: string;
+  onTaskCreated?: () => void;
 }
 
 interface Employee {
@@ -15,7 +17,7 @@ interface Employee {
   name: string;
 }
 
-export default function CreateTaskModal({ isOpen, onClose, companyCode }: CreateTaskModalProps) {
+export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId, onTaskCreated }: CreateTaskModalProps) {
   const { user } = useAuthStore();
   const [taskName, setTaskName] = useState('');
   const [description, setDescription] = useState('');
@@ -26,6 +28,8 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode }: Create
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
   const [notification, setNotification] = useState<'none' | 'once' | 'repeat'>('none');
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showEmpPicker, setShowEmpPicker] = useState(false);
   const [empSearchTerm, setEmpSearchTerm] = useState<string>('');
@@ -36,6 +40,12 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode }: Create
   const [resetCard, setResetCard] = useState<boolean>(true);
   const [selectedDays, setSelectedDays] = useState<number[]>([4]); // 4 = Thursday
   const [selectedMonthDay, setSelectedMonthDay] = useState<number>(15); // Default to 15th
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [pickerDate, setPickerDate] = useState(new Date());
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
+  const [showReminderDatePicker, setShowReminderDatePicker] = useState(false);
+  const [reminderPickerDate, setReminderPickerDate] = useState(new Date());
 
   const daysOfWeek = [
     { index: 0, short: 'อา', full: 'อาทิตย์' },
@@ -51,6 +61,36 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode }: Create
     setSelectedDays((prev) =>
       prev.includes(dayIndex) ? prev.filter((d) => d !== dayIndex) : [...prev, dayIndex]
     );
+  };
+
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const handleDateClick = (day: number) => {
+    const newDate = new Date(pickerDate.getFullYear(), pickerDate.getMonth(), day);
+
+    if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
+      setSelectedStartDate(newDate);
+      setSelectedEndDate(null);
+    } else if (newDate < selectedStartDate) {
+      setSelectedStartDate(newDate);
+    } else {
+      setSelectedEndDate(newDate);
+    }
+  };
+
+  const handleDoneDatePicker = () => {
+    if (selectedStartDate && selectedEndDate) {
+      const start = selectedStartDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+      const end = selectedEndDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+      setDateRange({ start, end });
+      setShowDatePicker(false);
+    }
   };
 
   useEffect(() => {
@@ -94,19 +134,72 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode }: Create
     onClose();
   };
 
-  const handleCreateTask = () => {
-    console.log({
-      taskName,
-      description,
-      visibility,
-      assignees,
-      type,
-      priority,
-      dateRange,
-      notification,
-      attachments,
-    });
-    handleClose();
+  const handleCreateTask = async () => {
+    if (!companyCode || !sprintId || !taskName.trim()) {
+      console.error('Missing required fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const assigneeList = visibility === 'self' ? [user?.id || ''] : assignees;
+      console.log('Creating tasks for assignees:', assigneeList);
+
+      // Map UI priority to schema priority
+      const priorityMap: { [key: string]: string } = {
+        'critical': 'urgent',
+        'high': 'high',
+        'normal': 'medium',
+        'low': 'low',
+        'later': 'low',
+      };
+
+      // Create task for each assignee
+      const createPromises = assigneeList.map((assigneeId) =>
+        fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            companyCode,
+            title: taskName,
+            description,
+            assignee: assigneeId,
+            sprint: sprintId,
+            lane: type,
+            priority: priorityMap[priority] || 'medium',
+            progress: 0,
+          }),
+        })
+      );
+
+      const results = await Promise.all(createPromises);
+      console.log('API responses:', results.map(r => r.status));
+      const allSuccess = results.every((res) => res.ok);
+
+      if (allSuccess) {
+        console.log('All tasks created successfully');
+        setShowSuccessToast(true);
+        onTaskCreated?.();
+        setTimeout(() => setShowSuccessToast(false), 3000);
+        setTimeout(() => handleClose(), 500);
+      } else {
+        // Log detailed error info
+        for (const res of results) {
+          if (!res.ok) {
+            try {
+              const errJson = await res.json();
+              console.error('API Error:', res.status, JSON.stringify(errJson, null, 2));
+            } catch (e) {
+              console.error('API Error:', res.status, 'Could not parse response');
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to create tasks:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isFormValid = taskName.trim().length > 0;
@@ -114,7 +207,9 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode }: Create
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" onClick={(e) => {
+      if (e.target === e.currentTarget) handleClose();
+    }}>
       <div className="panel" style={{ maxWidth: '500px' }}>
         <button
           className="icon-btn"
@@ -344,21 +439,116 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode }: Create
 
         <div className="field">
           <label>ช่วงวันที่ทำงาน</label>
-          <button
-            type="button"
-            className="set-input date-trigger"
-            aria-haspopup="dialog"
-            aria-expanded="false"
-            data-state="closed"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar date-trigger-icon" aria-hidden="true">
-              <path d="M8 2v4"></path>
-              <path d="M16 2v4"></path>
-              <rect width="18" height="18" x="3" y="4" rx="2"></rect>
-              <path d="M3 10h18"></path>
-            </svg>
-            <span className="date-trigger-ph">เลือกช่วงวันที่ทำงาน</span>
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              className="date-trigger"
+              aria-haspopup="dialog"
+              aria-expanded={showDatePicker}
+              data-state={showDatePicker ? 'open' : 'closed'}
+              onClick={() => {
+                console.log('Date trigger clicked, current state:', showDatePicker);
+                setShowDatePicker(!showDatePicker);
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar date-trigger-icon" aria-hidden="true">
+                <path d="M8 2v4"></path>
+                <path d="M16 2v4"></path>
+                <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                <path d="M3 10h18"></path>
+              </svg>
+              <span className="date-trigger-ph">
+                {dateRange ? `${dateRange.start} - ${dateRange.end}` : 'เลือกช่วงวันที่ทำงาน'}
+              </span>
+            </button>
+
+            {showDatePicker && (
+              <div className="date-picker-popup" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, marginTop: '0.5rem' }}>
+                <div className="date-picker-header">
+                  <button
+                    type="button"
+                    className="date-picker-nav"
+                    onClick={() => setPickerDate(new Date(pickerDate.getFullYear(), pickerDate.getMonth() - 1))}
+                  >
+                    ◀
+                  </button>
+                  <span className="date-picker-month">
+                    {pickerDate.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}
+                  </span>
+                  <button
+                    type="button"
+                    className="date-picker-nav"
+                    onClick={() => setPickerDate(new Date(pickerDate.getFullYear(), pickerDate.getMonth() + 1))}
+                  >
+                    ▶
+                  </button>
+                </div>
+
+                <div className="date-picker-weekdays">
+                  {['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].map((day) => (
+                    <div key={day} className="date-picker-weekday">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="date-picker-days">
+                  {Array.from({ length: getFirstDayOfMonth(pickerDate) }).map((_, i) => (
+                    <div key={`empty-${i}`} className="date-picker-day empty"></div>
+                  ))}
+                  {Array.from({ length: getDaysInMonth(pickerDate) }).map((_, i) => {
+                    const day = i + 1;
+                    const date = new Date(pickerDate.getFullYear(), pickerDate.getMonth(), day);
+                    const isToday =
+                      date.toDateString() === new Date().toDateString();
+                    const isStartDate =
+                      selectedStartDate && date.toDateString() === selectedStartDate.toDateString();
+                    const isEndDate =
+                      selectedEndDate && date.toDateString() === selectedEndDate.toDateString();
+                    const isInRange =
+                      selectedStartDate &&
+                      selectedEndDate &&
+                      date > selectedStartDate &&
+                      date < selectedEndDate;
+
+                    return (
+                      <button
+                        key={day}
+                        type="button"
+                        className={`date-picker-day ${isToday ? 'today' : ''} ${
+                          isStartDate || isEndDate ? 'selected' : ''
+                        } ${isInRange ? 'in-range' : ''}`}
+                        onClick={() => handleDateClick(day)}
+                      >
+                        {day}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="date-picker-footer">
+                  <button
+                    type="button"
+                    className="date-picker-btn clear"
+                    onClick={() => {
+                      setSelectedStartDate(null);
+                      setSelectedEndDate(null);
+                    }}
+                  >
+                    ล้าง
+                  </button>
+                  <button
+                    type="button"
+                    className="date-picker-btn done"
+                    onClick={handleDoneDatePicker}
+                    disabled={!selectedStartDate || !selectedEndDate}
+                  >
+                    เสร็จ
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="field">
@@ -390,27 +580,89 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode }: Create
           {notification === 'once' ? (
             <>
               <div className="remind-row" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
-                <button
-                  type="button"
-                  className="set-input date-trigger"
-                  aria-haspopup="dialog"
-                  aria-expanded="false"
-                  data-state="closed"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar date-trigger-icon" aria-hidden="true">
-                    <path d="M8 2v4"></path>
-                    <path d="M16 2v4"></path>
-                    <rect width="18" height="18" x="3" y="4" rx="2"></rect>
-                    <path d="M3 10h18"></path>
-                  </svg>
-                  <span>{reminderDate || new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                </button>
+                <div style={{ position: 'relative', flex: 1, backgroundColor: '#1e293b', borderRadius: '0.375rem', padding: '0.5rem' }}>
+                  <button
+                    type="button"
+                    className="date-trigger"
+                    aria-haspopup="dialog"
+                    aria-expanded={showReminderDatePicker}
+                    data-state={showReminderDatePicker ? 'open' : 'closed'}
+                    onClick={() => setShowReminderDatePicker(!showReminderDatePicker)}
+                    style={{ minHeight: '44px', display: 'flex', alignItems: 'center', backgroundColor: '#2d3748', border: 'none', width: '100%' }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar date-trigger-icon" aria-hidden="true">
+                      <path d="M8 2v4"></path>
+                      <path d="M16 2v4"></path>
+                      <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                      <path d="M3 10h18"></path>
+                    </svg>
+                    <span>{reminderDate || new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                  </button>
+
+                  {showReminderDatePicker && (
+                    <div className="date-picker-popup" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, marginTop: '0.5rem' }}>
+                      <div className="date-picker-header">
+                        <button
+                          type="button"
+                          className="date-picker-nav"
+                          onClick={() => setReminderPickerDate(new Date(reminderPickerDate.getFullYear(), reminderPickerDate.getMonth() - 1))}
+                        >
+                          ◀
+                        </button>
+                        <span className="date-picker-month">
+                          {reminderPickerDate.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}
+                        </span>
+                        <button
+                          type="button"
+                          className="date-picker-nav"
+                          onClick={() => setReminderPickerDate(new Date(reminderPickerDate.getFullYear(), reminderPickerDate.getMonth() + 1))}
+                        >
+                          ▶
+                        </button>
+                      </div>
+
+                      <div className="date-picker-weekdays">
+                        {['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].map((day) => (
+                          <div key={day} className="date-picker-weekday">
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="date-picker-days">
+                        {Array.from({ length: getFirstDayOfMonth(reminderPickerDate) }).map((_, i) => (
+                          <div key={`empty-${i}`} className="date-picker-day empty"></div>
+                        ))}
+                        {Array.from({ length: getDaysInMonth(reminderPickerDate) }).map((_, i) => {
+                          const day = i + 1;
+                          const date = new Date(reminderPickerDate.getFullYear(), reminderPickerDate.getMonth(), day);
+                          const isToday = date.toDateString() === new Date().toDateString();
+                          const isSelected = reminderDate && date.toDateString() === new Date(reminderDate).toDateString();
+
+                          return (
+                            <button
+                              key={day}
+                              type="button"
+                              className={`date-picker-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`}
+                              onClick={() => {
+                                setReminderDate(date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }));
+                                setShowReminderDatePicker(false);
+                              }}
+                            >
+                              {day}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <input
                   type="time"
                   className="set-input"
                   value={reminderTime}
                   onChange={(e) => setReminderTime(e.target.value)}
-                  style={{ flex: 1 }}
+                  style={{ flex: 1, minWidth: '80px' }}
                 />
               </div>
               <p className="note" style={{ margin: '6px 0px 0px' }}>เวลานี้ผ่านไปแล้ว — บันทึกแล้วจะเตือนทันทีในรอบตรวจถัดไป (ทุก 5 นาที)</p>
@@ -442,17 +694,16 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode }: Create
               </div>
 
               {repeatFrequency === 'weekly' && (
-                <div className="prio-picker" role="group" aria-label="วันในสัปดาห์" style={{ marginTop: '0.5rem' }}>
+                <div className="prio-picker day-picker" role="group" aria-label="วันในสัปดาห์" style={{ marginTop: '0.5rem' }}>
                   {daysOfWeek.map((day) => (
                     <button
                       key={day.index}
                       type="button"
                       className={`prio-chip ${selectedDays.includes(day.index) ? 'on' : ''}`}
                       title={day.full}
-                      style={{ '--prio': '#0E9384' } as React.CSSProperties}
                       onClick={() => handleDayToggle(day.index)}
                     >
-                      <span className="d"></span>{day.short}
+                      {day.short}
                     </button>
                   ))}
                 </div>
@@ -522,14 +773,58 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode }: Create
 
         <button
           className="btn-primary"
-          disabled={!isFormValid}
+          disabled={!isFormValid || isSubmitting}
           onClick={handleCreateTask}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: isSubmitting ? 0.6 : 1 }}
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 6 9 17l-5-5"></path>
-          </svg> สร้างงาน
+          {isSubmitting ? (
+            <>
+              <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⌛</span> สร้างงาน...
+            </>
+          ) : (
+            <>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6 9 17l-5-5"></path>
+              </svg> สร้างงาน
+            </>
+          )}
         </button>
+
+        {showSuccessToast && (
+          <div
+            style={{
+              position: 'fixed',
+              bottom: '100px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              backgroundColor: '#10b981',
+              color: 'white',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+              zIndex: 1000,
+              animation: 'slideUp 0.3s ease-out',
+            }}
+          >
+            ✓ สร้างงานสำเร็จ
+          </div>
+        )}
+
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+          @keyframes slideUp {
+            from {
+              opacity: 0;
+              transform: translateX(-50%) translateY(20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(-50%) translateY(0);
+            }
+          }
+        `}</style>
       </div>
     </div>
   );
