@@ -1,10 +1,25 @@
-import { Resend } from 'resend';
+let resend: any = null;
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const getResend = async () => {
+  if (!process.env.RESEND_API_KEY) {
+    return null;
+  }
+  if (!resend) {
+    const { Resend } = await import('resend');
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+};
 
 export async function sendVerificationEmail(email: string, code: string) {
+  const resendClient = await getResend();
+  if (!resendClient) {
+    console.log('Resend API key not configured, skipping email');
+    return true;
+  }
+
   try {
-    await resend.emails.send({
+    await resendClient.emails.send({
       from: 'JOB DO IT <onboarding@resend.dev>',
       to: email,
       subject: 'รหัสยืนยันอีเมล | JOB DO IT',
