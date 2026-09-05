@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Dock from '@/app/components/Dock';
+import TaskDetailModal from '@/app/components/TaskDetailModal';
+import EditTaskModal from '@/app/components/EditTaskModal';
 
 interface Employee {
   id: string;
@@ -36,6 +38,8 @@ export default function SprintPage() {
 
   const [cards, setCards] = useState<EmployeeCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [editingTask, setEditingTask] = useState<any>(null);
   const fetchDataRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
@@ -97,6 +101,12 @@ export default function SprintPage() {
 
   return (
     <>
+      <TaskDetailModal
+        task={selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onEdit={(task) => setEditingTask(task)}
+      />
+      <EditTaskModal task={editingTask} onClose={() => setEditingTask(null)} />
       <Dock
         onTaskCreated={() => {
           console.log('onTaskCreated called, refetching...');
@@ -165,9 +175,25 @@ export default function SprintPage() {
                 <div className="text-right mr-2 text-base font-bold text-gray-400 border border-gray-600 rounded-lg px-3 py-1">
                   {card.routineTasks.length + card.urgentTasks.length} งาน
                 </div>
-                <button className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-cyan-400 transition-colors flex-shrink-0" title="สร้างงาน">
+                <button
+                  onClick={() => router.push(`/c/${companyCode}/board/${card.employee.id}`)}
+                  className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-cyan-400 transition-colors flex-shrink-0"
+                  title="ดูบอร์ดงาน"
+                >
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 5v14M5 12h14"></path>
+                    <rect x="3" y="4" width="6" height="16" rx="1"></rect>
+                    <rect x="15" y="4" width="6" height="10" rx="1"></rect>
+                  </svg>
+                </button>
+                <button
+                  onClick={() => alert('ประวัติกิจกรรมยังไม่มีการพัฒนา')}
+                  className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-cyan-400 transition-colors flex-shrink-0"
+                  title="ประวัติกิจกรรม"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                    <path d="M12 7v5l3 2"></path>
                   </svg>
                 </button>
               </div>
@@ -193,7 +219,7 @@ export default function SprintPage() {
                     </div>
                   ) : (
                     card.routineTasks.map((task: any) => (
-                      <div key={task.id} className="bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md">
+                      <div key={task.id} onClick={() => setSelectedTask(task)} className="bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md cursor-pointer">
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <span className="inline-block px-2 py-1 rounded-md text-xs font-semibold bg-cyan-500/25 text-cyan-300 flex-shrink-0">
                             {task.priority}
@@ -219,7 +245,7 @@ export default function SprintPage() {
               </div>
 
               {/* Urgent Lane */}
-              <div className="space-y-2 overflow-y-auto border-2 rounded-lg px-2 py-2 transition-colors border-transparent">
+              <div className="space-y-2 overflow-y-auto border-2 rounded-lg px-2 py-2 transition-colors border-transparent bg-transparent">
                 <div className="flex items-center justify-between mb-3 flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-red-500"></span>
@@ -236,9 +262,9 @@ export default function SprintPage() {
                     </div>
                   ) : (
                     card.urgentTasks.map((task: any) => (
-                      <div key={task.id} className="bg-gradient-to-br from-red-900/40 to-red-950/30 rounded-lg p-3 text-xs text-gray-200 hover:from-red-900/60 hover:to-red-950/50 transition-all border border-red-700/40 shadow-sm hover:shadow-md">
+                      <div key={task.id} onClick={() => setSelectedTask(task)} className="bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md cursor-pointer">
                         <div className="flex items-start justify-between gap-2 mb-2">
-                          <span className="inline-block px-2 py-1 rounded-md text-xs font-semibold bg-red-500/30 text-red-300 flex-shrink-0">
+                          <span className="inline-block px-2 py-1 rounded-md text-xs font-semibold bg-orange-500/30 text-orange-300 flex-shrink-0">
                             {task.priority}
                           </span>
                         </div>
@@ -249,7 +275,7 @@ export default function SprintPage() {
                         <div className="space-y-1">
                           <div className="w-full bg-gray-700/50 rounded-full h-1.5 overflow-hidden border border-gray-600/30">
                             <div
-                              className="bg-gradient-to-r from-red-500 to-red-400 h-1.5 transition-all rounded-full"
+                              className="bg-gradient-to-r from-orange-500 to-orange-400 h-1.5 transition-all rounded-full"
                               style={{ width: `${task.progress}%` }}
                             ></div>
                           </div>
