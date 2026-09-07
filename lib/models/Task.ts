@@ -7,6 +7,7 @@ interface ITask extends Document {
   status: 'todo' | 'in-progress' | 'in-review' | 'done';
   priority: 'urgent' | 'high' | 'medium' | 'low';
   assignee?: string | null;
+  assignees?: string[];
   dueDate?: Date | null;
   sprint?: string | null;
   lane?: 'routine' | 'urgent';
@@ -44,6 +45,10 @@ const taskSchema = new Schema<ITask>(
       type: String,
       default: null,
       index: true,
+    },
+    assignees: {
+      type: [String],
+      default: [],
     },
     dueDate: {
       type: Date,

@@ -61,7 +61,15 @@ export default function SprintPage() {
         // Group tasks by employee and lane
         const cardData: EmployeeCard[] = employees.map((emp: any) => {
           const empId = emp.id || emp._id;
-          const empTasks = tasks.filter((t: any) => t.assignee === empId);
+          const empTasks = tasks.filter((t: any) => {
+            const taskAssignees = Array.isArray(t.assignees) && t.assignees.length > 0
+              ? t.assignees
+              : t.assignee
+                ? [t.assignee]
+                : [];
+
+            return taskAssignees.some((assigneeId: unknown) => String(assigneeId) === String(empId));
+          });
           console.log(`Tasks for employee ${empId} (${emp.name}):`, empTasks);
           return {
             employee: {

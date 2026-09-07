@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
         status: task.status,
         priority: task.priority,
         assignee: task.assignee,
+        assignees: task.assignees || [],
         lane: task.lane,
         progress: task.progress,
         sprint: task.sprint,
