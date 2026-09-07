@@ -47,7 +47,7 @@ export default function SprintPage() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [userCache, setUserCache] = useState<Record<string, string>>({});
   const [attachmentPreviews, setAttachmentPreviews] = useState<Record<string, string>>({});
-  const [nonImageFileCounts, setNonImageFileCounts] = useState<Record<string, number>>({});
+  const [nonImageFileIds, setNonImageFileIds] = useState<Record<string, Set<string>>>({});
   const fetchDataRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
@@ -314,19 +314,19 @@ export default function SprintPage() {
                                   attId={attId}
                                   onLoad={(isImage) => {
                                     if (!isImage) {
-                                      setNonImageFileCounts((prev) => ({
+                                      setNonImageFileIds((prev) => ({
                                         ...prev,
-                                        [task.id]: (prev[task.id] || 0) + 1,
+                                        [task.id]: new Set([...(prev[task.id] || new Set()), attId])
                                       }));
                                     }
                                   }}
                                 />
                               ))}
-                              {nonImageFileCounts[task.id] && nonImageFileCounts[task.id] > 0 && (
+                              {nonImageFileIds[task.id] && nonImageFileIds[task.id].size > 0 && (
                                 <div className="relative w-6 h-6">
                                   <span className="text-lg">📎</span>
                                   <span className="absolute -top-1 -right-1 bg-gray-600 text-white text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center text-[10px]">
-                                    {nonImageFileCounts[task.id]}
+                                    {nonImageFileIds[task.id].size}
                                   </span>
                                 </div>
                               )}

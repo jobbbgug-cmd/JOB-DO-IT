@@ -10,11 +10,25 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     console.log('Request body:', body);
-    const { id } = body;
+    let { id } = body;
 
     if (!id) {
       console.error('Missing attachment ID');
       return NextResponse.json({ error: 'Missing attachment ID' }, { status: 400 });
+    }
+
+    // Check if id is a dataUrl (old data) - return it directly
+    if (typeof id === 'string' && id.startsWith('data:')) {
+      console.log('ID is a dataUrl, returning as-is');
+      const mimeType = id.split(';')[0].replace('data:', '');
+      console.log('Legacy dataUrl mimeType:', mimeType);
+      return NextResponse.json({
+        id: 'legacy',
+        dataUrl: id,
+        fileName: 'legacy-file',
+        fileType: mimeType,  // This will be "image/jpeg" or "application/pdf" etc
+        fileSize: id.length,
+      });
     }
 
     console.log('Fetching attachment with ID:', id);
