@@ -45,6 +45,9 @@ export default function SprintPage() {
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
   const [deletingEmployeeId, setDeletingEmployeeId] = useState<string | null>(null);
   const [employees, setEmployees] = useState<any[]>([]);
+  const [userCache, setUserCache] = useState<Record<string, string>>({});
+  const [attachmentPreviews, setAttachmentPreviews] = useState<Record<string, string>>({});
+  const [nonImageFileCounts, setNonImageFileCounts] = useState<Record<string, number>>({});
   const fetchDataRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
@@ -120,6 +123,7 @@ export default function SprintPage() {
         onClose={() => setSelectedTask(null)}
         onEdit={(task) => setEditingTask(task)}
         employees={employees}
+        companyCode={companyCode}
       />
       <EditTaskModal
         task={editingTask}
@@ -268,57 +272,102 @@ export default function SprintPage() {
                       ว่าง
                     </div>
                   ) : (
-                    card.routineTasks.map((task: any) => (
+                    card.routineTasks.map((task: any) => {
+                      console.log('📌 Rendering task:', task.title, '| attachments:', task.attachments, '| has attachments:', !!task.attachments?.length);
+                      return (
                       <div key={task.id} className="group relative bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md cursor-pointer">
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingTask(task);
+                            }}
+                            className="p-1 hover:bg-gray-700/60 rounded transition-colors"
+                            title="แก้ไข"
+                          >
+                            <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                            </svg>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteTaskId(task.id);
+                              setDeletingEmployeeId(card.employee.id);
+                            }}
+                            className="p-1 hover:bg-gray-700/60 rounded transition-colors"
+                            title="ลบ"
+                          >
+                            <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                            </svg>
+                          </button>
+                        </div>
                         <div onClick={() => setSelectedTask(task)}>
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <span className="inline-block px-2 py-1 rounded-md text-xs font-semibold bg-cyan-500/25 text-cyan-300 flex-shrink-0">
-                              {task.priority}
-                            </span>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingTask(task);
-                                }}
-                                className="p-1 hover:bg-gray-700/60 rounded transition-colors"
-                                title="แก้ไข"
-                              >
-                                <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
-                                </svg>
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDeleteTaskId(task.id);
-                                  setDeletingEmployeeId(card.employee.id);
-                                }}
-                                className="p-1 hover:bg-gray-700/60 rounded transition-colors"
-                                title="ลบ"
-                              >
-                                <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
                           <div className="font-semibold text-gray-100 mb-2 line-clamp-2 text-sm leading-tight">{task.title}</div>
-                          {task.dueDate && (
-                            <div className="text-gray-400 text-xs mb-2">📅 {task.dueDate}</div>
+                          {task.attachments && task.attachments.length > 0 && (
+                            <div className="flex gap-1 mb-2 items-center">
+                              {console.log(`Task ${task.id} has ${task.attachments.length} attachments:`, task.attachments)}
+                              {task.attachments.map((attId: string, idx: number) => (
+                                <AttachmentThumbnail
+                                  key={`${task.id}-${attId}-${idx}`}
+                                  attId={attId}
+                                  onLoad={(isImage) => {
+                                    if (!isImage) {
+                                      setNonImageFileCounts((prev) => ({
+                                        ...prev,
+                                        [task.id]: (prev[task.id] || 0) + 1,
+                                      }));
+                                    }
+                                  }}
+                                />
+                              ))}
+                              {nonImageFileCounts[task.id] && nonImageFileCounts[task.id] > 0 && (
+                                <div className="relative w-6 h-6">
+                                  <span className="text-lg">📎</span>
+                                  <span className="absolute -top-1 -right-1 bg-gray-600 text-white text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center text-[10px]">
+                                    {nonImageFileCounts[task.id]}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
                           )}
-                          <div className="space-y-1">
-                            <div className="w-full bg-gray-700/50 rounded-full h-1.5 overflow-hidden border border-gray-600/30">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex-1 bg-gray-700/50 rounded-full h-1.5 overflow-hidden border border-gray-600/30">
                               <div
                                 className="bg-gradient-to-r from-cyan-500 to-cyan-400 h-1.5 transition-all rounded-full"
                                 style={{ width: `${task.progress}%` }}
                               ></div>
                             </div>
-                            <div className="text-xs text-gray-500">{task.progress}% เสร็จสิ้น</div>
+                            <div className="text-xs text-gray-500 whitespace-nowrap">{task.progress}%</div>
                           </div>
+                          {task.createdBy && (
+                            <div className="text-gray-500 text-xs flex items-center justify-between">
+                              <span>
+                                {(() => {
+                                  if (userCache[task.createdBy]) {
+                                    return userCache[task.createdBy];
+                                  }
+                                  if (!userCache.hasOwnProperty(task.createdBy)) {
+                                    fetch(`/api/users/${task.createdBy}`)
+                                      .then(res => res.json())
+                                      .then(user => setUserCache(prev => ({ ...prev, [task.createdBy]: user.name || task.createdBy })))
+                                      .catch(() => setUserCache(prev => ({ ...prev, [task.createdBy]: task.createdBy })));
+                                  }
+                                  return userCache[task.createdBy] || task.createdBy;
+                                })()}
+                              </span>
+                              {task.createdAt && (
+                                <span>
+                                  {new Date(task.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -376,8 +425,21 @@ export default function SprintPage() {
                             </div>
                           </div>
                           <div className="font-semibold text-gray-100 mb-2 line-clamp-2 text-sm leading-tight">{task.title}</div>
-                          {task.dueDate && (
-                            <div className="text-gray-400 text-xs mb-2">📅 {task.dueDate}</div>
+                          {task.createdBy && (
+                            <div className="text-gray-500 text-xs mb-2">
+                              {(() => {
+                                if (userCache[task.createdBy]) {
+                                  return userCache[task.createdBy];
+                                }
+                                if (!userCache.hasOwnProperty(task.createdBy)) {
+                                  fetch(`/api/users/${task.createdBy}`)
+                                    .then(res => res.json())
+                                    .then(user => setUserCache(prev => ({ ...prev, [task.createdBy]: user.name || task.createdBy })))
+                                    .catch(() => setUserCache(prev => ({ ...prev, [task.createdBy]: task.createdBy })));
+                                }
+                                return userCache[task.createdBy] || task.createdBy;
+                              })()}
+                            </div>
                           )}
                           <div className="space-y-1">
                             <div className="w-full bg-gray-700/50 rounded-full h-1.5 overflow-hidden border border-gray-600/30">
@@ -419,5 +481,88 @@ export default function SprintPage() {
       </div>
       </div>
     </>
+  );
+}
+
+function AttachmentThumbnail({ attId, onLoad }: { attId: string; onLoad?: (isImage: boolean) => void }) {
+  const [preview, setPreview] = useState<string | null>(null);
+  const [isImage, setIsImage] = useState<boolean | null>(null);
+  const callbackRef = useRef(false);
+  const onLoadRef = useRef(onLoad);
+
+  // Update ref whenever onLoad changes
+  useEffect(() => {
+    onLoadRef.current = onLoad;
+  }, [onLoad]);
+
+  useEffect(() => {
+    const fetchPreview = async () => {
+      try {
+        console.log('Fetching attachment:', attId);
+        const res = await fetch('/api/attachments/get', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: attId })
+        });
+        console.log('Fetch response status:', res.status);
+
+        if (res.ok) {
+          const data = await res.json();
+          console.log('Attachment data:', data);
+          if (data.dataUrl) {
+            setPreview(data.dataUrl);
+            const imageCheck = data.fileType?.startsWith('image/') || data.dataUrl.startsWith('data:image/');
+            console.log('🖼️ Attachment loaded:', {
+              attId,
+              fileType: data.fileType,
+              fileName: data.fileName,
+              dataUrlStart: data.dataUrl.substring(0, 30),
+              isImage: imageCheck
+            });
+            setIsImage(imageCheck);
+            if (!callbackRef.current) {
+              callbackRef.current = true;
+              console.log('Calling onLoad with:', imageCheck);
+              onLoadRef.current?.(imageCheck);
+            }
+          }
+        } else {
+          let errorData: any = {};
+          try {
+            errorData = await res.json();
+          } catch {
+            const text = await res.text();
+            console.error('Response text:', text);
+          }
+          const failInfo = {
+            status: res.status,
+            statusText: res.statusText,
+            error: errorData,
+            attId
+          };
+          console.error('❌ Fetch failed:', failInfo);
+          console.table(failInfo);
+        }
+      } catch (error) {
+        console.error('Failed to fetch attachment preview:', error);
+        if (!callbackRef.current) {
+          callbackRef.current = true;
+          onLoadRef.current?.(false);
+        }
+      }
+    };
+    fetchPreview();
+  }, [attId]);
+
+  if (!preview || isImage !== true) {
+    return null;
+  }
+
+  return (
+    <img
+      src={preview}
+      alt="attachment"
+      className="w-6 h-6 rounded object-cover cursor-pointer hover:opacity-80 transition-opacity"
+    />
   );
 }

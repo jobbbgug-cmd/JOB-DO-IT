@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface Task {
   id: string;
@@ -18,6 +18,7 @@ interface Task {
   createdBy?: string;
   startDate?: string;
   endDate?: string;
+  attachments?: string[];
 }
 
 interface TaskDetailModalProps {
@@ -25,13 +26,73 @@ interface TaskDetailModalProps {
   onClose: () => void;
   onEdit?: (task: Task) => void;
   employees?: any[];
+  companyCode?: string;
 }
 
 const COLORS = ['#0E9384', '#E4572E', '#5B7FB0', '#B4479A', '#C98A0E', '#3F6E4B', '#8A5CF6', '#D2504F'];
 
-export default function TaskDetailModal({ task, onClose, onEdit, employees = [] }: TaskDetailModalProps) {
+export default function TaskDetailModal({ task, onClose, onEdit, employees = [], companyCode = '' }: TaskDetailModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachments, setAttachments] = useState<{ file: File; preview: string }[]>([]);
+  const [creatorName, setCreatorName] = useState<string>('');
+
+  useEffect(() => {
+    if (!task?.createdBy) {
+      setCreatorName('');
+      return;
+    }
+
+    const fetchCreator = async () => {
+      try {
+        const res = await fetch(`/api/users/${task.createdBy}`);
+        if (res.ok) {
+          const user = await res.json();
+          setCreatorName(user.name || task.createdBy);
+        } else {
+          setCreatorName(task.createdBy);
+        }
+      } catch (error) {
+        console.error('Failed to fetch creator:', error);
+        setCreatorName(task.createdBy);
+      }
+    };
+
+    fetchCreator();
+  }, [task?.createdBy]);
+
+  useEffect(() => {
+    if (task?.attachments && Array.isArray(task.attachments) && task.attachments.length > 0) {
+      const loadAttachments = async () => {
+        const loadedAttachments = await Promise.all(
+          task.attachments.map(async (attId: string) => {
+            try {
+              if (!attId) {
+                console.warn('Empty attachment ID');
+                return null;
+              }
+              const res = await fetch(`/api/attachments/${attId}`);
+              if (!res.ok) {
+                console.error(`Failed to fetch attachment ${attId}: ${res.status}`);
+                return null;
+              }
+              const data = await res.json();
+              return {
+                file: new File([data.dataUrl], data.fileName, { type: data.fileType }),
+                preview: data.dataUrl,
+              };
+            } catch (error) {
+              console.error(`Error loading attachment ${attId}:`, error);
+              return null;
+            }
+          })
+        );
+        setAttachments(loadedAttachments.filter(Boolean) as any);
+      };
+      loadAttachments();
+    } else {
+      setAttachments([]);
+    }
+  }, [task?.attachments]);
 
   if (!task) return null;
 
@@ -39,20 +100,37 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [] 
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      Array.from(files).forEach(file => {
-        if (file.type.startsWith('image/')) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            setAttachments(prev => [...prev, { file, preview: event.target?.result as string }]);
-          };
-          reader.readAsDataURL(file);
+    if (!files || !task?.id || !companyCode) return;
+
+    Array.from(files).forEach(async (file) => {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('taskId', task.id);
+        formData.append('companyCode', companyCode);
+
+        const response = await fetch('/api/attachments/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setAttachments(prev => [...prev, { file, preview: data.dataUrl }]);
         } else {
-          setAttachments(prev => [...prev, { file, preview: '' }]);
+          const errorData = await response.json();
+          console.error('Upload failed:', errorData);
         }
-      });
+      } catch (error) {
+        console.error('Error uploading file:', error);
+      }
+    });
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -77,6 +155,11 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [] 
   const laneLabels: Record<string, string> = {
     'routine': 'งานรูทีน',
     'urgent': 'งานจิกปะทะ',
+  };
+
+  const laneColors: Record<string, string> = {
+    'routine': '#0E9384',
+    'urgent': '#EA580C',
   };
 
   const priorityLabels: Record<string, string> = {
@@ -117,7 +200,7 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [] 
               {statusLabels[task.status] || task.status}
             </span>
             {task.lane && (
-              <span className="px-2.5 py-1 rounded text-xs font-medium text-white flex items-center gap-1" style={{ backgroundColor: '#EA580C' }}>
+              <span className="px-2.5 py-1 rounded text-xs font-medium text-white flex items-center gap-1" style={{ backgroundColor: laneColors[task.lane] || '#666' }}>
                 <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
                 {laneLabels[task.lane] || task.lane}
               </span>
@@ -134,11 +217,11 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [] 
           )}
 
           <div className="space-y-3 mb-4 text-sm">
-            <div>
-              <span className="text-gray-500 text-xs block mb-1">ผู้ถือ</span>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {task.assignees && task.assignees.length > 0 ? (
-                  task.assignees.map((assigneeId: any, i: number) => {
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-gray-500 text-xs">ผู้ถืองาน</span>
+              {task.assignees && task.assignees.length > 0 ? (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {task.assignees.map((assigneeId: any, i: number) => {
                     const employee = employees.find((emp: any) => String(emp.id || emp._id) === String(assigneeId));
                     const empName = employee?.name || assigneeId;
                     const empColor = employee?.color || COLORS[i % COLORS.length];
@@ -153,29 +236,17 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [] 
                         <span className="text-gray-200 text-xs">{empName}</span>
                       </div>
                     );
-                  })
-                ) : (
-                  <span className="text-gray-500 text-xs">ไม่มีผู้รับ</span>
-                )}
-              </div>
+                  })}
+                </div>
+              ) : (
+                <span className="text-gray-500 text-xs">ไม่มีผู้รับ</span>
+              )}
             </div>
 
             <div>
-              <span className="text-gray-500 text-xs block mb-1">ช่วงวันที่</span>
-              <span className="text-gray-300">
-                📅{' '}
-                {task.startDate && task.endDate
-                  ? `${task.startDate} – ${task.endDate}`
-                  : task.dueDate
-                  ? task.dueDate
-                  : '-'}
-              </span>
-            </div>
-
-            <div>
-              <span className="text-gray-500 text-xs block mb-1">ผู้สั่งงาน</span>
-              <span className="text-gray-300">
-                {task.createdBy || task.creator || '-'}
+              <span className="text-gray-500 text-xs">ผู้สั่งงาน</span>
+              <span className="text-gray-300 ml-2">
+                {creatorName || task.createdBy || '-'}
                 {task.createdAt && <span className="text-gray-500 text-xs ml-2">· {task.createdAt}</span>}
               </span>
             </div>
@@ -183,34 +254,70 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [] 
 
           {attachments.length > 0 && (
             <div className="mb-4 space-y-2">
-              {attachments.map((item, idx) => {
-                const file = item.file;
-                const preview = item.preview;
+              {(() => {
+                const images = attachments.filter(item => item.preview && item.preview.startsWith('data:image/'));
+                const nonImageFiles = attachments.filter(item => !item.preview || !item.preview.startsWith('data:image/'));
+
                 return (
-                  <div key={idx} className="relative group">
-                    {preview ? (
-                      <img
-                        src={preview}
-                        alt={file.name}
-                        className="w-full rounded border border-gray-700 max-h-48 object-cover"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-between bg-gray-800 p-3 rounded border border-gray-700">
-                        <span className="text-gray-300 text-xs truncate">{file.name}</span>
+                  <>
+                    {images.length > 0 && (
+                      <div className="flex gap-2 overflow-x-auto pb-2">
+                        {images.map((item, idx) => (
+                          <div key={`img-${idx}`} className="relative group flex-shrink-0 w-40">
+                            <img
+                              src={item.preview}
+                              alt={item.file.name}
+                              className="w-full h-40 rounded border border-gray-700 object-cover"
+                            />
+                            <button
+                              onClick={() => removeAttachment(attachments.indexOf(item))}
+                              className="absolute top-1 right-1 p-1.5 bg-red-600/80 hover:bg-red-700 rounded transition opacity-0 group-hover:opacity-100"
+                              title="ถอดไฟล์"
+                            >
+                              <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     )}
-                    <button
-                      onClick={() => removeAttachment(idx)}
-                      className="absolute top-1 right-1 p-1.5 bg-red-600/80 hover:bg-red-700 rounded transition opacity-0 group-hover:opacity-100"
-                      title="ถอดไฟล์"
-                    >
-                      <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-                      </svg>
-                    </button>
-                  </div>
+
+                    {nonImageFiles.length > 0 && (
+                      <div className="space-y-2">
+                        {nonImageFiles.map((item, idx) => {
+                          const actualIdx = attachments.indexOf(item);
+                          return (
+                            <div
+                              key={`file-${idx}`}
+                              className="flex items-center gap-3 p-3 bg-gray-800/50 rounded border border-gray-700/50 group hover:bg-gray-800/70 transition"
+                            >
+                              <span className="text-lg flex-shrink-0">📎</span>
+                              <a
+                                href={item.preview}
+                                download={item.file.name}
+                                className="text-gray-300 text-sm hover:text-gray-100 underline truncate flex-1"
+                                title={item.file.name}
+                              >
+                                {item.file.name}
+                              </a>
+                              <button
+                                onClick={() => removeAttachment(actualIdx)}
+                                className="p-1.5 text-gray-400 hover:text-red-500 flex-shrink-0 opacity-0 group-hover:opacity-100 transition"
+                                title="ถอดไฟล์"
+                              >
+                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                                </svg>
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
                 );
-              })}
+              })()}
             </div>
           )}
 

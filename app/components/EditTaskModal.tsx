@@ -28,8 +28,6 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [showEmpPicker, setShowEmpPicker] = useState(false);
-  const [empSearchTerm, setEmpSearchTerm] = useState<string>('');
   const [reminderDate, setReminderDate] = useState<string>('');
   const [reminderTime, setReminderTime] = useState<string>('09:00');
   const [repeatFrequency, setRepeatFrequency] = useState<'daily' | 'weekly' | 'monthly'>('daily');
@@ -100,7 +98,16 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
       const taskAssignees = task?.assignees && Array.isArray(task.assignees) ? task.assignees : (task?.assignee ? [task.assignee] : []);
       setAssignees(taskAssignees);
       setType(task.lane || 'routine');
-      setPriority(task.priority || 'normal');
+
+      // Map DB priority values to UI values
+      const dbToPriorityMap: { [key: string]: string } = {
+        'urgent': 'critical',
+        'high': 'high',
+        'medium': 'normal',
+        'low': 'low',
+      };
+      const uiPriority = dbToPriorityMap[task.priority] || 'normal';
+      setPriority(uiPriority);
 
       // Load date range from task
       if (task.startDate && task.endDate) {
@@ -131,19 +138,36 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
 
       // Load existing attachments from task
       if (task.attachments && Array.isArray(task.attachments) && task.attachments.length > 0) {
-        console.log('Processing attachments...');
-        const existingAttachments = task.attachments.map((att: any) => {
-          console.log('Attachment item:', att, typeof att);
-          // Handle both string URLs and object formats
-          const url = typeof att === 'string' ? att : att.url || att;
-          return {
-            url,
-            name: typeof att === 'string' ? att.split('/').pop() : (att.name || att.split('/').pop() || 'attachment'),
-            isExisting: true,
-          };
-        });
-        console.log('Processed attachments:', existingAttachments);
-        setAttachments(existingAttachments as any);
+        console.log('Processing attachments:', task.attachments);
+        const loadAttachments = async () => {
+          const attachmentData = await Promise.all(
+            task.attachments.map(async (attId: string) => {
+              try {
+                const res = await fetch(`/api/attachments/${attId}`);
+                if (res.ok) {
+                  const data = await res.json();
+                  return {
+                    url: data.dataUrl,
+                    name: data.fileName,
+                    isExisting: true,
+                    id: attId,
+                  };
+                }
+              } catch (error) {
+                console.error('Failed to fetch attachment:', error);
+              }
+              return {
+                url: '',
+                name: attId,
+                isExisting: true,
+                id: attId,
+              };
+            })
+          );
+          console.log('Loaded attachments:', attachmentData);
+          setAttachments(attachmentData as any);
+        };
+        loadAttachments();
       } else {
         console.log('No attachments found');
         setAttachments([]);
@@ -332,113 +356,27 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
 
         <div className="field">
           <label>มอบหมายให้ <span className="field-hint">(เลือกได้หลายคน)</span></label>
-          <div className="emp-picker" style={{ position: 'relative' }}>
-            <button
-              type="button"
-              className="emp-picker-trigger"
-              aria-haspopup="listbox"
-              aria-expanded={showEmpPicker}
-              aria-label="มอบหมายงานให้"
-              onClick={() => setShowEmpPicker(!showEmpPicker)}
-            >
-              {assignees.length > 0 ? (
-                <div className="emp-picker-avatars">
-                  <div className="emp-avatars-group">
-                    {employees
-                      .filter((emp) => assignees.includes(emp.id))
-                      .slice(0, 3)
-                      .map((emp, idx) => {
-                        const initials = emp.name.substring(0, 2).toUpperCase();
-                        const colors = ['#5B7FB0', '#E4572E', '#0E9384', '#C98A0E', '#D2504F'];
-                        const colorIndex = emp.id.charCodeAt(0) % colors.length;
-                        const bgColor = colors[colorIndex];
-                        return (
-                          <div
-                            key={emp.id}
-                            className="emp-avatar-badge"
-                            style={{
-                              backgroundColor: bgColor,
-                              marginLeft: idx > 0 ? '-0.5rem' : '0',
-                            }}
-                            title={emp.name}
-                          >
-                            {initials}
-                          </div>
-                        );
-                      })}
-                  </div>
-                  <span className="emp-picker-count">{assignees.length} คน</span>
-                </div>
-              ) : (
-                <span className="emp-picker-name muted">เลือกผู้รับงาน</span>
-              )}
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down emp-picker-caret" aria-hidden="true">
-                <path d="m6 9 6 6 6-6"></path>
-              </svg>
-            </button>
-
-            {showEmpPicker && (
-              <div className="emp-picker-menu">
-                <input
-                  type="text"
-                  className="emp-picker-search"
-                  placeholder="ค้นหาชื่อพนักงาน…"
-                  value={empSearchTerm}
-                  onChange={(e) => setEmpSearchTerm(e.target.value)}
-                  autoComplete="off"
-                />
-                <div className="emp-picker-list" role="listbox" aria-multiselectable="true">
-                  {employees.length === 0 ? (
-                    <div className="emp-picker-empty">ไม่มีพนักงาน</div>
-                  ) : (
-                    employees
-                      .filter((emp) =>
-                        emp.name.toLowerCase().includes(empSearchTerm.toLowerCase())
-                      )
-                      .map((emp) => {
-                        const isSelected = assignees.includes(emp.id);
-                        const initials = emp.name.substring(0, 2).toUpperCase();
-                        const colors = ['#5B7FB0', '#E4572E', '#0E9384', '#C98A0E', '#D2504F'];
-                        const colorIndex = emp.id.charCodeAt(0) % colors.length;
-                        const bgColor = colors[colorIndex];
-
-                        return (
-                          <button
-                            key={emp.id}
-                            type="button"
-                            role="option"
-                            aria-selected={isSelected}
-                            className={`emp-picker-opt ${isSelected ? 'sel' : ''}`}
-                            onClick={() => handleAssigneeToggle(emp.id)}
-                          >
-                            <span className="emp-ava" style={{ backgroundColor: bgColor }}>
-                              {initials}
-                            </span>
-                            <span className="emp-picker-name">{emp.name}</span>
-                            {isSelected && (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="emp-picker-check"
-                              >
-                                <path d="M20 6 9 17l-5-5"></path>
-                              </svg>
-                            )}
-                          </button>
-                        );
-                      })
-                  )}
-                </div>
-              </div>
-            )}
+          <div className="prio-picker" role="group" aria-label="ผู้ถืองาน">
+            {employees.map((emp) => {
+              const colors = ['#5B7FB0', '#E4572E', '#0E9384', '#C98A0E', '#D2504F'];
+              const colorIndex = emp.id.charCodeAt(0) % colors.length;
+              const bgColor = colors[colorIndex];
+              const isSelected = assignees.includes(emp.id);
+              return (
+                <button
+                  key={emp.id}
+                  type="button"
+                  className={`prio-chip ${isSelected ? 'on' : ''}`}
+                  style={{ '--prio': bgColor } as any}
+                  onClick={() => handleAssigneeToggle(emp.id)}
+                >
+                  <span className="d"></span>
+                  {emp.name}
+                </button>
+              );
+            })}
           </div>
+
         </div>
 
         <div className="field">
@@ -811,7 +749,7 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
         <div className="field">
           <label>แนบไฟล์</label>
           {attachments.length > 0 && (
-            <div style={{ marginBottom: '0.75rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '0.5rem' }}>
+            <div style={{ marginBottom: '0.75rem', display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
               {attachments.map((file, idx) => {
                 const isFile = file instanceof File;
                 const isImage = isFile ? file.type.startsWith('image/') : (file as any).url?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
@@ -821,17 +759,17 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
                 return (
                   <div
                     key={`${fileName}-${idx}`}
-                    style={{ position: 'relative', borderRadius: '0.375rem', overflow: 'hidden', border: '1px solid #4B5563' }}
+                    style={{ position: 'relative', borderRadius: '0.375rem', overflow: 'hidden', border: '1px solid #4B5563', flexShrink: 0, width: '120px' }}
                   >
                     {preview ? (
                       <img
                         src={preview}
                         alt={fileName}
-                        style={{ width: '100%', height: '80px', objectFit: 'cover', display: 'block' }}
+                        style={{ width: '100%', height: '120px', objectFit: 'cover', display: 'block' }}
                       />
                     ) : (
-                      <div style={{ width: '100%', height: '80px', backgroundColor: '#2d3748', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center', padding: '4px' }}>
-                        <span style={{ wordBreak: 'break-all' }}>{fileName.substring(0, 20)}</span>
+                      <div style={{ width: '100%', height: '120px', backgroundColor: '#2d3748', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center', padding: '8px' }}>
+                        <span style={{ wordBreak: 'break-word' }}>{fileName.substring(0, 30)}</span>
                       </div>
                     )}
                     <button
@@ -839,10 +777,10 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
                       onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))}
                       style={{
                         position: 'absolute',
-                        top: '2px',
-                        right: '2px',
-                        width: '20px',
-                        height: '20px',
+                        top: '4px',
+                        right: '4px',
+                        width: '24px',
+                        height: '24px',
                         backgroundColor: '#dc2626',
                         color: 'white',
                         border: 'none',
@@ -851,7 +789,7 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '12px',
+                        fontSize: '14px',
                         padding: 0,
                       }}
                       title="ลบไฟล์"

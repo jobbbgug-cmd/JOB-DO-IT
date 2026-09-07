@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
           assignee: task.assignee,
           assignees: task.assignees || [],
           createdBy: task.createdBy,
+          createdAt: task.createdAt,
           lane: task.lane,
           progress: task.progress,
           sprint: task.sprint,
@@ -86,10 +87,10 @@ export async function POST(req: NextRequest) {
 
     console.log('DEBUG API - companyCode:', companyCode, 'createdBy:', createdBy, 'has createdBy key:', keys.includes('createdBy'));
 
-    // Check attachments (already base64 from upload endpoint)
-    const attachmentValues = formData.getAll('attachments');
-    const attachmentStrings = attachmentValues.filter(v => typeof v === 'string') as string[];
-    console.log('DEBUG API - attachments count:', attachmentStrings.length, 'has attachments key:', keys.includes('attachments'));
+    // Get attachment IDs from formData
+    const attachmentIdsStr = formData.get('attachmentIds') as string;
+    const attachmentIds = attachmentIdsStr ? JSON.parse(attachmentIdsStr) : [];
+    console.log('DEBUG API - attachmentIds:', attachmentIds, 'has attachmentIds key:', keys.includes('attachmentIds'));
     const startDateStr = formData.get('startDate') as string;
     const endDateStr = formData.get('endDate') as string;
     const notification = (formData.get('notification') as string) || 'none';
@@ -145,13 +146,10 @@ export async function POST(req: NextRequest) {
     const startDate = parseThaiDate(startDateStr);
     const endDate = parseThaiDate(endDateStr);
 
-    // Attachments are already base64 strings from upload endpoint
-    const attachments = attachmentStrings;
-
     console.log('Creating task with:', {
       companyCode, title, assignees, createdBy,
       startDate, endDate, notification,
-      attachments: attachments.length
+      attachmentIds: attachmentIds.length
     });
 
     const taskData = {
@@ -167,7 +165,7 @@ export async function POST(req: NextRequest) {
       progress,
       startDate,
       endDate,
-      attachments,
+      attachments: attachmentIds,
       notification,
       reminderDate: notification === 'once' ? reminderDate : null,
       reminderTime: notification === 'once' ? reminderTime : '09:00',

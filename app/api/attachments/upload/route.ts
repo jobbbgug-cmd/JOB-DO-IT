@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/db';
+import Attachment from '@/lib/models/Attachment';
+import Task from '@/lib/models/Task';
 
 export async function POST(req: NextRequest) {
   try {
+    await connectDB();
+
     const formData = await req.formData();
     const file = formData.get('file') as File;
+    const taskId = formData.get('taskId') as string;
+    const companyCode = formData.get('companyCode') as string;
 
-    if (!file) {
+    if (!file || !taskId || !companyCode) {
       return NextResponse.json(
-        { error: 'No file provided' },
+        { error: 'Missing file, taskId, or companyCode' },
         { status: 400 }
       );
     }
@@ -15,14 +22,33 @@ export async function POST(req: NextRequest) {
     // Convert file to base64
     const buffer = await file.arrayBuffer();
     const base64 = Buffer.from(buffer).toString('base64');
-    const dataUrl = `data:${file.type};base64,${base64}`;
+    const mimeType = file.type || 'application/octet-stream';
+    const dataUrl = `data:${mimeType};base64,${base64}`;
 
-    console.log('Attachment uploaded:', file.name, 'size:', file.size);
+    // Create attachment document
+    const attachment = await Attachment.create({
+      dataUrl,
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+      companyCode,
+    });
+
+    const attachmentId = String(attachment._id);
+
+    // Add attachment ID to task
+    await Task.findByIdAndUpdate(
+      taskId,
+      { $push: { attachments: attachmentId } },
+      { new: true }
+    );
+
+    console.log('Attachment uploaded:', file.name, 'ID:', attachmentId);
 
     return NextResponse.json(
       {
-        success: true,
-        attachment: dataUrl,
+        id: attachmentId,
+        dataUrl,
         fileName: file.name,
         fileType: file.type,
         fileSize: file.size,
