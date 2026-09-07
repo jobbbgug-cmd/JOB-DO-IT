@@ -1,21 +1,104 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import './CreateTaskModal.css';
 
 interface EditTaskModalProps {
   task: any | null;
   onClose: () => void;
+  companyCode?: string;
+  onTaskUpdated?: () => void;
 }
 
-export default function EditTaskModal({ task, onClose }: EditTaskModalProps) {
+export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdated }: EditTaskModalProps) {
   const [title, setTitle] = useState(task?.title || '');
   const [description, setDescription] = useState(task?.description || '');
-  const [visibility, setVisibility] = useState('public');
   const [assignees, setAssignees] = useState<string[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
   const [lane, setLane] = useState(task?.lane || 'routine');
   const [priority, setPriority] = useState(task?.priority || 'medium');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+
+  useEffect(() => {
+    if (task) {
+      setTitle(task.title || '');
+      setDescription(task.description || '');
+      const taskAssignees = task?.assignees && Array.isArray(task.assignees) ? task.assignees : (task?.assignee ? [task.assignee] : []);
+      setAssignees(taskAssignees);
+      setLane(task.lane || 'routine');
+      setPriority(task.priority || 'medium');
+    }
+  }, [task]);
+
+  useEffect(() => {
+    if (companyCode) {
+      fetchEmployees(companyCode);
+    }
+  }, [companyCode]);
+
+  const fetchEmployees = async (code: string) => {
+    try {
+      const response = await fetch(`/api/employees/${code}`);
+      if (response.ok) {
+        const data = await response.json();
+        setEmployees(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch employees:', error);
+    }
+  };
+
+  const handleAssigneeToggle = (empId: string) => {
+    setAssignees((prev) =>
+      prev.includes(empId) ? prev.filter((id) => id !== empId) : [...prev, empId]
+    );
+  };
+
+  const handleUpdateTask = async () => {
+    if (!task?.id || !title.trim()) {
+      console.error('Missing required fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('description', description);
+      formData.append('lane', lane);
+      formData.append('priority', priority);
+      formData.append('assignees', JSON.stringify(assignees));
+
+      const response = await fetch(`/api/tasks/edit/${task.id}`, {
+        method: 'PUT',
+        body: formData,
+      });
+
+      if (response.ok) {
+        setShowSuccessToast(true);
+        setTimeout(() => setShowSuccessToast(false), 3000);
+        onTaskUpdated?.();
+        setTimeout(() => handleClose(), 500);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', errorData);
+      }
+    } catch (error) {
+      console.error('Error updating task:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    setTitle('');
+    setDescription('');
+    setAssignees([]);
+    setLane('routine');
+    setPriority('medium');
+    onClose();
+  };
 
   if (!task) return null;
 
@@ -68,6 +151,37 @@ export default function EditTaskModal({ task, onClose }: EditTaskModalProps) {
                 placeholder="อธิบายเพิ่มเติม (ไม่บังคับ)"
                 className="w-full bg-gray-800 text-white px-3 py-2 rounded border border-gray-700 focus:border-cyan-500 focus:outline-none text-sm min-h-20 resize-none"
               />
+            </div>
+
+            {/* ผู้ถืองาน */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">ผู้ถืองาน (เลือกได้หลายคน)</label>
+              {employees.length === 0 ? (
+                <p className="text-gray-500 text-sm">กำลังโหลดข้อมูลสมาชิกทีม...</p>
+              ) : (
+                <div className="prio-picker" role="group" aria-label="ผู้ถืองาน">
+                  {employees.map((emp) => {
+                    const isSelected = assignees.includes(emp.id);
+                    const colors = ['#5B7FB0', '#E4572E', '#0E9384', '#C98A0E', '#D2504F'];
+                    const colorIndex = emp.id.charCodeAt(0) % colors.length;
+                    const bgColor = colors[colorIndex];
+
+                    return (
+                      <button
+                        key={emp.id}
+                        type="button"
+                        className={`prio-chip ${isSelected ? 'on' : ''}`}
+                        style={{ '--prio': bgColor } as React.CSSProperties}
+                        onClick={() => handleAssigneeToggle(emp.id)}
+                        title={isSelected ? `${emp.name} ได้รับมอบหมาย` : `เลือก ${emp.name}`}
+                      >
+                        <span className="d"></span>
+                        {emp.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* ประเภท */}
@@ -125,32 +239,23 @@ export default function EditTaskModal({ task, onClose }: EditTaskModalProps) {
               </div>
             </div>
 
-            {/* ช่วงวันที่ */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">ช่วงวันที่ทำงาน</label>
-              <div className="flex gap-2">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="flex-1 bg-gray-800 text-white px-3 py-2 rounded border border-gray-700 focus:border-cyan-500 focus:outline-none text-sm"
-                />
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="flex-1 bg-gray-800 text-white px-3 py-2 rounded border border-gray-700 focus:border-cyan-500 focus:outline-none text-sm"
-                />
-              </div>
-            </div>
-
-            {/* ปุ่มสร้าง */}
-            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition mt-6">
+            {/* ปุ่มบันทึก */}
+            <button
+              onClick={handleUpdateTask}
+              disabled={isSubmitting}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition mt-6 disabled:opacity-50"
+            >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
                 <path d="M20 6 9 17l-5-5"></path>
               </svg>
-              บันทึกการแก้ไข
+              {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
             </button>
+
+            {showSuccessToast && (
+              <div className="mt-4 p-3 bg-green-900/30 border border-green-700 rounded text-green-300 text-sm text-center">
+                ✓ บันทึกสำเร็จ
+              </div>
+            )}
           </div>
         </div>
       </div>
