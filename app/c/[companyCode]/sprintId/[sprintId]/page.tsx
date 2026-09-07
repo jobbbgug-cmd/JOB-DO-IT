@@ -47,7 +47,7 @@ export default function SprintPage() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [userCache, setUserCache] = useState<Record<string, string>>({});
   const [attachmentPreviews, setAttachmentPreviews] = useState<Record<string, string>>({});
-  const [nonImageFileIds, setNonImageFileIds] = useState<Record<string, Set<string>>>({});
+  const [nonImageFileIds, setNonImageFileIds] = useState<Record<string, string[]>>({});
   const fetchDataRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
@@ -314,19 +314,22 @@ export default function SprintPage() {
                                   attId={attId}
                                   onLoad={(isImage) => {
                                     if (!isImage) {
-                                      setNonImageFileIds((prev) => ({
-                                        ...prev,
-                                        [task.id]: new Set([...(prev[task.id] || new Set()), attId])
-                                      }));
+                                      setNonImageFileIds((prev) => {
+                                        const current = prev[task.id] || [];
+                                        return {
+                                          ...prev,
+                                          [task.id]: current.includes(attId) ? current : [...current, attId]
+                                        };
+                                      });
                                     }
                                   }}
                                 />
                               ))}
-                              {nonImageFileIds[task.id] && nonImageFileIds[task.id].size > 0 && (
+                              {nonImageFileIds[task.id] && nonImageFileIds[task.id].length > 0 && (
                                 <div className="relative w-6 h-6">
                                   <span className="text-lg">📎</span>
                                   <span className="absolute -top-1 -right-1 bg-gray-600 text-white text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center text-[10px]">
-                                    {nonImageFileIds[task.id].size}
+                                    {nonImageFileIds[task.id].length}
                                   </span>
                                 </div>
                               )}
