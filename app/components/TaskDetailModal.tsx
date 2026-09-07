@@ -24,11 +24,12 @@ interface TaskDetailModalProps {
   task: Task | null;
   onClose: () => void;
   onEdit?: (task: Task) => void;
+  employees?: any[];
 }
 
 const COLORS = ['#0E9384', '#E4572E', '#5B7FB0', '#B4479A', '#C98A0E', '#3F6E4B', '#8A5CF6', '#D2504F'];
 
-export default function TaskDetailModal({ task, onClose, onEdit }: TaskDetailModalProps) {
+export default function TaskDetailModal({ task, onClose, onEdit, employees = [] }: TaskDetailModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachments, setAttachments] = useState<{ file: File; preview: string }[]>([]);
 
@@ -137,17 +138,22 @@ export default function TaskDetailModal({ task, onClose, onEdit }: TaskDetailMod
               <span className="text-gray-500 text-xs block mb-1">ผู้ถือ</span>
               <div className="flex items-center gap-1.5 flex-wrap">
                 {task.assignees && task.assignees.length > 0 ? (
-                  task.assignees.map((assignee: any, i: number) => (
-                    <div key={i} className="flex items-center gap-1.5 bg-gray-800 px-2 py-1 rounded">
-                      <div
-                        className="w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center"
-                        style={{ backgroundColor: assignee.color || COLORS[i % COLORS.length] }}
-                      >
-                        {(assignee.name || assignee).substring(0, 2).toUpperCase()}
+                  task.assignees.map((assigneeId: any, i: number) => {
+                    const employee = employees.find((emp: any) => String(emp.id || emp._id) === String(assigneeId));
+                    const empName = employee?.name || assigneeId;
+                    const empColor = employee?.color || COLORS[i % COLORS.length];
+                    return (
+                      <div key={i} className="flex items-center gap-1.5 bg-gray-800 px-2 py-1 rounded">
+                        <div
+                          className="w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center"
+                          style={{ backgroundColor: empColor }}
+                        >
+                          {empName.substring(0, 2).toUpperCase()}
+                        </div>
+                        <span className="text-gray-200 text-xs">{empName}</span>
                       </div>
-                      <span className="text-gray-200 text-xs">{assignee.name || assignee}</span>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <span className="text-gray-500 text-xs">ไม่มีผู้รับ</span>
                 )}

@@ -27,7 +27,8 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
   const [priority, setPriority] = useState<string>('normal');
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
   const [notification, setNotification] = useState<'none' | 'once' | 'repeat'>('none');
-  const [attachments, setAttachments] = useState<File[]>([]);
+  const [attachments, setAttachments] = useState<{ id: string; dataUrl: string; fileName: string }[]>([]);
+  const [attachmentPreviews, setAttachmentPreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -121,6 +122,65 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
     );
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+
+    for (const file of files) {
+      try {
+        // First, upload to get base64
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const uploadResponse = await fetch('/api/attachments/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+
+          // Save to DB immediately
+          const saveResponse = await fetch('/api/attachments/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              dataUrl: uploadData.attachment,
+              fileName: file.name,
+              fileType: file.type,
+              fileSize: file.size,
+              companyCode: companyCode,
+            }),
+          });
+
+          if (saveResponse.ok) {
+            const saveData = await saveResponse.json();
+
+            // Store attachment ID and preview
+            setAttachments((prev) => [...prev, {
+              id: saveData.attachmentId,
+              dataUrl: uploadData.attachment,
+              fileName: file.name,
+            }]);
+            setAttachmentPreviews((prev) => [...prev, uploadData.attachment]);
+
+            console.log('File saved to DB:', file.name, 'ID:', saveData.attachmentId);
+          } else {
+            console.error('Save to DB failed for', file.name);
+          }
+        } else {
+          console.error('Upload failed for', file.name);
+        }
+      } catch (error) {
+        console.error('Error uploading file:', error);
+      }
+    }
+
+    // Reset input
+    if (e.target) {
+      e.target.value = '';
+    }
+  };
+
   const handleClose = () => {
     setTaskName('');
     setDescription('');
@@ -142,8 +202,9 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
 
     setIsSubmitting(true);
     try {
-      const assigneeList = visibility === 'self' ? [user?.id || ''] : assignees;
-      console.log('Creating tasks for assignees:', assigneeList);
+      const finalAssignees = visibility === 'self' ? [user?.id || ''] : assignees;
+      console.log('Creating task with assignees:', finalAssignees);
+      console.log('DEBUG - user?.id:', user?.id, 'attachments.length:', attachments.length, 'dateRange:', dateRange);
 
       // Map UI priority to schema priority
       const priorityMap: { [key: string]: string } = {
@@ -154,45 +215,68 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
         'later': 'low',
       };
 
-      // Create task for each assignee
-      const createPromises = assigneeList.map((assigneeId) =>
-        fetch('/api/tasks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            companyCode,
-            title: taskName,
-            description,
-            assignee: assigneeId,
-            sprint: sprintId,
-            lane: type,
-            priority: priorityMap[priority] || 'medium',
-            progress: 0,
-          }),
-        })
-      );
+      // Create single task with multiple assignees
+      const formData = new FormData();
+      formData.append('companyCode', companyCode);
+      formData.append('title', taskName);
+      formData.append('description', description);
+      formData.append('assignees', JSON.stringify(finalAssignees));
+      formData.append('createdBy', user?.id || '');
+      formData.append('sprint', sprintId);
+      formData.append('lane', type);
+      formData.append('priority', priorityMap[priority] || 'medium');
+      formData.append('progress', '0');
 
-      const results = await Promise.all(createPromises);
-      console.log('API responses:', results.map(r => r.status));
-      const allSuccess = results.every((res) => res.ok);
+      // Add date range
+      console.log('DEBUG - dateRange:', dateRange);
+      if (dateRange?.start) {
+        formData.append('startDate', dateRange.start);
+        console.log('Sending startDate:', dateRange.start);
+      }
+      if (dateRange?.end) {
+        formData.append('endDate', dateRange.end);
+        console.log('Sending endDate:', dateRange.end);
+      }
 
-      if (allSuccess) {
-        console.log('All tasks created successfully');
+      // Add notification settings
+      formData.append('notification', notification);
+      if (notification === 'once' && reminderDate) {
+        formData.append('reminderDate', reminderDate);
+        formData.append('reminderTime', reminderTime);
+      }
+      if (notification === 'repeat') {
+        formData.append('repeatFrequency', repeatFrequency);
+        formData.append('selectedDays', JSON.stringify(selectedDays));
+        formData.append('selectedMonthDay', String(selectedMonthDay));
+        formData.append('repeatTime', repeatTime);
+        formData.append('resetCard', String(resetCard));
+      }
+
+      // Add attachment IDs (saved to DB immediately on upload)
+      const attachmentIds = attachments.map((att) => att.id);
+      if (attachmentIds.length > 0) {
+        formData.append('attachmentIds', JSON.stringify(attachmentIds));
+      }
+
+      const response = await fetch('/api/tasks', {
+        method: 'POST',
+        body: formData,
+      });
+
+      console.log('API response:', response.status);
+
+      if (response.ok) {
+        console.log('Task created successfully');
         setShowSuccessToast(true);
         onTaskCreated?.();
         setTimeout(() => setShowSuccessToast(false), 3000);
         setTimeout(() => handleClose(), 500);
       } else {
-        // Log detailed error info
-        for (const res of results) {
-          if (!res.ok) {
-            try {
-              const errJson = await res.json();
-              console.error('API Error:', res.status, JSON.stringify(errJson, null, 2));
-            } catch (e) {
-              console.error('API Error:', res.status, 'Could not parse response');
-            }
-          }
+        try {
+          const errJson = await response.json();
+          console.error('API Error:', response.status, JSON.stringify(errJson, null, 2));
+        } catch (e) {
+          console.error('API Error:', response.status, 'Could not parse response');
         }
       }
     } catch (error) {
@@ -757,6 +841,56 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
 
         <div className="field">
           <label>แนบไฟล์</label>
+          {attachments.length > 0 && (
+            <div style={{ marginBottom: '0.75rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '0.5rem' }}>
+              {attachments.map((attachment, idx) => {
+                const isImage = attachment.dataUrl.startsWith('data:image/');
+
+                return (
+                  <div
+                    key={`attachment-${attachment.id}`}
+                    style={{ position: 'relative', borderRadius: '0.375rem', overflow: 'hidden', border: '1px solid #4B5563' }}
+                  >
+                    {isImage ? (
+                      <img
+                        src={attachment.dataUrl}
+                        alt={attachment.fileName}
+                        style={{ width: '100%', height: '80px', objectFit: 'cover', display: 'block' }}
+                      />
+                    ) : (
+                      <div style={{ width: '100%', height: '80px', backgroundColor: '#2d3748', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center', padding: '4px' }}>
+                        <span style={{ wordBreak: 'break-all' }}>📎 {attachment.fileName.substring(0, 15)}</span>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))}
+                      style={{
+                        position: 'absolute',
+                        top: '2px',
+                        right: '2px',
+                        width: '20px',
+                        height: '20px',
+                        backgroundColor: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        padding: 0,
+                      }}
+                      title="ลบไฟล์"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           <label className="attach-btn" title="เพิ่มรูป วิดีโอ หรือเอกสาร">
             <span className="attach-plus">+</span>
             เพิ่มไฟล์
@@ -765,7 +899,7 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
               accept="image/png,image/jpeg,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,application/pdf,text/plain,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/zip,application/x-zip-compressed"
               multiple
               hidden
-              onChange={(e) => setAttachments(Array.from(e.target.files || []))}
+              onChange={(e) => handleFileSelect(e)}
             />
           </label>
           <p className="note" style={{ margin: '6px 0px 0px' }}>รูป วิดีโอ และเอกสาร (Excel, Word, PowerPoint, PDF, ZIP) ไฟล์ละไม่เกิน 10 MB</p>

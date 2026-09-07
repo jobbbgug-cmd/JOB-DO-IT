@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Dock from '@/app/components/Dock';
 import TaskDetailModal from '@/app/components/TaskDetailModal';
 import EditTaskModal from '@/app/components/EditTaskModal';
+import DeleteConfirmModal from '@/app/components/DeleteConfirmModal';
 
 interface Employee {
   id: string;
@@ -40,6 +41,10 @@ export default function SprintPage() {
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [editingTask, setEditingTask] = useState<any>(null);
+  const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null);
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
+  const [deletingEmployeeId, setDeletingEmployeeId] = useState<string | null>(null);
+  const [employees, setEmployees] = useState<any[]>([]);
   const fetchDataRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
@@ -47,10 +52,11 @@ export default function SprintPage() {
       try {
         // Fetch employees
         const empRes = await fetch(`/api/employees/${companyCode}`);
-        const employees = await empRes.json();
-        console.log('Fetched employees:', employees);
-        if (employees.length > 0) {
-          console.log('First employee:', employees[0]);
+        const employeesList = await empRes.json();
+        console.log('Fetched employees:', employeesList);
+        setEmployees(employeesList);
+        if (employeesList.length > 0) {
+          console.log('First employee:', employeesList[0]);
         }
 
         // Fetch tasks for sprint
@@ -59,7 +65,7 @@ export default function SprintPage() {
         console.log('Fetched tasks:', tasks);
 
         // Group tasks by employee and lane
-        const cardData: EmployeeCard[] = employees.map((emp: any) => {
+        const cardData: EmployeeCard[] = employeesList.map((emp: any) => {
           const empId = emp.id || emp._id;
           const empTasks = tasks.filter((t: any) => {
             const taskAssignees = Array.isArray(t.assignees) && t.assignees.length > 0
@@ -113,8 +119,44 @@ export default function SprintPage() {
         task={selectedTask}
         onClose={() => setSelectedTask(null)}
         onEdit={(task) => setEditingTask(task)}
+        employees={employees}
       />
-      <EditTaskModal task={editingTask} onClose={() => setEditingTask(null)} />
+      <EditTaskModal
+        task={editingTask}
+        onClose={() => setEditingTask(null)}
+        companyCode={companyCode}
+        onTaskUpdated={() => {
+          console.log('Task updated, refetching...');
+          fetchDataRef.current?.();
+          setEditingTask(null);
+        }}
+      />
+      <DeleteConfirmModal
+        taskTitle={cards
+          .flatMap((card) => [...card.routineTasks, ...card.urgentTasks])
+          .find((t) => t.id === deleteTaskId)?.title || null}
+        isOpen={deleteTaskId !== null}
+        onCancel={() => setDeleteTaskId(null)}
+        onConfirm={async () => {
+          if (!deleteTaskId || !deletingEmployeeId) return;
+          setDeletingTaskId(deleteTaskId);
+          try {
+            const res = await fetch(`/api/tasks/delete/${deleteTaskId}?employeeId=${deletingEmployeeId}`, {
+              method: 'DELETE',
+            });
+            if (res.ok) {
+              setDeleteTaskId(null);
+              setDeletingEmployeeId(null);
+              fetchDataRef.current?.();
+            }
+          } catch (error) {
+            console.error('Failed to delete task:', error);
+          } finally {
+            setDeletingTaskId(null);
+          }
+        }}
+        isDeleting={deletingTaskId === deleteTaskId}
+      />
       <Dock
         onTaskCreated={() => {
           console.log('onTaskCreated called, refetching...');
@@ -227,24 +269,53 @@ export default function SprintPage() {
                     </div>
                   ) : (
                     card.routineTasks.map((task: any) => (
-                      <div key={task.id} onClick={() => setSelectedTask(task)} className="bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md cursor-pointer">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <span className="inline-block px-2 py-1 rounded-md text-xs font-semibold bg-cyan-500/25 text-cyan-300 flex-shrink-0">
-                            {task.priority}
-                          </span>
-                        </div>
-                        <div className="font-semibold text-gray-100 mb-2 line-clamp-2 text-sm leading-tight">{task.title}</div>
-                        {task.dueDate && (
-                          <div className="text-gray-400 text-xs mb-2">📅 {task.dueDate}</div>
-                        )}
-                        <div className="space-y-1">
-                          <div className="w-full bg-gray-700/50 rounded-full h-1.5 overflow-hidden border border-gray-600/30">
-                            <div
-                              className="bg-gradient-to-r from-cyan-500 to-cyan-400 h-1.5 transition-all rounded-full"
-                              style={{ width: `${task.progress}%` }}
-                            ></div>
+                      <div key={task.id} className="group relative bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md cursor-pointer">
+                        <div onClick={() => setSelectedTask(task)}>
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <span className="inline-block px-2 py-1 rounded-md text-xs font-semibold bg-cyan-500/25 text-cyan-300 flex-shrink-0">
+                              {task.priority}
+                            </span>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingTask(task);
+                                }}
+                                className="p-1 hover:bg-gray-700/60 rounded transition-colors"
+                                title="แก้ไข"
+                              >
+                                <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                                </svg>
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteTaskId(task.id);
+                                  setDeletingEmployeeId(card.employee.id);
+                                }}
+                                className="p-1 hover:bg-gray-700/60 rounded transition-colors"
+                                title="ลบ"
+                              >
+                                <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                                </svg>
+                              </button>
+                            </div>
                           </div>
-                          <div className="text-xs text-gray-500">{task.progress}% เสร็จสิ้น</div>
+                          <div className="font-semibold text-gray-100 mb-2 line-clamp-2 text-sm leading-tight">{task.title}</div>
+                          {task.dueDate && (
+                            <div className="text-gray-400 text-xs mb-2">📅 {task.dueDate}</div>
+                          )}
+                          <div className="space-y-1">
+                            <div className="w-full bg-gray-700/50 rounded-full h-1.5 overflow-hidden border border-gray-600/30">
+                              <div
+                                className="bg-gradient-to-r from-cyan-500 to-cyan-400 h-1.5 transition-all rounded-full"
+                                style={{ width: `${task.progress}%` }}
+                              ></div>
+                            </div>
+                            <div className="text-xs text-gray-500">{task.progress}% เสร็จสิ้น</div>
+                          </div>
                         </div>
                       </div>
                     ))
@@ -270,24 +341,53 @@ export default function SprintPage() {
                     </div>
                   ) : (
                     card.urgentTasks.map((task: any) => (
-                      <div key={task.id} onClick={() => setSelectedTask(task)} className="bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md cursor-pointer">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <span className="inline-block px-2 py-1 rounded-md text-xs font-semibold bg-orange-500/30 text-orange-300 flex-shrink-0">
-                            {task.priority}
-                          </span>
-                        </div>
-                        <div className="font-semibold text-gray-100 mb-2 line-clamp-2 text-sm leading-tight">{task.title}</div>
-                        {task.dueDate && (
-                          <div className="text-gray-400 text-xs mb-2">📅 {task.dueDate}</div>
-                        )}
-                        <div className="space-y-1">
-                          <div className="w-full bg-gray-700/50 rounded-full h-1.5 overflow-hidden border border-gray-600/30">
-                            <div
-                              className="bg-gradient-to-r from-orange-500 to-orange-400 h-1.5 transition-all rounded-full"
-                              style={{ width: `${task.progress}%` }}
-                            ></div>
+                      <div key={task.id} className="group relative bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md cursor-pointer">
+                        <div onClick={() => setSelectedTask(task)}>
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <span className="inline-block px-2 py-1 rounded-md text-xs font-semibold bg-orange-500/30 text-orange-300 flex-shrink-0">
+                              {task.priority}
+                            </span>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingTask(task);
+                                }}
+                                className="p-1 hover:bg-gray-700/60 rounded transition-colors"
+                                title="แก้ไข"
+                              >
+                                <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                                </svg>
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteTaskId(task.id);
+                                  setDeletingEmployeeId(card.employee.id);
+                                }}
+                                className="p-1 hover:bg-gray-700/60 rounded transition-colors"
+                                title="ลบ"
+                              >
+                                <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                                </svg>
+                              </button>
+                            </div>
                           </div>
-                          <div className="text-xs text-gray-500">{task.progress}% เสร็จสิ้น</div>
+                          <div className="font-semibold text-gray-100 mb-2 line-clamp-2 text-sm leading-tight">{task.title}</div>
+                          {task.dueDate && (
+                            <div className="text-gray-400 text-xs mb-2">📅 {task.dueDate}</div>
+                          )}
+                          <div className="space-y-1">
+                            <div className="w-full bg-gray-700/50 rounded-full h-1.5 overflow-hidden border border-gray-600/30">
+                              <div
+                                className="bg-gradient-to-r from-orange-500 to-orange-400 h-1.5 transition-all rounded-full"
+                                style={{ width: `${task.progress}%` }}
+                              ></div>
+                            </div>
+                            <div className="text-xs text-gray-500">{task.progress}% เสร็จสิ้น</div>
+                          </div>
                         </div>
                       </div>
                     ))

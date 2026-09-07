@@ -8,10 +8,22 @@ interface ITask extends Document {
   priority: 'urgent' | 'high' | 'medium' | 'low';
   assignee?: string | null;
   assignees?: string[];
+  createdBy?: string | null;
   dueDate?: Date | null;
+  startDate?: Date | null;
+  endDate?: Date | null;
   sprint?: string | null;
   lane?: 'routine' | 'urgent';
   progress?: number;
+  attachments?: string[];
+  notification?: 'none' | 'once' | 'repeat';
+  reminderDate?: string | null;
+  reminderTime?: string;
+  repeatFrequency?: 'daily' | 'weekly' | 'monthly';
+  selectedDays?: number[];
+  selectedMonthDay?: number;
+  repeatTime?: string;
+  resetCard?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -50,7 +62,20 @@ const taskSchema = new Schema<ITask>(
       type: [String],
       default: [],
     },
+    createdBy: {
+      type: String,
+      default: null,
+      index: true,
+    },
     dueDate: {
+      type: Date,
+      default: null,
+    },
+    startDate: {
+      type: Date,
+      default: null,
+    },
+    endDate: {
       type: Date,
       default: null,
     },
@@ -70,8 +95,55 @@ const taskSchema = new Schema<ITask>(
       min: 0,
       max: 100,
     },
+    attachments: {
+      type: [String],
+      default: [],
+    },
+    notification: {
+      type: String,
+      enum: ['none', 'once', 'repeat'],
+      default: 'none',
+    },
+    reminderDate: {
+      type: String,
+      default: null,
+    },
+    reminderTime: {
+      type: String,
+      default: '09:00',
+    },
+    repeatFrequency: {
+      type: String,
+      enum: ['daily', 'weekly', 'monthly'],
+      default: 'daily',
+    },
+    selectedDays: {
+      type: [Number],
+      default: [4],
+    },
+    selectedMonthDay: {
+      type: Number,
+      default: 15,
+    },
+    repeatTime: {
+      type: String,
+      default: '09:00',
+    },
+    resetCard: {
+      type: Boolean,
+      default: true,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    strict: false, // Allow additional fields from model
+  }
 );
+
+// Force collection drop and recreate if needed (for development)
+// Uncomment if schema changes aren't reflected:
+// if (mongoose.connection.collections['tasks']) {
+//   mongoose.connection.dropCollection('tasks');
+// }
 
 export default mongoose.models.Task || mongoose.model<ITask>('Task', taskSchema);

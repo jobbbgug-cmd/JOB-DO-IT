@@ -10,39 +10,163 @@ interface EditTaskModalProps {
   onTaskUpdated?: () => void;
 }
 
+interface Employee {
+  id: string;
+  name: string;
+}
+
 export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdated }: EditTaskModalProps) {
-  const [title, setTitle] = useState(task?.title || '');
-  const [description, setDescription] = useState(task?.description || '');
+  const [taskName, setTaskName] = useState('');
+  const [description, setDescription] = useState('');
+  const [visibility, setVisibility] = useState<'all' | 'self'>('all');
   const [assignees, setAssignees] = useState<string[]>([]);
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [lane, setLane] = useState(task?.lane || 'routine');
-  const [priority, setPriority] = useState(task?.priority || 'medium');
+  const [type, setType] = useState<'routine' | 'urgent'>('routine');
+  const [priority, setPriority] = useState<string>('normal');
+  const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
+  const [notification, setNotification] = useState<'none' | 'once' | 'repeat'>('none');
+  const [attachments, setAttachments] = useState<(File | { url: string; name: string; isExisting: boolean })[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [showEmpPicker, setShowEmpPicker] = useState(false);
+  const [empSearchTerm, setEmpSearchTerm] = useState<string>('');
+  const [reminderDate, setReminderDate] = useState<string>('');
+  const [reminderTime, setReminderTime] = useState<string>('09:00');
+  const [repeatFrequency, setRepeatFrequency] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [repeatTime, setRepeatTime] = useState<string>('09:00');
+  const [resetCard, setResetCard] = useState<boolean>(true);
+  const [selectedDays, setSelectedDays] = useState<number[]>([4]);
+  const [selectedMonthDay, setSelectedMonthDay] = useState<number>(15);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [pickerDate, setPickerDate] = useState(new Date());
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
+  const [showReminderDatePicker, setShowReminderDatePicker] = useState(false);
+  const [reminderPickerDate, setReminderPickerDate] = useState(new Date());
+
+  const daysOfWeek = [
+    { index: 0, short: 'อา', full: 'อาทิตย์' },
+    { index: 1, short: 'จ', full: 'จันทร์' },
+    { index: 2, short: 'อ', full: 'อังคาร' },
+    { index: 3, short: 'พ', full: 'พุธ' },
+    { index: 4, short: 'พฤ', full: 'พฤหัสบดี' },
+    { index: 5, short: 'ศ', full: 'ศุกร์' },
+    { index: 6, short: 'ส', full: 'เสาร์' },
+  ];
+
+  const handleDayToggle = (dayIndex: number) => {
+    setSelectedDays((prev) =>
+      prev.includes(dayIndex) ? prev.filter((d) => d !== dayIndex) : [...prev, dayIndex]
+    );
+  };
+
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const handleDateClick = (day: number) => {
+    const newDate = new Date(pickerDate.getFullYear(), pickerDate.getMonth(), day);
+
+    if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
+      setSelectedStartDate(newDate);
+      setSelectedEndDate(null);
+    } else if (newDate < selectedStartDate) {
+      setSelectedStartDate(newDate);
+    } else {
+      setSelectedEndDate(newDate);
+    }
+  };
+
+  const handleDoneDatePicker = () => {
+    if (selectedStartDate && selectedEndDate) {
+      const start = selectedStartDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+      const end = selectedEndDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+      setDateRange({ start, end });
+      setShowDatePicker(false);
+    }
+  };
 
   useEffect(() => {
     if (task) {
-      setTitle(task.title || '');
+      console.log('Task loaded:', task);
+      console.log('Task attachments:', task.attachments);
+
+      setTaskName(task.title || '');
       setDescription(task.description || '');
       const taskAssignees = task?.assignees && Array.isArray(task.assignees) ? task.assignees : (task?.assignee ? [task.assignee] : []);
       setAssignees(taskAssignees);
-      setLane(task.lane || 'routine');
-      setPriority(task.priority || 'medium');
+      setType(task.lane || 'routine');
+      setPriority(task.priority || 'normal');
+
+      // Load date range from task
+      if (task.startDate && task.endDate) {
+        const startDate = new Date(task.startDate);
+        const endDate = new Date(task.endDate);
+        const start = startDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+        const end = endDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+        setDateRange({ start, end });
+        setSelectedStartDate(startDate);
+        setSelectedEndDate(endDate);
+      }
+
+      // Load notification settings from task
+      if (task.notification) {
+        setNotification(task.notification);
+        if (task.notification === 'once') {
+          setReminderDate(task.reminderDate || '');
+          setReminderTime(task.reminderTime || '09:00');
+        }
+        if (task.notification === 'repeat') {
+          setRepeatFrequency(task.repeatFrequency || 'daily');
+          setSelectedDays(task.selectedDays || [4]);
+          setSelectedMonthDay(task.selectedMonthDay || 15);
+          setRepeatTime(task.repeatTime || '09:00');
+          setResetCard(task.resetCard !== false);
+        }
+      }
+
+      // Load existing attachments from task
+      if (task.attachments && Array.isArray(task.attachments) && task.attachments.length > 0) {
+        console.log('Processing attachments...');
+        const existingAttachments = task.attachments.map((att: any) => {
+          console.log('Attachment item:', att, typeof att);
+          // Handle both string URLs and object formats
+          const url = typeof att === 'string' ? att : att.url || att;
+          return {
+            url,
+            name: typeof att === 'string' ? att.split('/').pop() : (att.name || att.split('/').pop() || 'attachment'),
+            isExisting: true,
+          };
+        });
+        console.log('Processed attachments:', existingAttachments);
+        setAttachments(existingAttachments as any);
+      } else {
+        console.log('No attachments found');
+        setAttachments([]);
+      }
     }
   }, [task]);
 
   useEffect(() => {
     if (companyCode) {
-      fetchEmployees(companyCode);
+      fetchEmployees();
     }
   }, [companyCode]);
 
-  const fetchEmployees = async (code: string) => {
+  const fetchEmployees = async () => {
     try {
-      const response = await fetch(`/api/employees/${code}`);
+      const response = await fetch(`/api/employees/${companyCode}`);
       if (response.ok) {
         const data = await response.json();
-        setEmployees(data);
+        const transformed = data.map((emp: any) => ({
+          id: emp.id || emp._id,
+          name: emp.name,
+        }));
+        setEmployees(transformed);
       }
     } catch (error) {
       console.error('Failed to fetch employees:', error);
@@ -56,19 +180,56 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
   };
 
   const handleUpdateTask = async () => {
-    if (!task?.id || !title.trim()) {
+    if (!task?.id || !taskName.trim()) {
       console.error('Missing required fields');
       return;
     }
 
     setIsSubmitting(true);
     try {
+      const priorityMap: { [key: string]: string } = {
+        'critical': 'urgent',
+        'high': 'high',
+        'normal': 'medium',
+        'low': 'low',
+        'later': 'low',
+      };
+
+      // Prepare FormData for attachments
       const formData = new FormData();
-      formData.append('title', title);
+      formData.append('title', taskName);
       formData.append('description', description);
-      formData.append('lane', lane);
-      formData.append('priority', priority);
-      formData.append('assignees', JSON.stringify(assignees));
+      formData.append('lane', type);
+      formData.append('priority', priorityMap[priority] || 'medium');
+      formData.append('assignees', JSON.stringify(visibility === 'self' ? [task.createdBy] : assignees));
+
+      // Add date range
+      if (dateRange?.start) {
+        formData.append('startDate', dateRange.start);
+      }
+      if (dateRange?.end) {
+        formData.append('endDate', dateRange.end);
+      }
+
+      // Add notification settings
+      formData.append('notification', notification);
+      if (notification === 'once' && reminderDate) {
+        formData.append('reminderDate', reminderDate);
+        formData.append('reminderTime', reminderTime);
+      }
+      if (notification === 'repeat') {
+        formData.append('repeatFrequency', repeatFrequency);
+        formData.append('selectedDays', JSON.stringify(selectedDays));
+        formData.append('selectedMonthDay', String(selectedMonthDay));
+        formData.append('repeatTime', repeatTime);
+        formData.append('resetCard', String(resetCard));
+      }
+
+      // Add new attachments (not existing ones)
+      const newAttachments = attachments.filter((att: any) => att instanceof File);
+      newAttachments.forEach((file: File) => {
+        formData.append('attachments', file);
+      });
 
       const response = await fetch(`/api/tasks/edit/${task.id}`, {
         method: 'PUT',
@@ -92,172 +253,684 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
   };
 
   const handleClose = () => {
-    setTitle('');
+    setTaskName('');
     setDescription('');
+    setVisibility('all');
     setAssignees([]);
-    setLane('routine');
-    setPriority('medium');
+    setType('routine');
+    setPriority('normal');
+    setDateRange(null);
+    setNotification('none');
+    setAttachments([]);
     onClose();
   };
 
   if (!task) return null;
 
-  const priorityOptions = [
-    { value: 'urgent', label: 'ด่วนมาก', color: '#D2504F' },
-    { value: 'high', label: 'ด่วน', color: '#E4572E' },
-    { value: 'medium', label: 'ปกติ', color: '#0E9384' },
-    { value: 'low', label: 'ไม่รีบ', color: '#5B7FB0' },
-  ];
+  const isFormValid = taskName.trim().length > 0;
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
-      <div
-        className="bg-gray-900 rounded-xl w-full max-w-md shadow-2xl my-8"
-        onClick={e => e.stopPropagation()}
-      >
+    <div className="modal-overlay" onClick={(e) => {
+      if (e.target === e.currentTarget) handleClose();
+    }}>
+      <div className="panel" style={{ maxWidth: '500px' }}>
         <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 hover:bg-gray-800 rounded transition-colors"
+          className="icon-btn"
+          aria-label="ปิด"
           title="ปิด"
+          onClick={handleClose}
         >
-          <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 6 6 18M6 6l12 12"></path>
           </svg>
         </button>
 
-        <div className="p-6">
-          <h1 className="text-lg font-bold text-white mb-2 pr-8">กรอกงานแบบละเอียด</h1>
-          <p className="text-gray-400 text-sm mb-6">ระบุรายละเอียด กำหนดวัน และแนบไฟล์ให้ครบในครั้งเดียว</p>
+        <h1 style={{ paddingRight: '40px' }}>แก้ไขงาน</h1>
 
-          <div className="space-y-4">
-            {/* ชื่องาน */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">ชื่องาน</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="เช่น ออกแบบโปสเตอร์งานเปิดตัว"
-                className="w-full bg-gray-800 text-white px-3 py-2 rounded border border-gray-700 focus:border-cyan-500 focus:outline-none text-sm"
-              />
-            </div>
+        <div className="ai-fields">
+          <div className="field">
+            <label>ชื่องาน</label>
+            <input
+              className="set-input"
+              placeholder="เช่น ออกแบบโปสเตอร์งานเปิดตัว"
+              value={taskName}
+              onChange={(e) => setTaskName(e.target.value)}
+            />
+          </div>
 
-            {/* รายละเอียด */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">รายละเอียดงาน</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="อธิบายเพิ่มเติม (ไม่บังคับ)"
-                className="w-full bg-gray-800 text-white px-3 py-2 rounded border border-gray-700 focus:border-cyan-500 focus:outline-none text-sm min-h-20 resize-none"
-              />
-            </div>
+          <div className="field">
+            <label>รายละเอียดงาน</label>
+            <textarea
+              className="set-input"
+              placeholder="อธิบายเพิ่มเติม (ไม่บังคับ)"
+              style={{ minHeight: '80px', resize: 'vertical', fontFamily: 'inherit' }}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+        </div>
 
-            {/* ผู้ถืองาน */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">ผู้ถืองาน (เลือกได้หลายคน)</label>
-              {employees.length === 0 ? (
-                <p className="text-gray-500 text-sm">กำลังโหลดข้อมูลสมาชิกทีม...</p>
-              ) : (
-                <div className="prio-picker" role="group" aria-label="ผู้ถืองาน">
-                  {employees.map((emp) => {
-                    const isSelected = assignees.includes(emp.id);
-                    const colors = ['#5B7FB0', '#E4572E', '#0E9384', '#C98A0E', '#D2504F'];
-                    const colorIndex = emp.id.charCodeAt(0) % colors.length;
-                    const bgColor = colors[colorIndex];
-
-                    return (
-                      <button
-                        key={emp.id}
-                        type="button"
-                        className={`prio-chip ${isSelected ? 'on' : ''}`}
-                        style={{ '--prio': bgColor } as React.CSSProperties}
-                        onClick={() => handleAssigneeToggle(emp.id)}
-                        title={isSelected ? `${emp.name} ได้รับมอบหมาย` : `เลือก ${emp.name}`}
-                      >
-                        <span className="d"></span>
-                        {emp.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* ประเภท */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">ประเภท</label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setLane('routine')}
-                  className={`flex-1 py-2 px-3 rounded text-sm font-medium transition ${
-                    lane === 'routine'
-                      ? 'bg-cyan-500/30 text-cyan-300 border border-cyan-500'
-                      : 'bg-gray-800 text-gray-300 border border-gray-700 hover:border-gray-600'
-                  }`}
-                >
-                  <span className="inline-block w-2 h-2 rounded-full bg-cyan-500 mr-2"></span>
-                  รูทีน
-                </button>
-                <button
-                  onClick={() => setLane('urgent')}
-                  className={`flex-1 py-2 px-3 rounded text-sm font-medium transition ${
-                    lane === 'urgent'
-                      ? 'bg-orange-500/30 text-orange-300 border border-orange-500'
-                      : 'bg-gray-800 text-gray-300 border border-gray-700 hover:border-gray-600'
-                  }`}
-                >
-                  <span className="inline-block w-2 h-2 rounded-full bg-orange-500 mr-2"></span>
-                  จิกปะทะ
-                </button>
-              </div>
-            </div>
-
-            {/* ความสำคัญ */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">แท็กความสำคัญ</label>
-              <div className="grid grid-cols-2 gap-2">
-                {priorityOptions.map(option => (
-                  <button
-                    key={option.value}
-                    onClick={() => setPriority(option.value)}
-                    className={`py-2 px-3 rounded text-xs font-medium transition ${
-                      priority === option.value
-                        ? 'text-white'
-                        : 'text-gray-400'
-                    }`}
-                    style={{
-                      backgroundColor: priority === option.value ? `${option.color}33` : 'transparent',
-                      border: priority === option.value ? `1px solid ${option.color}` : '1px solid #4B5563',
-                      color: priority === option.value ? option.color : undefined,
-                    }}
-                  >
-                    <span className="inline-block w-1.5 h-1.5 rounded-full mr-2" style={{ backgroundColor: option.color }}></span>
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* ปุ่มบันทึก */}
+        <div className="field">
+          <label>ใครเห็นงานนี้</label>
+          <div className="seg" role="group" aria-label="การมองเห็น">
             <button
-              onClick={handleUpdateTask}
-              disabled={isSubmitting}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition mt-6 disabled:opacity-50"
+              type="button"
+              className={visibility === 'all' ? 'on' : ''}
+              onClick={() => setVisibility('all')}
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-                <path d="M20 6 9 17l-5-5"></path>
+              ทุกคน
+            </button>
+            <button
+              type="button"
+              className={visibility === 'self' ? 'on' : ''}
+              onClick={() => setVisibility('self')}
+            >
+              แค่ตัวเอง
+            </button>
+          </div>
+        </div>
+
+        <div className="field">
+          <label>มอบหมายให้ <span className="field-hint">(เลือกได้หลายคน)</span></label>
+          <div className="emp-picker" style={{ position: 'relative' }}>
+            <button
+              type="button"
+              className="emp-picker-trigger"
+              aria-haspopup="listbox"
+              aria-expanded={showEmpPicker}
+              aria-label="มอบหมายงานให้"
+              onClick={() => setShowEmpPicker(!showEmpPicker)}
+            >
+              {assignees.length > 0 ? (
+                <div className="emp-picker-avatars">
+                  <div className="emp-avatars-group">
+                    {employees
+                      .filter((emp) => assignees.includes(emp.id))
+                      .slice(0, 3)
+                      .map((emp, idx) => {
+                        const initials = emp.name.substring(0, 2).toUpperCase();
+                        const colors = ['#5B7FB0', '#E4572E', '#0E9384', '#C98A0E', '#D2504F'];
+                        const colorIndex = emp.id.charCodeAt(0) % colors.length;
+                        const bgColor = colors[colorIndex];
+                        return (
+                          <div
+                            key={emp.id}
+                            className="emp-avatar-badge"
+                            style={{
+                              backgroundColor: bgColor,
+                              marginLeft: idx > 0 ? '-0.5rem' : '0',
+                            }}
+                            title={emp.name}
+                          >
+                            {initials}
+                          </div>
+                        );
+                      })}
+                  </div>
+                  <span className="emp-picker-count">{assignees.length} คน</span>
+                </div>
+              ) : (
+                <span className="emp-picker-name muted">เลือกผู้รับงาน</span>
+              )}
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down emp-picker-caret" aria-hidden="true">
+                <path d="m6 9 6 6 6-6"></path>
               </svg>
-              {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
             </button>
 
-            {showSuccessToast && (
-              <div className="mt-4 p-3 bg-green-900/30 border border-green-700 rounded text-green-300 text-sm text-center">
-                ✓ บันทึกสำเร็จ
+            {showEmpPicker && (
+              <div className="emp-picker-menu">
+                <input
+                  type="text"
+                  className="emp-picker-search"
+                  placeholder="ค้นหาชื่อพนักงาน…"
+                  value={empSearchTerm}
+                  onChange={(e) => setEmpSearchTerm(e.target.value)}
+                  autoComplete="off"
+                />
+                <div className="emp-picker-list" role="listbox" aria-multiselectable="true">
+                  {employees.length === 0 ? (
+                    <div className="emp-picker-empty">ไม่มีพนักงาน</div>
+                  ) : (
+                    employees
+                      .filter((emp) =>
+                        emp.name.toLowerCase().includes(empSearchTerm.toLowerCase())
+                      )
+                      .map((emp) => {
+                        const isSelected = assignees.includes(emp.id);
+                        const initials = emp.name.substring(0, 2).toUpperCase();
+                        const colors = ['#5B7FB0', '#E4572E', '#0E9384', '#C98A0E', '#D2504F'];
+                        const colorIndex = emp.id.charCodeAt(0) % colors.length;
+                        const bgColor = colors[colorIndex];
+
+                        return (
+                          <button
+                            key={emp.id}
+                            type="button"
+                            role="option"
+                            aria-selected={isSelected}
+                            className={`emp-picker-opt ${isSelected ? 'sel' : ''}`}
+                            onClick={() => handleAssigneeToggle(emp.id)}
+                          >
+                            <span className="emp-ava" style={{ backgroundColor: bgColor }}>
+                              {initials}
+                            </span>
+                            <span className="emp-picker-name">{emp.name}</span>
+                            {isSelected && (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="emp-picker-check"
+                              >
+                                <path d="M20 6 9 17l-5-5"></path>
+                              </svg>
+                            )}
+                          </button>
+                        );
+                      })
+                  )}
+                </div>
               </div>
             )}
           </div>
         </div>
+
+        <div className="field">
+          <label>ประเภท</label>
+          <div className="seg" role="group" aria-label="ประเภทงาน">
+            <button
+              type="button"
+              data-lane="routine"
+              className={type === 'routine' ? 'on' : ''}
+              onClick={() => setType('routine')}
+            >
+              <span className="d"></span>รูทีน
+            </button>
+            <button
+              type="button"
+              data-lane="urgent"
+              className={type === 'urgent' ? 'on' : ''}
+              onClick={() => setType('urgent')}
+            >
+              <span className="d"></span>จิกปะทะ
+            </button>
+          </div>
+        </div>
+
+        <div className="field">
+          <label>แท็กความสำคัญ</label>
+          <div className="prio-picker" role="group" aria-label="แท็กความสำคัญ">
+            {[
+              { value: 'critical', label: 'ด่วนมาก', color: '#D2504F' },
+              { value: 'high', label: 'ด่วน', color: '#E4572E' },
+              { value: 'normal', label: 'ปกติ', color: '#0E9384' },
+              { value: 'low', label: 'ไม่รีบ', color: '#5B7FB0' },
+              { value: 'later', label: 'ทำเมื่อว่าง', color: '#8A8F98' },
+            ].map((p) => {
+              const isSelected = priority === p.value;
+              const bgColor = isSelected ? `${p.color}26` : 'transparent';
+              return (
+                <button
+                  key={p.value}
+                  type="button"
+                  className={`prio-chip ${isSelected ? 'on' : ''}`}
+                  style={{
+                    '--prio': p.color,
+                    backgroundColor: bgColor,
+                  } as React.CSSProperties}
+                  onClick={() => setPriority(p.value)}
+                >
+                  <span className="d"></span>{p.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="field">
+          <label>ช่วงวันที่ทำงาน</label>
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              className="date-trigger"
+              aria-haspopup="dialog"
+              aria-expanded={showDatePicker}
+              data-state={showDatePicker ? 'open' : 'closed'}
+              onClick={() => setShowDatePicker(!showDatePicker)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar date-trigger-icon" aria-hidden="true">
+                <path d="M8 2v4"></path>
+                <path d="M16 2v4"></path>
+                <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                <path d="M3 10h18"></path>
+              </svg>
+              <span className="date-trigger-ph">
+                {dateRange ? `${dateRange.start} - ${dateRange.end}` : 'เลือกช่วงวันที่ทำงาน'}
+              </span>
+            </button>
+
+            {showDatePicker && (
+              <div className="date-picker-popup" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, marginTop: '0.5rem' }}>
+                <div className="date-picker-header">
+                  <button
+                    type="button"
+                    className="date-picker-nav"
+                    onClick={() => setPickerDate(new Date(pickerDate.getFullYear(), pickerDate.getMonth() - 1))}
+                  >
+                    ◀
+                  </button>
+                  <span className="date-picker-month">
+                    {pickerDate.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}
+                  </span>
+                  <button
+                    type="button"
+                    className="date-picker-nav"
+                    onClick={() => setPickerDate(new Date(pickerDate.getFullYear(), pickerDate.getMonth() + 1))}
+                  >
+                    ▶
+                  </button>
+                </div>
+
+                <div className="date-picker-weekdays">
+                  {['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].map((day) => (
+                    <div key={day} className="date-picker-weekday">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="date-picker-days">
+                  {Array.from({ length: getFirstDayOfMonth(pickerDate) }).map((_, i) => (
+                    <div key={`empty-${i}`} className="date-picker-day empty"></div>
+                  ))}
+                  {Array.from({ length: getDaysInMonth(pickerDate) }).map((_, i) => {
+                    const day = i + 1;
+                    const date = new Date(pickerDate.getFullYear(), pickerDate.getMonth(), day);
+                    const isToday =
+                      date.toDateString() === new Date().toDateString();
+                    const isStartDate =
+                      selectedStartDate && date.toDateString() === selectedStartDate.toDateString();
+                    const isEndDate =
+                      selectedEndDate && date.toDateString() === selectedEndDate.toDateString();
+                    const isInRange =
+                      selectedStartDate &&
+                      selectedEndDate &&
+                      date > selectedStartDate &&
+                      date < selectedEndDate;
+
+                    return (
+                      <button
+                        key={day}
+                        type="button"
+                        className={`date-picker-day ${isToday ? 'today' : ''} ${
+                          isStartDate || isEndDate ? 'selected' : ''
+                        } ${isInRange ? 'in-range' : ''}`}
+                        onClick={() => handleDateClick(day)}
+                      >
+                        {day}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="date-picker-footer">
+                  <button
+                    type="button"
+                    className="date-picker-btn clear"
+                    onClick={() => {
+                      setSelectedStartDate(null);
+                      setSelectedEndDate(null);
+                    }}
+                  >
+                    ล้าง
+                  </button>
+                  <button
+                    type="button"
+                    className="date-picker-btn done"
+                    onClick={handleDoneDatePicker}
+                    disabled={!selectedStartDate || !selectedEndDate}
+                  >
+                    เสร็จ
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="field">
+          <label>แจ้งเตือน / ทำซ้ำ</label>
+          <div className="seg" role="group" aria-label="รูปแบบการแจ้งเตือน">
+            <button
+              type="button"
+              className={notification === 'none' ? 'on' : ''}
+              onClick={() => setNotification('none')}
+            >
+              ไม่เตือน
+            </button>
+            <button
+              type="button"
+              className={notification === 'once' ? 'on' : ''}
+              onClick={() => setNotification('once')}
+            >
+              ครั้งเดียว
+            </button>
+            <button
+              type="button"
+              className={notification === 'repeat' ? 'on' : ''}
+              onClick={() => setNotification('repeat')}
+            >
+              ทำซ้ำ
+            </button>
+          </div>
+
+          {notification === 'once' ? (
+            <>
+              <div className="remind-row" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                <div style={{ position: 'relative', flex: 1, backgroundColor: '#1e293b', borderRadius: '0.375rem', padding: '0.5rem' }}>
+                  <button
+                    type="button"
+                    className="date-trigger"
+                    aria-haspopup="dialog"
+                    aria-expanded={showReminderDatePicker}
+                    data-state={showReminderDatePicker ? 'open' : 'closed'}
+                    onClick={() => setShowReminderDatePicker(!showReminderDatePicker)}
+                    style={{ minHeight: '44px', display: 'flex', alignItems: 'center', backgroundColor: '#2d3748', border: 'none', width: '100%' }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar date-trigger-icon" aria-hidden="true">
+                      <path d="M8 2v4"></path>
+                      <path d="M16 2v4"></path>
+                      <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                      <path d="M3 10h18"></path>
+                    </svg>
+                    <span>{reminderDate || new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                  </button>
+
+                  {showReminderDatePicker && (
+                    <div className="date-picker-popup" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, marginTop: '0.5rem' }}>
+                      <div className="date-picker-header">
+                        <button
+                          type="button"
+                          className="date-picker-nav"
+                          onClick={() => setReminderPickerDate(new Date(reminderPickerDate.getFullYear(), reminderPickerDate.getMonth() - 1))}
+                        >
+                          ◀
+                        </button>
+                        <span className="date-picker-month">
+                          {reminderPickerDate.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}
+                        </span>
+                        <button
+                          type="button"
+                          className="date-picker-nav"
+                          onClick={() => setReminderPickerDate(new Date(reminderPickerDate.getFullYear(), reminderPickerDate.getMonth() + 1))}
+                        >
+                          ▶
+                        </button>
+                      </div>
+
+                      <div className="date-picker-weekdays">
+                        {['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].map((day) => (
+                          <div key={day} className="date-picker-weekday">
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="date-picker-days">
+                        {Array.from({ length: getFirstDayOfMonth(reminderPickerDate) }).map((_, i) => (
+                          <div key={`empty-${i}`} className="date-picker-day empty"></div>
+                        ))}
+                        {Array.from({ length: getDaysInMonth(reminderPickerDate) }).map((_, i) => {
+                          const day = i + 1;
+                          const date = new Date(reminderPickerDate.getFullYear(), reminderPickerDate.getMonth(), day);
+                          const isToday = date.toDateString() === new Date().toDateString();
+                          const isSelected = reminderDate && date.toDateString() === new Date(reminderDate).toDateString();
+
+                          return (
+                            <button
+                              key={day}
+                              type="button"
+                              className={`date-picker-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`}
+                              onClick={() => {
+                                setReminderDate(date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }));
+                                setShowReminderDatePicker(false);
+                              }}
+                            >
+                              {day}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="time"
+                  className="set-input"
+                  value={reminderTime}
+                  onChange={(e) => setReminderTime(e.target.value)}
+                  style={{ flex: 1, minWidth: '80px' }}
+                />
+              </div>
+              <p className="note" style={{ margin: '6px 0px 0px' }}>เวลานี้ผ่านไปแล้ว — บันทึกแล้วจะเตือนทันทีในรอบตรวจถัดไป (ทุก 5 นาที)</p>
+            </>
+          ) : notification === 'repeat' ? (
+            <>
+              <div className="seg" role="group" aria-label="ความถี่" style={{ marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  className={repeatFrequency === 'daily' ? 'on' : ''}
+                  onClick={() => setRepeatFrequency('daily')}
+                >
+                  ทุกวัน
+                </button>
+                <button
+                  type="button"
+                  className={repeatFrequency === 'weekly' ? 'on' : ''}
+                  onClick={() => setRepeatFrequency('weekly')}
+                >
+                  ทุกสัปดาห์
+                </button>
+                <button
+                  type="button"
+                  className={repeatFrequency === 'monthly' ? 'on' : ''}
+                  onClick={() => setRepeatFrequency('monthly')}
+                >
+                  ทุกเดือน
+                </button>
+              </div>
+
+              {repeatFrequency === 'weekly' && (
+                <div className="prio-picker day-picker" role="group" aria-label="วันในสัปดาห์" style={{ marginTop: '0.5rem' }}>
+                  {daysOfWeek.map((day) => (
+                    <button
+                      key={day.index}
+                      type="button"
+                      className={`prio-chip ${selectedDays.includes(day.index) ? 'on' : ''}`}
+                      title={day.full}
+                      onClick={() => handleDayToggle(day.index)}
+                    >
+                      {day.short}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {repeatFrequency === 'monthly' && (
+                <div className="month-days" role="group" aria-label="วันที่ของเดือน" style={{ marginTop: '0.5rem', display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.25rem' }}>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                    <button
+                      key={day}
+                      type="button"
+                      className={`month-day ${selectedMonthDay === day ? 'on' : ''}`}
+                      onClick={() => setSelectedMonthDay(day)}
+                    >
+                      {day}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="remind-row" style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span className="muted-note" style={{ color: '#9ca3af', fontSize: '0.875rem', flexShrink: 0 }}>เวลา</span>
+                <input
+                  type="time"
+                  className="set-input"
+                  value={repeatTime}
+                  onChange={(e) => setRepeatTime(e.target.value)}
+                />
+              </div>
+
+              <label className="remind-check" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem', cursor: 'pointer', color: '#d1d5db', fontSize: '0.875rem' }}>
+                <input
+                  type="checkbox"
+                  checked={resetCard}
+                  onChange={(e) => setResetCard(e.target.checked)}
+                  style={{ cursor: 'pointer', accentColor: '#06b6d4' }}
+                />
+                ถึงรอบใหม่แล้วรีเซ็ตการ์ดกลับเป็น "งานทั้งหมด" 0%
+              </label>
+
+              <p className="note" style={{ margin: '6px 0px 0px' }}>
+                {repeatFrequency === 'monthly'
+                  ? 'เดือนไหนไม่มีวันที่ที่เลือก จะเตือนวันสุดท้ายของเดือนนั้นแทน'
+                  : 'แจ้งทั้งกระดิ่งในแอปและอีเมลของผู้ถืองานทุกคน'}
+              </p>
+            </>
+          ) : (
+            <p className="note" style={{ margin: '6px 0px 0px' }}>ตั้งได้ทั้งเตือนครั้งเดียว หรือทำซ้ำ เช่น งานสรุปทุกวันศุกร์ 12:00</p>
+          )}
+        </div>
+
+        <div className="field">
+          <label>แนบไฟล์</label>
+          {attachments.length > 0 && (
+            <div style={{ marginBottom: '0.75rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '0.5rem' }}>
+              {attachments.map((file, idx) => {
+                const isFile = file instanceof File;
+                const isImage = isFile ? file.type.startsWith('image/') : (file as any).url?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+                const preview = isFile ? (isImage ? URL.createObjectURL(file as File) : null) : (file as any).url;
+                const fileName = isFile ? (file as File).name : (file as any).name;
+
+                return (
+                  <div
+                    key={`${fileName}-${idx}`}
+                    style={{ position: 'relative', borderRadius: '0.375rem', overflow: 'hidden', border: '1px solid #4B5563' }}
+                  >
+                    {preview ? (
+                      <img
+                        src={preview}
+                        alt={fileName}
+                        style={{ width: '100%', height: '80px', objectFit: 'cover', display: 'block' }}
+                      />
+                    ) : (
+                      <div style={{ width: '100%', height: '80px', backgroundColor: '#2d3748', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center', padding: '4px' }}>
+                        <span style={{ wordBreak: 'break-all' }}>{fileName.substring(0, 20)}</span>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))}
+                      style={{
+                        position: 'absolute',
+                        top: '2px',
+                        right: '2px',
+                        width: '20px',
+                        height: '20px',
+                        backgroundColor: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        padding: 0,
+                      }}
+                      title="ลบไฟล์"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <label className="attach-btn" title="เพิ่มรูป วิดีโอ หรือเอกสาร">
+            <span className="attach-plus">+</span>
+            เพิ่มไฟล์
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,application/pdf,text/plain,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/zip,application/x-zip-compressed"
+              multiple
+              hidden
+              onChange={(e) => setAttachments([...attachments, ...Array.from(e.target.files || [])])}
+            />
+          </label>
+          <p className="note" style={{ margin: '6px 0px 0px' }}>รูป วิดีโอ และเอกสาร (Excel, Word, PowerPoint, PDF, ZIP) ไฟล์ละไม่เกิน 10 MB</p>
+        </div>
+
+        <button
+          className="btn-primary"
+          disabled={!isFormValid || isSubmitting}
+          onClick={handleUpdateTask}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: isSubmitting ? 0.6 : 1 }}
+        >
+          {isSubmitting ? (
+            <>
+              <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⌛</span> บันทึก...
+            </>
+          ) : (
+            <>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6 9 17l-5-5"></path>
+              </svg> บันทึกการแก้ไข
+            </>
+          )}
+        </button>
+
+        {showSuccessToast && (
+          <div
+            style={{
+              position: 'fixed',
+              bottom: '100px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              backgroundColor: '#10b981',
+              color: 'white',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+              zIndex: 1000,
+              animation: 'slideUp 0.3s ease-out',
+            }}
+          >
+            ✓ บันทึกสำเร็จ
+          </div>
+        )}
+
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+          @keyframes slideUp {
+            from {
+              opacity: 0;
+              transform: translateX(-50%) translateY(20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(-50%) translateY(0);
+            }
+          }
+        `}</style>
       </div>
     </div>
   );
