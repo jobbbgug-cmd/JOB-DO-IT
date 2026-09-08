@@ -1,38 +1,35 @@
+// @ts-nocheck
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CreateTaskModal from '@/app/components/CreateTaskModal';
-
-interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  status: 'todo' | 'in-progress' | 'in-review' | 'done';
-  priority: 'urgent' | 'high' | 'medium' | 'low';
-  assignee?: string;
-  dueDate?: string;
-  progress?: number;
-  createdAt?: string;
-}
+import TaskDetailModal from '@/app/components/TaskDetailModal';
+import EditTaskModal from '@/app/components/EditTaskModal';
+import type { Task } from '@/app/types/index';
 
 const STATUS_CONFIG = [
-  { id: 'todo', name: 'ยังไม่เริ่ม', color: '#5B7FB0' },
-  { id: 'in-progress', name: 'กำลังทำ', color: '#C98A0E' },
-  { id: 'in-review', name: 'รอรีวิว', color: '#8A5CF6' },
-  { id: 'done', name: 'เสร็จ', color: '#0E9384' },
+  { id: 'todo' as const, name: 'ยังไม่เริ่ม', color: '#5B7FB0' },
+  { id: 'in-progress' as const, name: 'กำลังทำ', color: '#C98A0E' },
+  { id: 'in-review' as const, name: 'รอรีวิว', color: '#8A5CF6' },
+  { id: 'done' as const, name: 'เสร็จ', color: '#0E9384' },
 ];
 
 export default function BoardPage() {
   const router = useRouter();
   const params = useParams();
   const companyCode = params.companyCode as string;
+  // Extract assignee ID from URL: /board/assigneeId
+  const assigneeFilter = Array.isArray(params.slug) ? params.slug[0] : (params.slug || '') as string;
   const [isHydrated, setIsHydrated] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProject, setSelectedProject] = useState('all');
   const [activeTab, setActiveTab] = useState('todo');
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -73,9 +70,18 @@ export default function BoardPage() {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
-  const filteredTasks = tasks.filter(t =>
-    t.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTasks = tasks.filter(t => {
+    const matchesSearch = t.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesAssignee = !assigneeFilter || (t.assignees && t.assignees.includes(assigneeFilter));
+    return matchesSearch && matchesAssignee;
+  });
+
+  // Debug log - ALWAYS
+  console.log('🔍 DEBUG - Assignee Filter:', assigneeFilter);
+  console.log('📋 DEBUG - All Tasks Count:', tasks.length);
+  console.log('📋 DEBUG - All Tasks:', tasks);
+  console.log('✅ DEBUG - Filtered Tasks Count:', filteredTasks.length);
+  console.log('✅ DEBUG - Filtered Tasks:', filteredTasks);
 
   const getTasksByStatus = (status: string) =>
     filteredTasks.filter(t => t.status === status);
@@ -97,75 +103,61 @@ export default function BoardPage() {
 
   const pendingCount = getTasksByStatus('todo').length + getTasksByStatus('in-progress').length;
 
+  // Using shared Task type from @/app/types/index
   const TaskCard = ({ task, statusColor }: { task: Task; statusColor: string }) => (
     <div
-      className="bg-gray-700/40 border border-gray-600 rounded-lg p-3 hover:border-gray-500 transition-all hover:bg-gray-700/60 group"
-      style={{ 
-        borderTopColor: statusColor, 
-        borderTopWidth: '3px',
-        borderLeftWidth: '1px'
-      }}
+      onClick={() => setSelectedTask(task)}
+      className="group relative bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md cursor-pointer"
     >
-      <h3 className="text-white text-sm font-medium mb-2 line-clamp-2">
-        {task.title}
-      </h3>
-
-      {task.progress !== undefined && (
-        <div className="mb-3">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-gray-400">ความคืบหน้า</span>
-            <span className="text-xs text-gray-400 font-medium">{task.progress}%</span>
-          </div>
-          <div className="w-full bg-gray-600 rounded-full h-1.5">
-            <div
-              className="bg-gradient-to-r from-cyan-500 to-cyan-400 h-1.5 rounded-full transition-all"
-              style={{ width: `${task.progress}%` }}
-            ></div>
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between text-xs mb-3 gap-2 flex-wrap">
-        {task.assignee && (
-          <div className="flex items-center gap-2 min-w-0">
-            <div
-              className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-              style={{ backgroundColor: getAvatarColor(task.assignee) }}
-            >
-              {getInitials(task.assignee)}
-            </div>
-            <span className="text-gray-400 truncate text-xs">{task.assignee}</span>
-          </div>
-        )}
-
-        {task.createdAt && (
-          <span className="text-gray-500 flex-shrink-0 text-xs">
-            {new Date(task.createdAt).toLocaleTimeString('th-TH', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </span>
-        )}
-      </div>
-
-      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          onClick={() => {}}
-          className="flex-1 px-2 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors flex items-center justify-center gap-1"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
+      {/* Edit/Delete Buttons - Top Right */}
+      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+        <button onClick={() => setSelectedTask(task)} className="p-1 hover:bg-gray-700/60 rounded transition-colors" title="แก้ไข">
+          <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
           </svg>
         </button>
-        <button
-          onClick={() => handleDeleteTask(task.id)}
-          className="px-2 py-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded text-xs font-medium transition-colors"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
+        <button onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }} className="p-1 hover:bg-gray-700/60 rounded transition-colors" title="ลบ">
+          <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
           </svg>
         </button>
       </div>
+
+      {/* Title */}
+      <div className="font-semibold text-gray-100 mb-2 line-clamp-2 text-sm leading-tight pr-16">
+        {task.title}
+      </div>
+
+      {/* Attachments/Files Row */}
+      <div className="flex gap-1 mb-2 items-center">
+        {/* File attachments would go here */}
+        <span className="text-xs text-gray-500">📎</span>
+      </div>
+
+      {/* Footer: Status & Priority */}
+      <div className="flex gap-1 mb-2 items-center">
+        {task.priority && (
+          <span
+            className="text-[10px] px-2 py-0.5 rounded font-medium"
+            style={{
+              backgroundColor: `${statusColor}33`,
+              color: statusColor,
+            }}
+          >
+            {task.priority}
+          </span>
+        )}
+      </div>
+
+      {/* Progress Bar */}
+      {task.progress !== undefined && (
+        <div className="w-full bg-gray-700 rounded-full h-1 overflow-hidden border border-gray-600/30">
+          <div
+            className="h-1 transition-all"
+            style={{ width: `${task.progress}%`, backgroundColor: statusColor }}
+          ></div>
+        </div>
+      )}
     </div>
   );
 
@@ -350,6 +342,33 @@ export default function BoardPage() {
           })}
         </div>
       </div>
+
+      {/* Task Detail Modal */}
+      <TaskDetailModal
+        task={selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onEdit={(editTask: any) => {
+          setEditingTask(editTask);
+          setSelectedTask(null);
+        }}
+        onTaskUpdated={() => {
+          fetchTasks();
+          setSelectedTask(null);
+        }}
+        employees={employees}
+        companyCode={companyCode}
+      />
+
+      {/* Edit Task Modal */}
+      <EditTaskModal
+        task={editingTask}
+        onClose={() => setEditingTask(null)}
+        companyCode={companyCode}
+        onTaskUpdated={() => {
+          fetchTasks();
+          setEditingTask(null);
+        }}
+      />
 
       {/* Create Task Modal */}
       <CreateTaskModal

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import type { Task } from '@/app/types/index';
 
 interface Employee {
   id: string;
@@ -9,14 +10,6 @@ interface Employee {
   role: string;
   color: string;
   userId?: string;
-}
-
-interface Task {
-  id: string;
-  title: string;
-  lane: 'routine' | 'urgent';
-  assignee: string;
-  progress: number;
 }
 
 interface EmployeeCard {

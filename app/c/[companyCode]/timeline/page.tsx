@@ -2,15 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-
-interface Task {
-  id: string;
-  title: string;
-  projectName: string;
-  dueDate: string;
-  status: string;
-  assignee: string;
-}
+import type { Task } from '@/app/types/index';
 
 export default function TimelinePage() {
   const router = useRouter();

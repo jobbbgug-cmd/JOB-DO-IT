@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import type { Task } from '@/app/types/index';
 import Dock from '@/app/components/Dock';
 import TaskDetailModal from '@/app/components/TaskDetailModal';
 import EditTaskModal from '@/app/components/EditTaskModal';
@@ -13,14 +14,6 @@ interface Employee {
   role: string;
   color: string;
   userId?: string;
-}
-
-interface Task {
-  id: string;
-  title: string;
-  lane: 'routine' | 'urgent';
-  assignee: string;
-  progress: number;
 }
 
 interface EmployeeCard {

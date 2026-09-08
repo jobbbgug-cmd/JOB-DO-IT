@@ -2,14 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-
-interface Task {
-  id: string;
-  title: string;
-  status: 'todo' | 'in-progress' | 'in-review' | 'done';
-  priority: string;
-  progress: number;
-}
+import type { Task } from '@/app/types/index';
 
 interface Employee {
   id: string;

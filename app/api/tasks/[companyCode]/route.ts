@@ -19,8 +19,13 @@ export async function GET(
       status: task.status || 'todo',
       priority: task.priority || 'medium',
       assignee: task.assignee || null,
+      assignees: task.assignees || [],
       dueDate: task.dueDate || null,
       attachments: task.attachments || [],
+      progress: task.progress || 0,
+      lane: task.lane || 'routine',
+      startDate: task.startDate || null,
+      endDate: task.endDate || null,
     }));
 
     return NextResponse.json(formattedTasks);
@@ -37,7 +42,7 @@ export async function POST(
   try {
     await connectDB();
     const { companyCode } = await params;
-    const { title, description, status, priority, assignee, dueDate } = await req.json();
+    const { title, description, status, priority, assignee, assignees, dueDate, progress, lane, startDate, endDate } = await req.json();
 
     if (!title) {
       return NextResponse.json({ error: 'Task title required' }, { status: 400 });
@@ -50,7 +55,12 @@ export async function POST(
       status: status || 'todo',
       priority: priority || 'medium',
       assignee: assignee || null,
+      assignees: assignees || [],
       dueDate: dueDate || null,
+      progress: progress || 0,
+      lane: lane || 'routine',
+      startDate: startDate || null,
+      endDate: endDate || null,
     });
 
     return NextResponse.json({
@@ -62,7 +72,12 @@ export async function POST(
         status: task.status,
         priority: task.priority,
         assignee: task.assignee || null,
+        assignees: task.assignees || [],
         dueDate: task.dueDate || null,
+        progress: task.progress || 0,
+        lane: task.lane || 'routine',
+        startDate: task.startDate || null,
+        endDate: task.endDate || null,
       },
     });
   } catch (error) {

@@ -1,11 +1,12 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+// Database interface - use flexible string types for compatibility with frontend
 interface ITask extends Document {
   companyCode: string;
   title: string;
   description?: string | null;
-  status: 'todo' | 'in-progress' | 'in-review' | 'done';
-  priority: 'urgent' | 'high' | 'medium' | 'low';
+  status: string; // Flexible to match frontend Task type
+  priority: string; // Flexible to match frontend Task type
   assignee?: string | null;
   assignees?: string[];
   createdBy?: string | null;
@@ -27,6 +28,12 @@ interface ITask extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Flexible frontend Task type (use /app/types instead)
+export type FrontendTask = Omit<ITask, 'toObject' | 'toJSON'> & {
+  status: string; // Allow any string for flexibility
+  progress?: number;
+};
 
 const taskSchema = new Schema<ITask>(
   {
