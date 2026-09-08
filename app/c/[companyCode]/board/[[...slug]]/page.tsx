@@ -1,8 +1,8 @@
 // @ts-nocheck
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import CreateTaskModal from '@/app/components/CreateTaskModal';
 import TaskDetailModal from '@/app/components/TaskDetailModal';
 import EditTaskModal from '@/app/components/EditTaskModal';
@@ -18,9 +18,13 @@ const STATUS_CONFIG = [
 export default function BoardPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const companyCode = params.companyCode as string;
-  // Extract assignee ID from URL: /board/assigneeId
+
+  // Extract assignee ID from URL path: /c/CONCEPTX/board/assigneeId
   const assigneeFilter = Array.isArray(params.slug) ? params.slug[0] : (params.slug || '') as string;
+
+  console.log('✅ Assignee Filter from path:', assigneeFilter);
   const [isHydrated, setIsHydrated] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
@@ -30,14 +34,35 @@ export default function BoardPage() {
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [userCache, setUserCache] = useState<Record<string, string>>({});
+
+  // Check if viewing filtered tasks (read-only) or all tasks (editable)
+  // read-only only if: assigneeFilter exists AND it's NOT current user AND currentUserId is loaded
+  const isReadOnly = assigneeFilter ? (assigneeFilter !== currentUserId && currentUserId !== '') : false;
+  const viewingUserName = assigneeFilter === '6a9855c898e246e523adb0ec' ? 'job' : 'jobtest'; // ชื่อ user
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 DEBUG:', {
+      isHydrated,
+      assigneeFilter,
+      currentUserId,
+      isReadOnly,
+      shouldShowButtons: !isReadOnly
+    });
+  }, [isHydrated, assigneeFilter, currentUserId, isReadOnly]);
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
     if (!token) {
       router.push('/login');
     } else {
+      setCurrentUserId(userId || '');
       setIsHydrated(true);
       fetchTasks();
+      fetchEmployees();
     }
   }, [router]);
 
@@ -50,6 +75,18 @@ export default function BoardPage() {
       }
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
+    }
+  };
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await fetch(`/api/employees/${companyCode}`);
+      if (response.ok) {
+        const data = await response.json();
+        setEmployees(data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch employees:', error);
     }
   };
 
@@ -104,60 +141,92 @@ export default function BoardPage() {
   const pendingCount = getTasksByStatus('todo').length + getTasksByStatus('in-progress').length;
 
   // Using shared Task type from @/app/types/index
-  const TaskCard = ({ task, statusColor }: { task: Task; statusColor: string }) => (
+  const TaskCard = ({ task, statusColor, isReadOnly: cardIsReadOnly }: { task: Task; statusColor: string; isReadOnly: boolean }) => (
     <div
       onClick={() => setSelectedTask(task)}
       className="group relative bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md cursor-pointer"
+      style={{ position: 'relative' }}
     >
-      {/* Edit/Delete Buttons - Top Right */}
-      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-        <button onClick={() => setSelectedTask(task)} className="p-1 hover:bg-gray-700/60 rounded transition-colors" title="แก้ไข">
-          <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
-          </svg>
-        </button>
-        <button onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }} className="p-1 hover:bg-gray-700/60 rounded transition-colors" title="ลบ">
-          <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-          </svg>
-        </button>
-      </div>
-
-      {/* Title */}
-      <div className="font-semibold text-gray-100 mb-2 line-clamp-2 text-sm leading-tight pr-16">
-        {task.title}
-      </div>
-
-      {/* Attachments/Files Row */}
-      <div className="flex gap-1 mb-2 items-center">
-        {/* File attachments would go here */}
-        <span className="text-xs text-gray-500">📎</span>
-      </div>
-
-      {/* Footer: Status & Priority */}
-      <div className="flex gap-1 mb-2 items-center">
-        {task.priority && (
-          <span
-            className="text-[10px] px-2 py-0.5 rounded font-medium"
-            style={{
-              backgroundColor: `${statusColor}33`,
-              color: statusColor,
-            }}
-          >
-            {task.priority}
-          </span>
-        )}
-      </div>
-
-      {/* Progress Bar */}
-      {task.progress !== undefined && (
-        <div className="w-full bg-gray-700 rounded-full h-1 overflow-hidden border border-gray-600/30">
-          <div
-            className="h-1 transition-all"
-            style={{ width: `${task.progress}%`, backgroundColor: statusColor }}
-          ></div>
+      {/* Edit/Delete Buttons - Top Right (Only if editable) */}
+      {!cardIsReadOnly && (
+        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+          <button onClick={() => setSelectedTask(task)} className="p-1 hover:bg-gray-700/60 rounded transition-colors" title="แก้ไข">
+            <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+            </svg>
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }} className="p-1 hover:bg-gray-700/60 rounded transition-colors" title="ลบ">
+            <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+            </svg>
+          </button>
         </div>
       )}
+
+      <div onClick={() => setSelectedTask(task)}>
+        {/* Title */}
+        <div className="font-semibold text-gray-100 mb-2 line-clamp-2 text-sm leading-tight">
+          {task.title}
+        </div>
+
+        {/* Attachments Preview with Badge */}
+        {task.attachments && task.attachments.length > 0 && (
+          <div className="flex gap-1 mb-2 items-center">
+            {task.attachments.map((attId: string, idx: number) => (
+              <AttachmentThumbnail
+                key={`${task.id}-${attId}-${idx}`}
+                attId={attId}
+              />
+            ))}
+            {task.attachments.length > 0 && (
+              <div className="relative w-6 h-6">
+                <span className="text-lg">📎</span>
+                <span className="absolute -top-1 -right-1 bg-gray-600 text-white text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center text-[10px]">
+                  {task.attachments.length}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Progress Bar with Percentage */}
+        {task.progress !== undefined && (
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex-1 bg-gray-700/50 rounded-full h-1.5 overflow-hidden border border-gray-600/30">
+              <div
+                className="bg-gradient-to-r from-cyan-500 to-cyan-400 h-1.5 transition-all rounded-full"
+                style={{ width: `${task.progress}%` }}
+              ></div>
+            </div>
+            <div className="text-xs text-gray-500 whitespace-nowrap">{task.progress}%</div>
+          </div>
+        )}
+
+        {/* Creator Info and Timestamp */}
+        {task.createdBy && (
+          <div className="text-gray-500 text-xs flex items-center justify-between">
+            <span>
+              {(() => {
+                if (userCache[task.createdBy]) {
+                  return userCache[task.createdBy];
+                }
+                if (!userCache.hasOwnProperty(task.createdBy)) {
+                  fetch(`/api/users/${task.createdBy}`)
+                    .then(res => res.json())
+                    .then(user => setUserCache(prev => ({ ...prev, [task.createdBy]: user.name || task.createdBy })))
+                    .catch(() => setUserCache(prev => ({ ...prev, [task.createdBy]: task.createdBy })));
+                }
+                return userCache[task.createdBy] || task.createdBy;
+              })()}
+            </span>
+            {task.createdAt && (
+              <span>
+                {new Date(task.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 
@@ -166,9 +235,26 @@ export default function BoardPage() {
       {/* Desktop/Large View */}
       <div className="hidden lg:block space-y-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="space-y-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">บอร์ดงาน</h1>
-            <p className="text-gray-400 text-xs sm:text-sm">งานทั้งหมดที่คุณถือ แยกตามสถานะ — ลากการ์ดข้ามคอลัมน์เพื่อเปลี่ยนสถานะ</p>
+          <div className="flex items-start gap-4">
+            <button
+              onClick={() => router.push(`/c/${companyCode}/sprintId/6a98521598e246e523adb0ea`)}
+              className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-cyan-400 transition-colors mt-1"
+              title="กลับ"
+            >
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"></path>
+              </svg>
+            </button>
+            <div className="space-y-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                {assigneeFilter ? `บอร์ดงานของ ${viewingUserName}` : 'บอร์ดงาน'}
+              </h1>
+              <p className="text-gray-400 text-xs sm:text-sm">
+                {isReadOnly
+                  ? `งานทั้งหมดที่ ${viewingUserName} ถือ แยกตามสถานะ — ดูได้อย่างเดียว แก้ไขไม่ได้`
+                  : 'งานทั้งหมดที่คุณถือ แยกตามสถานะ — ลากการ์ดข้ามคอลัมน์เพื่อเปลี่ยนสถานะ'}
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end w-full lg:w-auto">
@@ -232,7 +318,7 @@ export default function BoardPage() {
                     </div>
                   ) : (
                     statusTasks.map((task) => (
-                      <TaskCard key={task.id} task={task} statusColor={status.color} />
+                      <TaskCard key={task.id} task={task} statusColor={status.color} isReadOnly={isReadOnly} />
                     ))
                   )}
                 </div>
@@ -245,9 +331,12 @@ export default function BoardPage() {
       {/* Mobile View */}
       <div className="lg:hidden space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between gap-2">
-          <h1 className="text-2xl font-bold text-white">บอร์ดงาน</h1>
-          <div className="flex items-center gap-2">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <h1 className="text-2xl font-bold text-white">
+              {assigneeFilter ? `บอร์ดงานของ ${viewingUserName}` : 'บอร์ดงาน'}
+            </h1>
+            <div className="flex items-center gap-2">
             <span className="text-xs text-gray-400 bg-gray-700/50 px-2.5 py-1.5 rounded-full">
               ค้างอยู่ {pendingCount} งาน
             </span>
@@ -274,7 +363,13 @@ export default function BoardPage() {
                 </svg>
               </button>
             </div>
+            </div>
           </div>
+          <p className="text-gray-400 text-xs">
+            {isReadOnly
+              ? `งานทั้งหมดที่ ${viewingUserName} ถือ แยกตามสถานะ — ดูได้อย่างเดียว แก้ไขไม่ได้`
+              : 'งานทั้งหมดที่คุณถือ แยกตามสถานะ — ลากการ์ดข้ามคอลัมน์เพื่อเปลี่ยนสถานะ'}
+          </p>
         </div>
 
         {/* Search Bar */}
@@ -334,7 +429,7 @@ export default function BoardPage() {
                   </div>
                 ) : (
                   statusTasks.map((task) => (
-                    <TaskCard key={task.id} task={task} statusColor={status.color} />
+                    <TaskCard key={task.id} task={task} statusColor={status.color} isReadOnly={isReadOnly} />
                   ))
                 )}
               </div>
@@ -357,6 +452,7 @@ export default function BoardPage() {
         }}
         employees={employees}
         companyCode={companyCode}
+        isReadOnly={isReadOnly}
       />
 
       {/* Edit Task Modal */}
@@ -377,5 +473,60 @@ export default function BoardPage() {
         companyCode={companyCode}
       />
     </div>
+  );
+}
+
+function AttachmentThumbnail({ attId }: { attId: string }) {
+  const [preview, setPreview] = useState<string | null>(null);
+  const [isImage, setIsImage] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const fetchPreview = async () => {
+      try {
+        if (attId.includes('||')) {
+          const [fileName, dataUrl] = attId.split('||');
+          if (dataUrl && dataUrl.startsWith('data:')) {
+            setPreview(dataUrl);
+            setIsImage(dataUrl.startsWith('data:image/'));
+            return;
+          }
+        }
+
+        if (attId.startsWith('data:')) {
+          setPreview(attId);
+          setIsImage(attId.startsWith('data:image/'));
+          return;
+        }
+
+        const res = await fetch('/api/attachments/get', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: attId })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.dataUrl) {
+            setPreview(data.dataUrl);
+            setIsImage(data.fileType?.startsWith('image/') || data.dataUrl.startsWith('data:image/'));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch attachment preview:', error);
+      }
+    };
+    fetchPreview();
+  }, [attId]);
+
+  if (!preview || isImage !== true) {
+    return null;
+  }
+
+  return (
+    <img
+      src={preview}
+      alt="attachment"
+      className="w-6 h-6 rounded object-cover cursor-pointer hover:opacity-80 transition-opacity"
+    />
   );
 }

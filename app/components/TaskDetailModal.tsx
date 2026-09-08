@@ -10,11 +10,12 @@ interface TaskDetailModalProps {
   onTaskUpdated?: () => void;
   employees?: any[];
   companyCode?: string;
+  isReadOnly?: boolean;
 }
 
 const COLORS = ['#0E9384', '#E4572E', '#5B7FB0', '#B4479A', '#C98A0E', '#3F6E4B', '#8A5CF6', '#D2504F'];
 
-export default function TaskDetailModal({ task, onClose, onEdit, onTaskUpdated, employees = [], companyCode = '' }: TaskDetailModalProps) {
+export default function TaskDetailModal({ task, onClose, onEdit, onTaskUpdated, employees = [], companyCode = '', isReadOnly = false }: TaskDetailModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachments, setAttachments] = useState<{ file: File; preview: string }[]>([]);
   const [creatorName, setCreatorName] = useState<string>('');
@@ -374,52 +375,56 @@ export default function TaskDetailModal({ task, onClose, onEdit, onTaskUpdated, 
             </div>
           )}
 
-          <div className="mb-4">
-            <button
-              onClick={handleFileAttach}
-              className="w-full text-gray-300 hover:text-gray-100 text-sm py-2 px-3 rounded hover:bg-gray-800 transition flex items-center justify-center gap-2"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 5v14M5 12h14"></path>
-              </svg>
-              แนบไฟล์
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              onChange={handleFileChange}
-              className="hidden"
-              accept="image/*,video/*,application/pdf,.doc,.docx,.txt"
-            />
-          </div>
+          {!isReadOnly && (
+            <>
+              <div className="mb-4">
+                <button
+                  onClick={handleFileAttach}
+                  className="w-full text-gray-300 hover:text-gray-100 text-sm py-2 px-3 rounded hover:bg-gray-800 transition flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 5v14M5 12h14"></path>
+                  </svg>
+                  แนบไฟล์
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="hidden"
+                  accept="image/*,video/*,application/pdf,.doc,.docx,.txt"
+                />
+              </div>
 
-          <div className="flex gap-2">
-            <button className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M20 6 9 17l-5-5"></path>
-              </svg>
-              เสร็จ
-            </button>
-            <button
-              onClick={() => {
-                onEdit?.(task);
-                onClose();
-              }}
-              className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
-              </svg>
-              แก้ไข
-            </button>
-            <button className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition">
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-              </svg>
-              ลบงาน
-            </button>
-          </div>
+              <div className="flex gap-2">
+                <button className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M20 6 9 17l-5-5"></path>
+                  </svg>
+                  เสร็จ
+                </button>
+                <button
+                  onClick={() => {
+                    onEdit?.(task);
+                    onClose();
+                  }}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                  </svg>
+                  แก้ไข
+                </button>
+                <button className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                  </svg>
+                  ลบงาน
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
