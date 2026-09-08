@@ -816,81 +816,81 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
         <div className="field">
           <label>แนบไฟล์</label>
           {attachments.length > 0 && (
-            <div style={{ marginBottom: '0.75rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.375rem', paddingBottom: '0.5rem' }}>
+            <div style={{ marginBottom: '0.75rem', display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', flexWrap: 'wrap' }}>
               {attachments.map((file, idx) => {
                 const isFile = file instanceof File;
                 const fileName = isFile ? (file as File).name : (file as any).name;
-                const fileExt = fileName.split('.').pop()?.toLowerCase() || '';
-                
-                const getFileIcon = (ext: string) => {
-                  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'].includes(ext)) return '🖼️';
-                  if (['mp4', 'webm', 'quicktime', 'mov'].includes(ext)) return '🎬';
-                  if (['pdf'].includes(ext)) return '📄';
-                  if (['txt', 'csv'].includes(ext)) return '📝';
-                  if (['xls', 'xlsx'].includes(ext)) return '📊';
-                  if (['doc', 'docx'].includes(ext)) return '📋';
-                  if (['ppt', 'pptx'].includes(ext)) return '🎯';
-                  if (['zip'].includes(ext)) return '📦';
-                  return '📎';
-                };
+                const isImage = isFile ? (file as File).type.startsWith('image/') : (file as any).url?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+                const preview = isFile ? (isImage ? URL.createObjectURL(file as File) : null) : (file as any).url;
 
-                return (
-                  <div
-                    key={`${fileName}-${idx}`}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.375rem',
-                      padding: '0.375rem 0.5rem',
-                      backgroundColor: '#2d3748',
-                      border: '1px solid #4B5563',
-                      borderRadius: '0.25rem',
-                      fontSize: '0.75rem',
-                      color: '#e2e8f0',
-                      position: 'relative',
-                      justifyContent: 'space-between',
-                                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#374151'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2d3748'}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', minWidth: 0 }}>
-                      <span style={{ fontSize: '1rem', flexShrink: 0 }}>{getFileIcon(fileExt)}</span>
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {fileName}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const deletedFile = attachments[idx];
-                        if (deletedFile && !(deletedFile instanceof File) && (deletedFile as any).isExisting) {
-                          const fileId = (deletedFile as any).id;
-                          if (fileId) {
-                            setDeletedAttachmentIds([...deletedAttachmentIds, fileId]);
+                if (isImage && preview) {
+                  return (
+                    <div key={`${fileName}-${idx}`} style={{ position: 'relative', borderRadius: '0.375rem', overflow: 'hidden', border: '1px solid #4B5563', flexShrink: 0, width: '80px', height: '80px' }}>
+                      <img
+                        src={preview}
+                        alt={fileName}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const deletedFile = attachments[idx];
+                          if (deletedFile && !(deletedFile instanceof File) && (deletedFile as any).isExisting) {
+                            const fileId = (deletedFile as any).id;
+                            if (fileId) {
+                              setDeletedAttachmentIds([...deletedAttachmentIds, fileId]);
+                            }
                           }
-                        }
-                        setAttachments(attachments.filter((_, i) => i !== idx));
-                      }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#ef4444',
-                        cursor: 'pointer',
-                        fontSize: '1rem',
-                        padding: '0 0.25rem',
-                        flexShrink: 0,
-                        lineHeight: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                      title="ลบไฟล์"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                );
+                          setAttachments(attachments.filter((_, i) => i !== idx));
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: '2px',
+                          right: '2px',
+                          width: '20px',
+                          height: '20px',
+                          backgroundColor: '#dc2626',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '12px',
+                          padding: 0,
+                        }}
+                        title="ลบไฟล์"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                }
+                return null;
               })}
+              {attachments.filter((file: any) => {
+                const isFile = file instanceof File;
+                return !isFile ? !(file as any).url?.match(/\.(jpg|jpeg|png|gif|webp)$/i) : !(file as File).type.startsWith('image/');
+              }).length > 0 && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  padding: '0.25rem 0.5rem',
+                  backgroundColor: '#2d3748',
+                  border: '1px solid #4B5563',
+                  borderRadius: '0.375rem',
+                  fontSize: '0.75rem',
+                  color: '#e2e8f0',
+                  flexShrink: 0,
+                }}>
+                  📎 {attachments.filter((file: any) => {
+                    const isFile = file instanceof File;
+                    return !isFile ? !(file as any).url?.match(/\.(jpg|jpeg|png|gif|webp)$/i) : !(file as File).type.startsWith('image/');
+                  }).length}
+                </div>
+              )}
             </div>
           )}
           <label className="attach-btn" title="เพิ่มรูป วิดีโอ หรือเอกสาร">
