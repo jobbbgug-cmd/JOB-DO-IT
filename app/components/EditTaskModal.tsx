@@ -25,6 +25,7 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
   const [notification, setNotification] = useState<'none' | 'once' | 'repeat'>('none');
   const [attachments, setAttachments] = useState<(File | { url: string; name: string; isExisting: boolean })[]>([]);
+  const [deletedAttachmentIds, setDeletedAttachmentIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -254,6 +255,11 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
       newAttachments.forEach((file: File) => {
         formData.append('attachments', file);
       });
+
+      // Add deleted attachment IDs to remove from DB
+      if (deletedAttachmentIds.length > 0) {
+        formData.append('deletedAttachmentIds', JSON.stringify(deletedAttachmentIds));
+      }
 
       const response = await fetch(`/api/tasks/edit/${task.id}`, {
         method: 'PUT',
@@ -794,7 +800,14 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
                     </div>
                     <button
                       type="button"
-                      onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))}
+                      onClick={() => {
+                        const deletedFile = attachments[idx];
+                        if (deletedFile && !(deletedFile instanceof File) && (deletedFile as any).isExisting) {
+                          const fileId = (deletedFile as any).url.split('/').pop() || '';
+                          setDeletedAttachmentIds([...deletedAttachmentIds, fileId]);
+                        }
+                        setAttachments(attachments.filter((_, i) => i !== idx));
+                      }}
                       style={{
                         background: 'none',
                         border: 'none',
