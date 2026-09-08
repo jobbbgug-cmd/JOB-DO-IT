@@ -716,7 +716,7 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
               )}
 
               <div className="remind-row" style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span className="muted-note" style={{ color: '#9ca3af', fontSize: '0.875rem', flexShrink: 0 }}>เวลา</span>
+                <span className="muted-note" style={{ color: '#9ca3af', fontSize: '0.75rem', flexShrink: 0 }}>เวลา</span>
                 <input
                   type="time"
                   className="set-input"
@@ -749,7 +749,7 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
         <div className="field">
           <label>แนบไฟล์</label>
           {attachments.length > 0 && (
-            <div style={{ marginBottom: '0.75rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', paddingBottom: '0.5rem' }}>
+            <div style={{ marginBottom: '0.75rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.375rem', paddingBottom: '0.5rem' }}>
               {attachments.map((file, idx) => {
                 const isFile = file instanceof File;
                 const fileName = isFile ? (file as File).name : (file as any).name;
@@ -773,22 +773,21 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.75rem',
-                      padding: '0.75rem 1rem',
+                      gap: '0.375rem',
+                      padding: '0.375rem 0.5rem',
                       backgroundColor: '#2d3748',
                       border: '1px solid #4B5563',
-                      borderRadius: '0.5rem',
-                      fontSize: '0.875rem',
+                      borderRadius: '0.25rem',
+                      fontSize: '0.75rem',
                       color: '#e2e8f0',
                       position: 'relative',
                       justifyContent: 'space-between',
-                      transition: 'all 0.2s ease',
-                    }}
+                                    }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#374151'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2d3748'}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-                      <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>{getFileIcon(fileExt)}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', minWidth: 0 }}>
+                      <span style={{ fontSize: '1rem', flexShrink: 0 }}>{getFileIcon(fileExt)}</span>
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {fileName}
                       </span>
@@ -801,7 +800,7 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
                         border: 'none',
                         color: '#ef4444',
                         cursor: 'pointer',
-                        fontSize: '1.25rem',
+                        fontSize: '1rem',
                         padding: '0 0.25rem',
                         flexShrink: 0,
                         lineHeight: 1,
