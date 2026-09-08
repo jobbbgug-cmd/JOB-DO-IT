@@ -749,7 +749,7 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
         <div className="field">
           <label>แนบไฟล์</label>
           {attachments.length > 0 && (
-            <div style={{ marginBottom: '0.75rem', display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', flexWrap: 'wrap' }}>
+            <div style={{ marginBottom: '0.75rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', paddingBottom: '0.5rem' }}>
               {attachments.map((file, idx) => {
                 const isFile = file instanceof File;
                 const fileName = isFile ? (file as File).name : (file as any).name;
@@ -773,21 +773,26 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.375rem 0.75rem',
+                      gap: '0.75rem',
+                      padding: '0.75rem 1rem',
                       backgroundColor: '#2d3748',
                       border: '1px solid #4B5563',
-                      borderRadius: '0.375rem',
+                      borderRadius: '0.5rem',
                       fontSize: '0.875rem',
                       color: '#e2e8f0',
-                      flexShrink: 0,
                       position: 'relative',
+                      justifyContent: 'space-between',
+                      transition: 'all 0.2s ease',
                     }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#374151'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2d3748'}
                   >
-                    <span>{getFileIcon(fileExt)}</span>
-                    <span style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {fileName}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                      <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>{getFileIcon(fileExt)}</span>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {fileName}
+                      </span>
+                    </div>
                     <button
                       type="button"
                       onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))}
@@ -796,10 +801,13 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
                         border: 'none',
                         color: '#ef4444',
                         cursor: 'pointer',
-                        fontSize: '1rem',
+                        fontSize: '1.25rem',
                         padding: '0 0.25rem',
-                        marginLeft: '0.25rem',
+                        flexShrink: 0,
                         lineHeight: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                       title="ลบไฟล์"
                     >
