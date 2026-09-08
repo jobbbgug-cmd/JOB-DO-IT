@@ -749,48 +749,57 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
         <div className="field">
           <label>แนบไฟล์</label>
           {attachments.length > 0 && (
-            <div style={{ marginBottom: '0.75rem', display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+            <div style={{ marginBottom: '0.75rem', display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', flexWrap: 'wrap' }}>
               {attachments.map((file, idx) => {
                 const isFile = file instanceof File;
-                const isImage = isFile ? file.type.startsWith('image/') : (file as any).url?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
-                const preview = isFile ? (isImage ? URL.createObjectURL(file as File) : null) : (file as any).url;
                 const fileName = isFile ? (file as File).name : (file as any).name;
+                const fileExt = fileName.split('.').pop()?.toLowerCase() || '';
+                
+                const getFileIcon = (ext: string) => {
+                  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'].includes(ext)) return '🖼️';
+                  if (['mp4', 'webm', 'quicktime', 'mov'].includes(ext)) return '🎬';
+                  if (['pdf'].includes(ext)) return '📄';
+                  if (['txt', 'csv'].includes(ext)) return '📝';
+                  if (['xls', 'xlsx'].includes(ext)) return '📊';
+                  if (['doc', 'docx'].includes(ext)) return '📋';
+                  if (['ppt', 'pptx'].includes(ext)) return '🎯';
+                  if (['zip'].includes(ext)) return '📦';
+                  return '📎';
+                };
 
                 return (
                   <div
                     key={`${fileName}-${idx}`}
-                    style={{ position: 'relative', borderRadius: '0.375rem', overflow: 'hidden', border: '1px solid #4B5563', flexShrink: 0, width: '120px' }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.375rem 0.75rem',
+                      backgroundColor: '#2d3748',
+                      border: '1px solid #4B5563',
+                      borderRadius: '0.375rem',
+                      fontSize: '0.875rem',
+                      color: '#e2e8f0',
+                      flexShrink: 0,
+                      position: 'relative',
+                    }}
                   >
-                    {preview ? (
-                      <img
-                        src={preview}
-                        alt={fileName}
-                        style={{ width: '100%', height: '120px', objectFit: 'cover', display: 'block' }}
-                      />
-                    ) : (
-                      <div style={{ width: '100%', height: '120px', backgroundColor: '#2d3748', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: '#9ca3af', textAlign: 'center', padding: '8px' }}>
-                        <span style={{ wordBreak: 'break-word' }}>{fileName.substring(0, 30)}</span>
-                      </div>
-                    )}
+                    <span>{getFileIcon(fileExt)}</span>
+                    <span style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {fileName}
+                    </span>
                     <button
                       type="button"
                       onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))}
                       style={{
-                        position: 'absolute',
-                        top: '4px',
-                        right: '4px',
-                        width: '24px',
-                        height: '24px',
-                        backgroundColor: '#dc2626',
-                        color: 'white',
+                        background: 'none',
                         border: 'none',
-                        borderRadius: '50%',
+                        color: '#ef4444',
                         cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '14px',
-                        padding: 0,
+                        fontSize: '1rem',
+                        padding: '0 0.25rem',
+                        marginLeft: '0.25rem',
+                        lineHeight: 1,
                       }}
                       title="ลบไฟล์"
                     >
