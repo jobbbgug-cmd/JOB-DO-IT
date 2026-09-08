@@ -40,7 +40,7 @@ export default function BoardPage() {
   // Check if viewing filtered tasks (read-only) or all tasks (editable)
   // read-only only if: assigneeFilter exists AND it's NOT current user AND currentUserId is loaded
   const isReadOnly = assigneeFilter ? (assigneeFilter !== currentUserId && currentUserId !== '') : false;
-  const viewingUserName = assigneeFilter === '6a9855c898e246e523adb0ec' ? 'job' : 'jobtest'; // ชื่อ user
+  const viewingUserName = employees.find(u => u.id === assigneeFilter)?.name || assigneeFilter || 'ผู้ใช้';
 
   // Debug logging
   useEffect(() => {
