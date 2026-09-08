@@ -123,7 +123,14 @@ export default function SprintPage() {
       <TaskDetailModal
         task={selectedTask}
         onClose={() => setSelectedTask(null)}
-        onEdit={() => fetchDataRef.current?.()}
+        onEdit={(task) => {
+          setEditingTask(task);
+          setSelectedTask(null);
+        }}
+        onTaskUpdated={() => {
+          console.log('Task updated, refetching...');
+          fetchDataRef.current?.();
+        }}
         employees={employees}
         companyCode={companyCode}
       />
@@ -318,9 +325,11 @@ export default function SprintPage() {
                                     if (!isImage) {
                                       setNonImageFileIds((prev) => {
                                         const current = prev[task.id] || [];
+                                        // Use Set to deduplicate and prevent double-counting
+                                        const updated = Array.from(new Set([...current, attId]));
                                         return {
                                           ...prev,
-                                          [task.id]: current.includes(attId) ? current : [...current, attId]
+                                          [task.id]: updated
                                         };
                                       });
                                     }
@@ -435,9 +444,11 @@ export default function SprintPage() {
                                     if (!isImage) {
                                       setNonImageFileIds((prev) => {
                                         const current = prev[task.id] || [];
+                                        // Use Set to deduplicate and prevent double-counting
+                                        const updated = Array.from(new Set([...current, attId]));
                                         return {
                                           ...prev,
-                                          [task.id]: current.includes(attId) ? current : [...current, attId]
+                                          [task.id]: updated
                                         };
                                       });
                                     }
@@ -535,6 +546,46 @@ function AttachmentThumbnail({ attId, onLoad }: { attId: string; onLoad?: (isIma
     const fetchPreview = async () => {
       try {
         console.log('Fetching attachment:', attId);
+
+        // Handle embedded filename format: filename||data:...
+        if (attId.includes('||')) {
+          const [fileName, dataUrl] = attId.split('||');
+          if (dataUrl && dataUrl.startsWith('data:')) {
+            setPreview(dataUrl);
+            const imageCheck = dataUrl.startsWith('data:image/');
+            console.log('🖼️ Attachment loaded (embedded):', {
+              fileName,
+              dataUrlStart: dataUrl.substring(0, 30),
+              isImage: imageCheck
+            });
+            setIsImage(imageCheck);
+            if (!callbackRef.current) {
+              callbackRef.current = true;
+              console.log('Calling onLoad with:', imageCheck);
+              onLoadRef.current?.(imageCheck);
+            }
+            return;
+          }
+        }
+
+        // Handle base64 data URL format
+        if (attId.startsWith('data:')) {
+          setPreview(attId);
+          const imageCheck = attId.startsWith('data:image/');
+          console.log('🖼️ Attachment loaded (base64):', {
+            dataUrlStart: attId.substring(0, 30),
+            isImage: imageCheck
+          });
+          setIsImage(imageCheck);
+          if (!callbackRef.current) {
+            callbackRef.current = true;
+            console.log('Calling onLoad with:', imageCheck);
+            onLoadRef.current?.(imageCheck);
+          }
+          return;
+        }
+
+        // Handle API ID format (MongoDB attachment ID)
         const res = await fetch('/api/attachments/get', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

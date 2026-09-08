@@ -24,14 +24,15 @@ interface Task {
 interface TaskDetailModalProps {
   task: Task | null;
   onClose: () => void;
-  onEdit?: () => void;
+  onEdit?: (task: Task) => void;
+  onTaskUpdated?: () => void;
   employees?: any[];
   companyCode?: string;
 }
 
 const COLORS = ['#0E9384', '#E4572E', '#5B7FB0', '#B4479A', '#C98A0E', '#3F6E4B', '#8A5CF6', '#D2504F'];
 
-export default function TaskDetailModal({ task, onClose, onEdit, employees = [], companyCode = '' }: TaskDetailModalProps) {
+export default function TaskDetailModal({ task, onClose, onEdit, onTaskUpdated, employees = [], companyCode = '' }: TaskDetailModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachments, setAttachments] = useState<{ file: File; preview: string }[]>([]);
   const [creatorName, setCreatorName] = useState<string>('');
@@ -68,13 +69,22 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [],
             if (!att) return null;
 
             // ถ้า base64 ใช้โดยตรง
-            if (att.startsWith('data:')) {
-              const isImage = att.startsWith('data:image/');
-              const fileName = `file_${idx}`;
-              const mimeType = isImage ? att.split(':')[1].split(';')[0] : 'application/octet-stream';
+            if (att.startsWith('data:') || att.includes('||data:')) {
+              let fileName = `file_${idx}`;
+              let dataUrl = att;
+
+              // แยกชื่อไฟล์ถ้ามี format: filename||data:...
+              if (att.includes('||')) {
+                const [name, data] = att.split('||');
+                fileName = name || `file_${idx}`;
+                dataUrl = data;
+              }
+
+              const isImage = dataUrl.startsWith('data:image/');
+              const mimeType = isImage ? dataUrl.split(':')[1].split(';')[0] : 'application/octet-stream';
               return {
-                file: new File([att], fileName, { type: mimeType }),
-                preview: att,
+                file: new File([dataUrl], fileName, { type: mimeType }),
+                preview: dataUrl,
               };
             }
 
@@ -127,7 +137,11 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [],
 
           if (response.ok) {
             const data = await response.json();
-            setAttachments(prev => [...prev, { file, preview: data.dataUrl }]);
+            // Use the filename from API response if available, otherwise use file.name
+            const displayFileName = data.fileName || file.name;
+            // Create a new File object with the proper filename for display
+            const fileWithName = new File([data.dataUrl], displayFileName, { type: file.type });
+            setAttachments(prev => [...prev, { file: fileWithName, preview: data.dataUrl }]);
           } else {
             const errorData = await response.json();
             console.error('Upload failed:', errorData);
@@ -138,7 +152,8 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [],
       })
     );
 
-    onEdit?.();
+    // Notify parent to refetch task data so new attachment persists
+    onTaskUpdated?.();
 
     // Reset input
     if (fileInputRef.current) {
@@ -191,17 +206,37 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [],
   };
 
   const priorityLabels: Record<string, string> = {
-    'low': 'ต่ำ',
+    'critical': 'ด่วนมาก',
+    'urgent': 'ด่วน',
+    'high': 'ด่วน',
+    'normal': 'ปกติ',
     'medium': 'ปกติ',
-    'high': 'สูง',
-    'urgent': 'เร่งด่วน',
+    'low': 'ไม่รีบ',
+    'later': 'ทำเมื่อว่าง',
+    'none': 'ทำเมื่อว่าง',
+    'idle': 'ทำเมื่อว่าง',
   };
 
   const priorityColors: Record<string, string> = {
-    'low': '#7C3AED',
+    'critical': '#D2504F',
+    'urgent': '#E4572E',
+    'high': '#E4572E',
+    'normal': '#0E9384',
     'medium': '#0E9384',
-    'high': '#DC2626',
-    'urgent': '#EA580C',
+    'low': '#5B7FB0',
+    'later': '#8A8F98',
+    'none': '#8A8F98',
+    'idle': '#8A8F98',
+  };
+
+  const getPriorityLabel = (priority: string | undefined): string => {
+    if (!priority) return 'ปกติ';
+    return priorityLabels[priority.toLowerCase()] || 'ปกติ';
+  };
+
+  const getPriorityColor = (priority: string | undefined): string => {
+    if (!priority) return '#0E9384';
+    return priorityColors[priority.toLowerCase()] || '#666';
   };
 
   return (
@@ -233,8 +268,8 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [],
                 {laneLabels[task.lane] || task.lane}
               </span>
             )}
-            <span className="px-2.5 py-1 rounded text-xs font-medium text-white" style={{ backgroundColor: priorityColors[task.priority] || '#666' }}>
-              {priorityLabels[task.priority] || task.priority}
+            <span className="px-2.5 py-1 rounded text-xs font-medium text-white" style={{ backgroundColor: getPriorityColor(task.priority) }}>
+              {getPriorityLabel(task.priority)}
             </span>
           </div>
 
@@ -386,7 +421,7 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [],
             </button>
             <button
               onClick={() => {
-                onEdit?.();
+                onEdit?.(task);
                 onClose();
               }}
               className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition"

@@ -21,7 +21,7 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
   const [visibility, setVisibility] = useState<'all' | 'self'>('all');
   const [assignees, setAssignees] = useState<string[]>([]);
   const [type, setType] = useState<'routine' | 'urgent'>('routine');
-  const [priority, setPriority] = useState<string>('normal');
+  const [priority, setPriority] = useState<string>('later');
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
   const [notification, setNotification] = useState<'none' | 'once' | 'repeat'>('none');
   const [attachments, setAttachments] = useState<(File | { url: string; name: string; isExisting: boolean })[]>([]);
@@ -102,12 +102,15 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
 
       // Map DB priority values to UI values
       const dbToPriorityMap: { [key: string]: string } = {
+        'critical': 'critical',
         'urgent': 'critical',
         'high': 'high',
+        'normal': 'normal',
         'medium': 'normal',
         'low': 'low',
+        'later': 'later',
       };
-      const uiPriority = dbToPriorityMap[task.priority] || 'normal';
+      const uiPriority = dbToPriorityMap[task.priority] || 'later';
       setPriority(uiPriority);
 
       // Load date range from task
@@ -143,6 +146,17 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
         const loadAttachments = async () => {
           const attachmentData = await Promise.all(
             task.attachments.map(async (attId: string) => {
+              // Handle embedded filename format: filename||data:...
+              if (attId.includes('||')) {
+                const [fileName, dataUrl] = attId.split('||');
+                return {
+                  url: dataUrl,
+                  name: fileName || 'file',
+                  isExisting: true,
+                  id: attId,
+                };
+              }
+
               try {
                 const res = await fetch(`/api/attachments/${attId}`);
                 if (res.ok) {
@@ -157,9 +171,19 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
               } catch (error) {
                 console.error('Failed to fetch attachment:', error);
               }
+              // Try to extract filename from base64 data URL or use default
+              let fallbackName = 'file';
+              if (attId.startsWith('data:')) {
+                const mimeType = attId.split(';')[0].replace('data:', '') || 'application/octet-stream';
+                const ext = mimeType.split('/')[1] || 'bin';
+                fallbackName = `file.${ext}`;
+              } else {
+                fallbackName = attId.split('||')[0] || 'file';
+              }
+
               return {
                 url: '',
-                name: attId,
+                name: fallbackName,
                 isExisting: true,
                 id: attId,
               };
@@ -213,11 +237,11 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
     setIsSubmitting(true);
     try {
       const priorityMap: { [key: string]: string } = {
-        'critical': 'urgent',
+        'critical': 'critical',
         'high': 'high',
-        'normal': 'medium',
+        'normal': 'normal',
         'low': 'low',
-        'later': 'low',
+        'later': 'later',
       };
 
       // Prepare FormData for attachments
@@ -355,8 +379,10 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
             </button>
             <button
               type="button"
-              className={visibility === 'self' ? 'on' : ''}
-              onClick={() => setVisibility('self')}
+              className={`${visibility === 'self' ? 'on' : ''} ${(assignees?.length > 1) ? 'disabled' : ''}`}
+              onClick={() => (assignees?.length <= 1) && setVisibility('self')}
+              disabled={(assignees?.length || 0) > 1}
+              title={(assignees?.length > 1) ? 'ไม่สามารถใช้เมื่อมีผู้รับมอบหมายหลายคน' : ''}
             >
               แค่ตัวเอง
             </button>

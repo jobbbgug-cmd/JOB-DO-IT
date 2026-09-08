@@ -739,3 +739,12 @@
   width: 1rem;
   height: 1rem;
 }
+
+.prio-picker button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.prio-picker button:disabled:hover {
+  opacity: 0.5;
+}

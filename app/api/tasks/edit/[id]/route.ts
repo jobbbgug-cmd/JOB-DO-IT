@@ -126,7 +126,7 @@ export async function PUT(
     let attachments = (existingTask.attachments || []).filter(
       (att: string) => !deletedAttachmentIds.includes(att)
     );
-    
+
     console.log('Attachments after filter:', attachments);
     const attachmentFiles = formData.getAll('attachments') as File[];
     if (attachmentFiles.length > 0) {
@@ -134,7 +134,9 @@ export async function PUT(
         attachmentFiles.map(async (file) => {
           const buffer = await file.arrayBuffer();
           const base64 = Buffer.from(buffer).toString('base64');
-          return `data:${file.type};base64,${base64}`;
+          const dataUrl = `data:${file.type};base64,${base64}`;
+          // Embed filename with base64 data: filename||data:...
+          return `${file.name}||${dataUrl}`;
         })
       );
       attachments = [...attachments, ...newAttachments];
