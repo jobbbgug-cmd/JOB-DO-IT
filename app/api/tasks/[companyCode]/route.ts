@@ -20,6 +20,7 @@ export async function GET(
       priority: task.priority || 'medium',
       assignee: task.assignee || null,
       dueDate: task.dueDate || null,
+      attachments: task.attachments || [],
     }));
 
     return NextResponse.json(formattedTasks);

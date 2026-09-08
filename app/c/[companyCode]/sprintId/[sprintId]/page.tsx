@@ -65,6 +65,8 @@ export default function SprintPage() {
         // Fetch tasks for sprint
         const tasksRes = await fetch(`/api/tasks?sprintId=${sprintId}&companyCode=${companyCode}`);
         const tasks = await tasksRes.json();
+        console.log('📋 Sprint tasks loaded:', tasks.length, 'tasks');
+        console.log('First 3 tasks attachments:', tasks.slice(0, 3).map((t: any) => ({ title: t.title, attachments: t.attachments })));
         console.log('Fetched tasks:', tasks);
 
         // Group tasks by employee and lane
@@ -121,7 +123,7 @@ export default function SprintPage() {
       <TaskDetailModal
         task={selectedTask}
         onClose={() => setSelectedTask(null)}
-        onEdit={(task) => setEditingTask(task)}
+        onEdit={() => fetchDataRef.current?.()}
         employees={employees}
         companyCode={companyCode}
       />
@@ -394,65 +396,96 @@ export default function SprintPage() {
                   ) : (
                     card.urgentTasks.map((task: any) => (
                       <div key={task.id} className="group relative bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md cursor-pointer">
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingTask(task);
+                            }}
+                            className="p-1 hover:bg-gray-700/60 rounded transition-colors"
+                            title="แก้ไข"
+                          >
+                            <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                            </svg>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteTaskId(task.id);
+                              setDeletingEmployeeId(card.employee.id);
+                            }}
+                            className="p-1 hover:bg-gray-700/60 rounded transition-colors"
+                            title="ลบ"
+                          >
+                            <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                            </svg>
+                          </button>
+                        </div>
                         <div onClick={() => setSelectedTask(task)}>
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <span className="inline-block px-2 py-1 rounded-md text-xs font-semibold bg-orange-500/30 text-orange-300 flex-shrink-0">
-                              {task.priority}
-                            </span>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingTask(task);
-                                }}
-                                className="p-1 hover:bg-gray-700/60 rounded transition-colors"
-                                title="แก้ไข"
-                              >
-                                <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
-                                </svg>
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDeleteTaskId(task.id);
-                                  setDeletingEmployeeId(card.employee.id);
-                                }}
-                                className="p-1 hover:bg-gray-700/60 rounded transition-colors"
-                                title="ลบ"
-                              >
-                                <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
                           <div className="font-semibold text-gray-100 mb-2 line-clamp-2 text-sm leading-tight">{task.title}</div>
-                          {task.createdBy && (
-                            <div className="text-gray-500 text-xs mb-2">
-                              {(() => {
-                                if (userCache[task.createdBy]) {
-                                  return userCache[task.createdBy];
-                                }
-                                if (!userCache.hasOwnProperty(task.createdBy)) {
-                                  fetch(`/api/users/${task.createdBy}`)
-                                    .then(res => res.json())
-                                    .then(user => setUserCache(prev => ({ ...prev, [task.createdBy]: user.name || task.createdBy })))
-                                    .catch(() => setUserCache(prev => ({ ...prev, [task.createdBy]: task.createdBy })));
-                                }
-                                return userCache[task.createdBy] || task.createdBy;
-                              })()}
+                          {task.attachments && task.attachments.length > 0 && (
+                            <div className="flex gap-1 mb-2 items-center">
+                              {task.attachments.map((attId: string, idx: number) => (
+                                <AttachmentThumbnail
+                                  key={`${task.id}-${attId}-${idx}`}
+                                  attId={attId}
+                                  onLoad={(isImage) => {
+                                    if (!isImage) {
+                                      setNonImageFileIds((prev) => {
+                                        const current = prev[task.id] || [];
+                                        return {
+                                          ...prev,
+                                          [task.id]: current.includes(attId) ? current : [...current, attId]
+                                        };
+                                      });
+                                    }
+                                  }}
+                                />
+                              ))}
+                              {nonImageFileIds[task.id] && nonImageFileIds[task.id].length > 0 && (
+                                <div className="relative w-6 h-6">
+                                  <span className="text-lg">📎</span>
+                                  <span className="absolute -top-1 -right-1 bg-gray-600 text-white text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center text-[10px]">
+                                    {nonImageFileIds[task.id].length}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           )}
-                          <div className="space-y-1">
-                            <div className="w-full bg-gray-700/50 rounded-full h-1.5 overflow-hidden border border-gray-600/30">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex-1 bg-gray-700/50 rounded-full h-1.5 overflow-hidden border border-gray-600/30">
                               <div
                                 className="bg-gradient-to-r from-orange-500 to-orange-400 h-1.5 transition-all rounded-full"
                                 style={{ width: `${task.progress}%` }}
                               ></div>
                             </div>
-                            <div className="text-xs text-gray-500">{task.progress}% เสร็จสิ้น</div>
+                            <div className="text-xs text-gray-500 whitespace-nowrap">{task.progress}%</div>
                           </div>
+                          {task.createdBy && (
+                            <div className="text-gray-500 text-xs flex items-center justify-between">
+                              <span>
+                                {(() => {
+                                  if (userCache[task.createdBy]) {
+                                    return userCache[task.createdBy];
+                                  }
+                                  if (!userCache.hasOwnProperty(task.createdBy)) {
+                                    fetch(`/api/users/${task.createdBy}`)
+                                      .then(res => res.json())
+                                      .then(user => setUserCache(prev => ({ ...prev, [task.createdBy]: user.name || task.createdBy })))
+                                      .catch(() => setUserCache(prev => ({ ...prev, [task.createdBy]: task.createdBy })));
+                                  }
+                                  return userCache[task.createdBy] || task.createdBy;
+                                })()}
+                              </span>
+                              {task.createdAt && (
+                                <span>
+                                  {new Date(task.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))

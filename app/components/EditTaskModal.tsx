@@ -303,10 +303,10 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
   const isFormValid = taskName.trim().length > 0;
 
   return (
-    <div className="modal-overlay" onClick={(e) => {
+    <div className="modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => {
       if (e.target === e.currentTarget) handleClose();
     }}>
-      <div className="panel" style={{ maxWidth: '500px' }}>
+      <div className="panel" style={{ maxWidth: '500px', position: 'relative' }}>
         <button
           className="icon-btn"
           aria-label="ปิด"
@@ -317,64 +317,6 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
             <path d="M18 6 6 18M6 6l12 12"></path>
           </svg>
         </button>
-
-        {/* Task Card Preview */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(55, 65, 81, 0.6) 0%, rgba(17, 24, 39, 0.4) 100%)',
-          borderRadius: '0.5rem',
-          padding: '0.75rem',
-          fontSize: '0.75rem',
-          color: '#d1d5db',
-          border: '1px solid rgba(55, 65, 81, 0.5)',
-          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-          margin: '1rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <span style={{
-              display: 'inline-block',
-              padding: '0.25rem 0.5rem',
-              borderRadius: '0.375rem',
-              fontSize: '0.75rem',
-              fontWeight: '600',
-              flexShrink: 0,
-              backgroundColor: priority === 'urgent' ? 'rgba(239, 68, 68, 0.3)' :
-                               priority === 'high' ? 'rgba(249, 115, 22, 0.3)' :
-                               priority === 'medium' ? 'rgba(234, 179, 8, 0.3)' :
-                               'rgba(34, 197, 94, 0.3)',
-              color: priority === 'urgent' ? '#fca5a5' :
-                     priority === 'high' ? '#fed7aa' :
-                     priority === 'medium' ? '#fef08a' :
-                     '#86efac'
-            }}>
-              {priority || 'medium'}
-            </span>
-          </div>
-          <div style={{ fontWeight: '600', color: '#f3f4f6', marginBottom: '0.5rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.875rem', lineHeight: '1.25' }}>
-            {taskName || 'ชื่องาน'}
-          </div>
-          <div style={{ color: '#9ca3af', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
-            {task?.createdBy || 'ผู้สร้าง'}
-          </div>
-          <div>
-            <div style={{ width: '100%', backgroundColor: 'rgba(55, 65, 81, 0.5)', borderRadius: '9999px', height: '0.375rem', overflow: 'hidden', border: '1px solid rgba(75, 85, 99, 0.3)' }}>
-              <div style={{
-                backgroundColor: priority === 'urgent' ? 'linear-gradient(to right, rgb(239, 68, 68), rgb(252, 91, 91))' :
-                                priority === 'high' ? 'linear-gradient(to right, rgb(249, 115, 22), rgb(253, 144, 61))' :
-                                priority === 'medium' ? 'linear-gradient(to right, rgb(234, 179, 8), rgb(253, 185, 11))' :
-                                'linear-gradient(to right, rgb(34, 197, 94), rgb(74, 222, 128))',
-                backgroundImage: priority === 'urgent' ? 'linear-gradient(to right, rgb(239, 68, 68), rgb(252, 91, 91))' :
-                                 priority === 'high' ? 'linear-gradient(to right, rgb(249, 115, 22), rgb(253, 144, 61))' :
-                                 priority === 'medium' ? 'linear-gradient(to right, rgb(234, 179, 8), rgb(253, 185, 11))' :
-                                 'linear-gradient(to right, rgb(34, 197, 94), rgb(74, 222, 128))',
-                height: '0.375rem',
-                transition: 'all 0.3s ease',
-                borderRadius: '9999px',
-                width: '0%'
-              }} />
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>0% เสร็จสิ้น</div>
-          </div>
-        </div>
 
         <h1 style={{ paddingRight: '40px' }}>แก้ไขงาน</h1>
 
@@ -815,84 +757,69 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
 
         <div className="field">
           <label>แนบไฟล์</label>
-          {attachments.length > 0 && (
-            <div style={{ marginBottom: '0.75rem', display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', flexWrap: 'wrap' }}>
+          <div style={{ marginBottom: '0.75rem', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', paddingBottom: '0.5rem' }}>
+            {attachments.length > 0 ? (
+              <>
               {attachments.map((file, idx) => {
                 const isFile = file instanceof File;
                 const fileName = isFile ? (file as File).name : (file as any).name;
-                const isImage = isFile ? (file as File).type.startsWith('image/') : (file as any).url?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
-                const preview = isFile ? (isImage ? URL.createObjectURL(file as File) : null) : (file as any).url;
+                const isImage = isFile
+                  ? (file as File).type.startsWith('image/')
+                  : (file as any).url?.match(/\.(jpg|jpeg|png|gif|webp)$/i) || fileName?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
 
-                if (isImage && preview) {
-                  return (
-                    <div key={`${fileName}-${idx}`} style={{ position: 'relative', borderRadius: '0.375rem', overflow: 'hidden', border: '1px solid #4B5563', flexShrink: 0, width: '80px', height: '80px' }}>
-                      <img
-                        src={preview}
-                        alt={fileName}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const deletedFile = attachments[idx];
-                          if (deletedFile && !(deletedFile instanceof File) && (deletedFile as any).isExisting) {
-                            const fileId = (deletedFile as any).id;
-                            if (fileId) {
-                              setDeletedAttachmentIds([...deletedAttachmentIds, fileId]);
-                            }
-                          }
-                          setAttachments(attachments.filter((_, i) => i !== idx));
-                        }}
-                        style={{
-                          position: 'absolute',
-                          top: '2px',
-                          right: '2px',
-                          width: '20px',
-                          height: '20px',
-                          backgroundColor: '#dc2626',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '50%',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '12px',
-                          padding: 0,
-                        }}
-                        title="ลบไฟล์"
-                      >
-                        ✕
-                      </button>
+                return (
+                  <div key={`${fileName}-${idx}`} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.375rem', backgroundColor: '#1e293b', border: '1px solid #4B5563', borderRadius: '0.375rem', fontSize: '0.75rem', color: '#e2e8f0', position: 'relative' }}>
+                    <div style={{ fontSize: '0.875rem', flexShrink: 0 }}>
+                      {isImage ? '🖼' : '📎'}
                     </div>
-                  );
-                }
-                return null;
+                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.65rem' }} title={fileName}>
+                      {fileName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const deletedFile = attachments[idx];
+                        if (deletedFile && !(deletedFile instanceof File) && (deletedFile as any).isExisting) {
+                          const fileId = (deletedFile as any).id;
+                          if (fileId) {
+                            setDeletedAttachmentIds([...deletedAttachmentIds, fileId]);
+                          }
+                        }
+                        setAttachments(attachments.filter((_, i) => i !== idx));
+                      }}
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        backgroundColor: 'transparent',
+                        color: '#9ca3af',
+                        border: 'none',
+                        borderRadius: '0.25rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: 0,
+                        flexShrink: 0,
+                        transition: 'color 0.2s',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = '#9ca3af')}
+                      title="ลบไฟล์"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                      </svg>
+                    </button>
+                  </div>
+                );
               })}
-              {attachments.filter((file: any) => {
-                const isFile = file instanceof File;
-                return !isFile ? !(file as any).url?.match(/\.(jpg|jpeg|png|gif|webp)$/i) : !(file as File).type.startsWith('image/');
-              }).length > 0 && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                  padding: '0.25rem 0.5rem',
-                  backgroundColor: '#2d3748',
-                  border: '1px solid #4B5563',
-                  borderRadius: '0.375rem',
-                  fontSize: '0.75rem',
-                  color: '#e2e8f0',
-                  flexShrink: 0,
-                }}>
-                  📎 {attachments.filter((file: any) => {
-                    const isFile = file instanceof File;
-                    return !isFile ? !(file as any).url?.match(/\.(jpg|jpeg|png|gif|webp)$/i) : !(file as File).type.startsWith('image/');
-                  }).length}
-                </div>
-              )}
+              </>
+            ) : (
+              <div style={{ fontSize: '0.75rem', color: '#9ca3af', padding: '0.5rem 0', fontStyle: 'italic', gridColumn: '1 / -1' }}>
+                ยังไม่มีไฟล์แนบ
+              </div>
+            )}
             </div>
-          )}
           <label className="attach-btn" title="เพิ่มรูป วิดีโอ หรือเอกสาร">
             <span className="attach-plus">+</span>
             เพิ่มไฟล์

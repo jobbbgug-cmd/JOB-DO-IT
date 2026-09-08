@@ -17,6 +17,26 @@ export async function PUT(
       );
     }
 
+    const contentType = req.headers.get('content-type') || '';
+    let deletedAttachments: string[] = [];
+
+    if (contentType.includes('application/json')) {
+      const body = await req.json();
+      deletedAttachments = body.deletedAttachments || [];
+
+      const existingTask = await Task.findById(id);
+      if (!existingTask) {
+        return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+      }
+
+      let attachments = (existingTask.attachments || []).filter(
+        (att: string) => !deletedAttachments.includes(att)
+      );
+
+      await Task.findByIdAndUpdate(id, { attachments }, { new: true });
+      return NextResponse.json({ success: true });
+    }
+
     const formData = await req.formData();
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;

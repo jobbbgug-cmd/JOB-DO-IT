@@ -24,7 +24,7 @@ interface Task {
 interface TaskDetailModalProps {
   task: Task | null;
   onClose: () => void;
-  onEdit?: (task: Task) => void;
+  onEdit?: () => void;
   employees?: any[];
   companyCode?: string;
 }
@@ -63,30 +63,38 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [],
   useEffect(() => {
     if (task?.attachments && Array.isArray(task.attachments) && task.attachments.length > 0) {
       const loadAttachments = async () => {
-        const loadedAttachments = await Promise.all(
-          task.attachments.map(async (attId: string) => {
-            try {
-              if (!attId) {
-                console.warn('Empty attachment ID');
-                return null;
-              }
-              const res = await fetch(`/api/attachments/${attId}`);
-              if (!res.ok) {
-                console.error(`Failed to fetch attachment ${attId}: ${res.status}`);
-                return null;
-              }
-              const data = await res.json();
+        const loaded = await Promise.all(
+          task.attachments.map(async (att: string, idx: number) => {
+            if (!att) return null;
+
+            // ถ้า base64 ใช้โดยตรง
+            if (att.startsWith('data:')) {
+              const isImage = att.startsWith('data:image/');
+              const fileName = `file_${idx}`;
+              const mimeType = isImage ? att.split(':')[1].split(';')[0] : 'application/octet-stream';
               return {
-                file: new File([data.dataUrl], data.fileName, { type: data.fileType }),
-                preview: data.dataUrl,
+                file: new File([att], fileName, { type: mimeType }),
+                preview: att,
               };
-            } catch (error) {
-              console.error(`Error loading attachment ${attId}:`, error);
-              return null;
             }
+
+            // ถ้า ID เรียก API
+            try {
+              const res = await fetch(`/api/attachments/${att}`);
+              if (res.ok) {
+                const data = await res.json();
+                return {
+                  file: new File([data.dataUrl], data.fileName, { type: data.fileType }),
+                  preview: data.dataUrl,
+                };
+              }
+            } catch (error) {
+              console.error(`Failed to load attachment ${att}:`, error);
+            }
+            return null;
           })
         );
-        setAttachments(loadedAttachments.filter(Boolean) as any);
+        setAttachments(loaded.filter(Boolean) as any);
       };
       loadAttachments();
     } else {
@@ -104,29 +112,33 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [],
     const files = e.target.files;
     if (!files || !task?.id || !companyCode) return;
 
-    Array.from(files).forEach(async (file) => {
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('taskId', task.id);
-        formData.append('companyCode', companyCode);
+    await Promise.all(
+      Array.from(files).map(async (file) => {
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('taskId', task.id);
+          formData.append('companyCode', companyCode);
 
-        const response = await fetch('/api/attachments/upload', {
-          method: 'POST',
-          body: formData,
-        });
+          const response = await fetch('/api/attachments/upload', {
+            method: 'POST',
+            body: formData,
+          });
 
-        if (response.ok) {
-          const data = await response.json();
-          setAttachments(prev => [...prev, { file, preview: data.dataUrl }]);
-        } else {
-          const errorData = await response.json();
-          console.error('Upload failed:', errorData);
+          if (response.ok) {
+            const data = await response.json();
+            setAttachments(prev => [...prev, { file, preview: data.dataUrl }]);
+          } else {
+            const errorData = await response.json();
+            console.error('Upload failed:', errorData);
+          }
+        } catch (error) {
+          console.error('Error uploading file:', error);
         }
-      } catch (error) {
-        console.error('Error uploading file:', error);
-      }
-    });
+      })
+    );
+
+    onEdit?.();
 
     // Reset input
     if (fileInputRef.current) {
@@ -134,8 +146,24 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [],
     }
   };
 
-  const removeAttachment = (index: number) => {
+  const removeAttachment = async (index: number) => {
+    if (!task?.id || !task?.attachments?.[index]) return;
+
     setAttachments(prev => prev.filter((_, i) => i !== index));
+
+    try {
+      const attachmentToDelete = task.attachments[index];
+      await fetch(`/api/tasks/edit/${task.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deletedAttachments: [attachmentToDelete],
+          companyCode,
+        }),
+      });
+    } catch (error) {
+      console.error('Error deleting attachment:', error);
+    }
   };
 
   const statusLabels: Record<string, string> = {
@@ -247,7 +275,15 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [],
               <span className="text-gray-500 text-xs">ผู้สั่งงาน</span>
               <span className="text-gray-300 ml-2">
                 {creatorName || task.createdBy || '-'}
-                {task.createdAt && <span className="text-gray-500 text-xs ml-2">· {task.createdAt}</span>}
+                {task.createdAt && (() => {
+                  const date = new Date(task.createdAt);
+                  const day = String(date.getDate()).padStart(2, '0');
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const year = date.getFullYear();
+                  const hours = String(date.getHours()).padStart(2, '0');
+                  const minutes = String(date.getMinutes()).padStart(2, '0');
+                  return <span className="text-gray-500 text-xs ml-2">· {day}-{month}-{year} {hours}:{minutes} น.</span>;
+                })()}
               </span>
             </div>
           </div>
@@ -290,9 +326,9 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [],
                           return (
                             <div
                               key={`file-${idx}`}
-                              className="flex items-center gap-3 p-3 bg-gray-800/50 rounded border border-gray-700/50 group hover:bg-gray-800/70 transition"
+                              className="flex items-center gap-1.5 p-1.5 bg-gray-800/50 rounded border border-gray-700/50 group hover:bg-gray-800/70 transition"
                             >
-                              <span className="text-lg flex-shrink-0">📎</span>
+                              <span className="text-sm flex-shrink-0">📎</span>
                               <a
                                 href={item.preview}
                                 download={item.file.name}
@@ -350,7 +386,7 @@ export default function TaskDetailModal({ task, onClose, onEdit, employees = [],
             </button>
             <button
               onClick={() => {
-                onEdit?.(task);
+                onEdit?.();
                 onClose();
               }}
               className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition"
