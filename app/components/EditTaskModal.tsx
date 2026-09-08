@@ -318,6 +318,64 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
           </svg>
         </button>
 
+        {/* Task Card Preview */}
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(55, 65, 81, 0.6) 0%, rgba(17, 24, 39, 0.4) 100%)',
+          borderRadius: '0.5rem',
+          padding: '0.75rem',
+          fontSize: '0.75rem',
+          color: '#d1d5db',
+          border: '1px solid rgba(55, 65, 81, 0.5)',
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+          margin: '1rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <span style={{
+              display: 'inline-block',
+              padding: '0.25rem 0.5rem',
+              borderRadius: '0.375rem',
+              fontSize: '0.75rem',
+              fontWeight: '600',
+              flexShrink: 0,
+              backgroundColor: priority === 'urgent' ? 'rgba(239, 68, 68, 0.3)' :
+                               priority === 'high' ? 'rgba(249, 115, 22, 0.3)' :
+                               priority === 'medium' ? 'rgba(234, 179, 8, 0.3)' :
+                               'rgba(34, 197, 94, 0.3)',
+              color: priority === 'urgent' ? '#fca5a5' :
+                     priority === 'high' ? '#fed7aa' :
+                     priority === 'medium' ? '#fef08a' :
+                     '#86efac'
+            }}>
+              {priority || 'medium'}
+            </span>
+          </div>
+          <div style={{ fontWeight: '600', color: '#f3f4f6', marginBottom: '0.5rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.875rem', lineHeight: '1.25' }}>
+            {taskName || 'ชื่องาน'}
+          </div>
+          <div style={{ color: '#9ca3af', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
+            {task?.createdBy || 'ผู้สร้าง'}
+          </div>
+          <div>
+            <div style={{ width: '100%', backgroundColor: 'rgba(55, 65, 81, 0.5)', borderRadius: '9999px', height: '0.375rem', overflow: 'hidden', border: '1px solid rgba(75, 85, 99, 0.3)' }}>
+              <div style={{
+                backgroundColor: priority === 'urgent' ? 'linear-gradient(to right, rgb(239, 68, 68), rgb(252, 91, 91))' :
+                                priority === 'high' ? 'linear-gradient(to right, rgb(249, 115, 22), rgb(253, 144, 61))' :
+                                priority === 'medium' ? 'linear-gradient(to right, rgb(234, 179, 8), rgb(253, 185, 11))' :
+                                'linear-gradient(to right, rgb(34, 197, 94), rgb(74, 222, 128))',
+                backgroundImage: priority === 'urgent' ? 'linear-gradient(to right, rgb(239, 68, 68), rgb(252, 91, 91))' :
+                                 priority === 'high' ? 'linear-gradient(to right, rgb(249, 115, 22), rgb(253, 144, 61))' :
+                                 priority === 'medium' ? 'linear-gradient(to right, rgb(234, 179, 8), rgb(253, 185, 11))' :
+                                 'linear-gradient(to right, rgb(34, 197, 94), rgb(74, 222, 128))',
+                height: '0.375rem',
+                transition: 'all 0.3s ease',
+                borderRadius: '9999px',
+                width: '0%'
+              }} />
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>0% เสร็จสิ้น</div>
+          </div>
+        </div>
+
         <h1 style={{ paddingRight: '40px' }}>แก้ไขงาน</h1>
 
         <div className="ai-fields">
