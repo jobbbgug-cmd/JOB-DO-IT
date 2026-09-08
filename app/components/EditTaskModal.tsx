@@ -258,9 +258,12 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
 
       // Add deleted attachment IDs to remove from DB
       if (deletedAttachmentIds.length > 0) {
+        console.log('Deleted attachment IDs:', deletedAttachmentIds);
         formData.append('deletedAttachmentIds', JSON.stringify(deletedAttachmentIds));
       }
 
+      console.log('Form data keys:', Array.from(formData.keys()));
+      
       const response = await fetch(`/api/tasks/edit/${task.id}`, {
         method: 'PUT',
         body: formData,
@@ -803,8 +806,10 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
                       onClick={() => {
                         const deletedFile = attachments[idx];
                         if (deletedFile && !(deletedFile instanceof File) && (deletedFile as any).isExisting) {
-                          const fileId = (deletedFile as any).url.split('/').pop() || '';
-                          setDeletedAttachmentIds([...deletedAttachmentIds, fileId]);
+                          const fileId = (deletedFile as any).id;
+                          if (fileId) {
+                            setDeletedAttachmentIds([...deletedAttachmentIds, fileId]);
+                          }
                         }
                         setAttachments(attachments.filter((_, i) => i !== idx));
                       }}

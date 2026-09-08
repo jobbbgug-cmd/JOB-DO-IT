@@ -99,10 +99,15 @@ export async function PUT(
     const deletedAttachmentIdsStr = formData.get('deletedAttachmentIds') as string;
     const deletedAttachmentIds = deletedAttachmentIdsStr ? JSON.parse(deletedAttachmentIdsStr) : [];
     
+    console.log('Existing attachments:', existingTask.attachments);
+    console.log('Deleted attachment IDs:', deletedAttachmentIds);
+    
     // Handle new attachments
     let attachments = (existingTask.attachments || []).filter(
       (att: string) => !deletedAttachmentIds.includes(att)
     );
+    
+    console.log('Attachments after filter:', attachments);
     const attachmentFiles = formData.getAll('attachments') as File[];
     if (attachmentFiles.length > 0) {
       const newAttachments = await Promise.all(
