@@ -203,6 +203,25 @@ export default function BoardPage() {
 
   console.log('🟠 DEBUG - doingCount:', doingCount, 'pendingCount:', pendingCount, 'total tasks:', tasks.length);
 
+  const getProgressFromStatus = (status: string): number => {
+    switch (status) {
+      case 'todo':
+        return 0;
+      case 'in-progress':
+        return 25;
+      case 'testing-failed':
+        return 50;
+      case 'wait-testing':
+        return 75;
+      case 'in-review': // backward compatibility
+        return 75;
+      case 'done':
+        return 100;
+      default:
+        return 0;
+    }
+  };
+
   // Using shared Task type from @/app/types/index
   const TaskCard = ({ task, statusColor, isReadOnly: cardIsReadOnly, attachmentPreviews: previews }: { task: Task; statusColor: string; isReadOnly: boolean; attachmentPreviews: Record<string, string> }) => (
     <div
@@ -262,15 +281,15 @@ export default function BoardPage() {
         )}
 
         {/* Progress Bar with Percentage */}
-        {task.progress !== undefined && (
+        {task.status && (
           <div className="flex items-center gap-2 mb-2">
             <div className="flex-1 bg-gray-700/50 rounded-full h-1.5 overflow-hidden border border-gray-600/30">
               <div
                 className="bg-gradient-to-r from-cyan-500 to-cyan-400 h-1.5 transition-all rounded-full"
-                style={{ width: `${task.progress}%` }}
+                style={{ width: `${getProgressFromStatus(task.status)}%` }}
               ></div>
             </div>
-            <div className="text-xs text-gray-500 whitespace-nowrap">{task.progress}%</div>
+            <div className="text-xs text-gray-500 whitespace-nowrap">{getProgressFromStatus(task.status)}%</div>
           </div>
         )}
 

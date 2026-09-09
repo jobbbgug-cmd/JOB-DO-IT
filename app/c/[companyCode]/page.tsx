@@ -147,6 +147,25 @@ export default function CompanyPage() {
     }
   };
 
+  const getProgressFromStatus = (status: string): number => {
+    switch (status) {
+      case 'todo':
+        return 0;
+      case 'in-progress':
+        return 25;
+      case 'testing-failed':
+        return 50;
+      case 'wait-testing':
+        return 75;
+      case 'in-review': // backward compatibility
+        return 75;
+      case 'done':
+        return 100;
+      default:
+        return 0;
+    }
+  };
+
   const handleDragStart = (e: React.MouseEvent, empId: string) => {
     e.preventDefault();
     setDragging(empId);
@@ -494,11 +513,11 @@ export default function CompanyPage() {
                               <div className="w-full bg-gray-700 rounded-full h-1 overflow-hidden">
                                 <div
                                   className="bg-gradient-to-r from-cyan-500 to-cyan-400 h-1 rounded-full transition-all"
-                                  style={{ width: `${task.progress}%` }}
+                                  style={{ width: `${getProgressFromStatus(task.status || 'todo')}%` }}
                                 ></div>
                               </div>
                               <span className="font-semibold text-gray-500 whitespace-nowrap ml-1">
-                                {task.progress}%
+                                {getProgressFromStatus(task.status || 'todo')}%
                               </span>
                             </div>
                             <div className="flex items-center justify-between">
@@ -560,11 +579,11 @@ export default function CompanyPage() {
                               <div className="w-full bg-gray-700 rounded-full h-1 overflow-hidden">
                                 <div
                                   className="bg-gradient-to-r from-red-500 to-red-400 h-1 rounded-full transition-all"
-                                  style={{ width: `${task.progress}%` }}
+                                  style={{ width: `${getProgressFromStatus(task.status || 'todo')}%` }}
                                 ></div>
                               </div>
                               <span className="font-semibold text-gray-500 whitespace-nowrap ml-1">
-                                {task.progress}%
+                                {getProgressFromStatus(task.status || 'todo')}%
                               </span>
                             </div>
                             <div className="flex items-center justify-between">

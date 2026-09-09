@@ -25,6 +25,25 @@ interface EmployeeCard {
 
 const COLORS = ['#0E9384', '#E4572E', '#5B7FB0', '#B4479A', '#C98A0E', '#3F6E4B', '#8A5CF6', '#D2504F'];
 
+const getProgressFromStatus = (status: string): number => {
+  switch (status) {
+    case 'todo':
+      return 0;
+    case 'in-progress':
+      return 25;
+    case 'testing-failed':
+      return 50;
+    case 'wait-testing':
+      return 75;
+    case 'in-review': // backward compatibility
+      return 75;
+    case 'done':
+      return 100;
+    default:
+      return 0;
+  }
+};
+
 export default function SprintPage() {
   const router = useRouter();
   const params = useParams();
@@ -371,10 +390,10 @@ export default function SprintPage() {
                             <div className="flex-1 bg-gray-700/50 rounded-full h-1.5 overflow-hidden border border-gray-600/30">
                               <div
                                 className="bg-gradient-to-r from-cyan-500 to-cyan-400 h-1.5 transition-all rounded-full"
-                                style={{ width: `${task.progress}%` }}
+                                style={{ width: `${getProgressFromStatus(task.status)}%` }}
                               ></div>
                             </div>
-                            <div className="text-xs text-gray-500 whitespace-nowrap">{task.progress}%</div>
+                            <div className="text-xs text-gray-500 whitespace-nowrap">{getProgressFromStatus(task.status)}%</div>
                           </div>
                           {task.createdBy && (
                             <div className="text-gray-500 text-xs flex items-center justify-between">
@@ -490,10 +509,10 @@ export default function SprintPage() {
                             <div className="flex-1 bg-gray-700/50 rounded-full h-1.5 overflow-hidden border border-gray-600/30">
                               <div
                                 className="bg-gradient-to-r from-orange-500 to-orange-400 h-1.5 transition-all rounded-full"
-                                style={{ width: `${task.progress}%` }}
+                                style={{ width: `${getProgressFromStatus(task.status)}%` }}
                               ></div>
                             </div>
-                            <div className="text-xs text-gray-500 whitespace-nowrap">{task.progress}%</div>
+                            <div className="text-xs text-gray-500 whitespace-nowrap">{getProgressFromStatus(task.status)}%</div>
                           </div>
                           {task.createdBy && (
                             <div className="text-gray-500 text-xs flex items-center justify-between">
