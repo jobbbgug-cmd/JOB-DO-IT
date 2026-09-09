@@ -230,14 +230,23 @@ export default function BoardPage() {
                 attId={attId}
               />
             ))}
-            {task.attachments.length > 0 && (
-              <div className="relative w-6 h-6">
-                <span className="text-lg">📎</span>
-                <span className="absolute -top-1 -right-1 bg-gray-600 text-white text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center text-[10px]">
-                  {task.attachments.length}
-                </span>
-              </div>
-            )}
+            {(() => {
+              // Count non-image attachments (PDF, docs, etc)
+              const nonImageCount = Object.values(attachmentPreviews).filter(preview => {
+                if (!preview) return false;
+                // Check if it's NOT an image by MIME type
+                return !preview.startsWith('data:image/');
+              }).length;
+
+              return nonImageCount > 0 && (
+                <div className="relative w-6 h-6">
+                  <span className="text-lg">📎</span>
+                  <span className="absolute -top-1 -right-1 bg-gray-600 text-white text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center text-[10px]">
+                    {nonImageCount}
+                  </span>
+                </div>
+              );
+            })()}
           </div>
         )}
 
