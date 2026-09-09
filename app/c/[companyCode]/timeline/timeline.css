@@ -33,6 +33,17 @@
   display: flex;
   flex-direction: column;
   border-right: 1px solid rgb(55, 65, 81);
+  position: relative;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 138.5px,
+    rgb(75, 85, 99) 138.5px,
+    rgb(75, 85, 99) 138.6px
+  );
+  background-size: 138.6px 100%;
+  background-position: 0 0;
+  background-attachment: local;
 }
 
 .tl-months {
