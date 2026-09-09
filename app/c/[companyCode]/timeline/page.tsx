@@ -11,6 +11,7 @@ export default function TimelinePage() {
   const companyCode = params.companyCode as string;
   const [isHydrated, setIsHydrated] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
   const [view, setView] = useState('month');
   const [viewType, setViewType] = useState('overview');
   const [showAll, setShowAll] = useState(false);
@@ -25,8 +26,21 @@ export default function TimelinePage() {
   useEffect(() => {
     if (isHydrated) {
       fetchTasks();
+      fetchEmployees();
     }
   }, [isHydrated, companyCode]);
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await fetch(`/api/employees/${companyCode}`);
+      if (response.ok) {
+        const data = await response.json();
+        setEmployees(data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch employees:', error);
+    }
+  };
 
   const fetchTasks = async () => {
     try {
@@ -80,6 +94,13 @@ export default function TimelinePage() {
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
     return colors[Math.abs(hash) % colors.length];
+  };
+
+  const getEmployeeNames = (assigneeIds?: string[]): string => {
+    if (!assigneeIds || assigneeIds.length === 0) return 'ไม่มีผู้รับผิดชอบ';
+    return assigneeIds
+      .map(id => employees.find(e => e.id === id)?.name || id)
+      .join(', ');
   };
 
   if (!isHydrated) return <div className="flex items-center justify-center h-screen">Loading...</div>;
@@ -192,38 +213,41 @@ export default function TimelinePage() {
         <div className="tl-today" style={{ left: `calc(${labelWidth}px + 36px)` }}></div>
 
         {/* Rows */}
-        {visibleTasks.map((task) => (
-          <div key={task.id} className={`tl-row tl-flat ${task.status === 'done' ? 'tl-done' : ''}`}>
-            <div className="tl-label">
-              <button className="tl-task-name">
-                <span className="dot" style={{ background: getStatusColor(task.status || 'todo') }}></span>
-                <span className="who">
-                  {task.title}
-                  <span className="role">
-                    {task.projectName && `${task.projectName} · `}
-                    {task.assignees?.length ? task.assignees.slice(0, 2).map((id, i) => `Assignee${i + 1}`).join(', ') : 'ไม่มีผู้รับผิดชอบ'}
-                  </span>
-                </span>
-                <span className="tl-pct muted">{task.progress || 0}%</span>
-              </button>
-            </div>
-
-            <div className="tl-track" style={{ width: timelineWidth }}>
-              <button type="button" className="tl-bar" style={{ left: 0, width: timelineWidth, '--bar': getStatusColor(task.status || 'todo') } as any}>
-                <span className="fill" style={{ width: `${(task.progress || 0)}%` }}></span>
-                <span className="tl-holders">
-                  {task.assignees?.slice(0, 2).map((name, i) => (
-                    <span key={i} className="av" style={{ background: getAvatarColor(name) }}>
-                      {getInitials(name)}
+        {visibleTasks.map((task) => {
+          const assigneeNames = task.assignees?.map(id => employees.find(e => e.id === id)?.name || id) || [];
+          return (
+            <div key={task.id} className={`tl-row tl-flat ${task.status === 'done' ? 'tl-done' : ''}`}>
+              <div className="tl-label">
+                <button className="tl-task-name" title="ดูรายละเอียดงาน">
+                  <span className="dot" style={{ background: getStatusColor(task.status || 'todo') }}></span>
+                  <span className="who">
+                    {task.title}
+                    <span className="role">
+                      {task.projectName && `${task.projectName} · `}
+                      {getEmployeeNames(task.assignees)}
                     </span>
-                  ))}
-                </span>
-                <span className="txt">{task.title}</span>
-                <span className="pct">{task.progress || 0}%</span>
-              </button>
+                  </span>
+                  <span className="tl-pct muted">{task.progress || 0}%</span>
+                </button>
+              </div>
+
+              <div className="tl-track" style={{ width: timelineWidth }}>
+                <button type="button" className="tl-bar" style={{ left: 0, width: timelineWidth, '--bar': getStatusColor(task.status || 'todo') } as any}>
+                  <span className="fill" style={{ width: `${(task.progress || 0)}%` }}></span>
+                  <span className="tl-holders">
+                    {assigneeNames.slice(0, 2).map((name, i) => (
+                      <span key={i} className="av" style={{ background: getAvatarColor(name) }}>
+                        {getInitials(name)}
+                      </span>
+                    ))}
+                  </span>
+                  <span className="txt">{task.title}</span>
+                  <span className="pct">{task.progress || 0}%</span>
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
