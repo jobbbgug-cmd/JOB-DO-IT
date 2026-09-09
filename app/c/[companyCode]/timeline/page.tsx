@@ -362,7 +362,7 @@ export default function TimelinePage() {
                       </span>
                       <span className="who">
                         <b>{emp.name}</b>
-                        <span className="role">{emp.position || emp.department || 'Member'}</span>
+                        <span className="role">{emp.role || emp.position || emp.department || 'Member'}</span>
                       </span>
                       <span className="n">{empTasks.length}</span>
                     </button>
