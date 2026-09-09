@@ -394,7 +394,14 @@ export default function TimelinePage() {
             return (
               <div key={task.id} className={`tl-row tl-flat ${task.status === 'done' ? 'tl-done' : ''}`}>
                 <div className="tl-label">
-                  <button className="tl-task-name" title="ดูรายละเอียดงาน">
+                  <button
+                    className="tl-task-name"
+                    title="ดูรายละเอียดงาน"
+                    onClick={() => {
+                      console.log('👁️ Overview task name clicked:', task);
+                      setSelectedTask(task);
+                    }}
+                  >
                     <span className="dot" style={{ background: getStatusColor(task.status || 'todo') }}></span>
                     <span className="who">
                       {task.title}
@@ -488,7 +495,14 @@ export default function TimelinePage() {
                           return (
                             <div key={task.id} className={`tl-row tl-task ${task.status === 'done' ? 'tl-done' : ''}`}>
                               <div className="tl-label indent">
-                                <button className="tl-task-name" title="ดูรายละเอียดงาน">
+                                <button
+                                  className="tl-task-name"
+                                  title="ดูรายละเอียดงาน"
+                                  onClick={() => {
+                                    console.log('👁️ Employee task name clicked:', task);
+                                    setSelectedTask(task);
+                                  }}
+                                >
                                   <span className="dot" style={{ background: getStatusColor(task.status || 'todo') }}></span>
                                   <span className="who">{task.title}</span>
                                   <span className="tl-pct muted">{task.progress || 0}%</span>
