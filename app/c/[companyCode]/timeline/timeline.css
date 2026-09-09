@@ -177,17 +177,23 @@
   align-items: center;
   gap: 8px;
   padding: 0 8px;
-  background: none;
-  border: none;
+  background: var(--bar);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
   color: white;
   font-size: 12px;
   white-space: nowrap;
-  transition: filter 0.2s;
-  border-radius: 4px;
+  transition: all 0.2s;
+  border-radius: 6px;
   overflow: hidden;
   pointer-events: auto;
   z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.tl-bar:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .tl-bar:hover {
