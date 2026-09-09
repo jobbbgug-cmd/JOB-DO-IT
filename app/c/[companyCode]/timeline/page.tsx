@@ -411,7 +411,10 @@ export default function TimelinePage() {
                   <button
                     type="button"
                     className="tl-bar"
-                    onClick={() => setSelectedTask(task)}
+                    onClick={() => {
+                      console.log('🖱️ Task bar clicked:', task);
+                      setSelectedTask(task);
+                    }}
                     style={{
                       left: barPos.left,
                       width: barPos.width,
