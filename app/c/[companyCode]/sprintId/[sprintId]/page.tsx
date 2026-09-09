@@ -353,7 +353,7 @@ export default function SprintPage() {
                           </button>
                         </div>
                         <div onClick={() => setSelectedTask(task)}>
-                          <div className="font-semibold text-gray-100 mb-2 line-clamp-2 text-sm leading-tight">{task.title}</div>
+                          <div className="font-semibold text-gray-100 mb-2 line-clamp-3 text-sm leading-tight">{task.title}</div>
                           {task.attachments && task.attachments.length > 0 && (
                             <div className="flex gap-1 mb-2 items-center">
                               {console.log(`Task ${task.id} has ${task.attachments.length} attachments:`, task.attachments)}
@@ -473,7 +473,7 @@ export default function SprintPage() {
                           </button>
                         </div>
                         <div onClick={() => setSelectedTask(task)}>
-                          <div className="font-semibold text-gray-100 mb-2 line-clamp-2 text-sm leading-tight">{task.title}</div>
+                          <div className="font-semibold text-gray-100 mb-2 line-clamp-3 text-sm leading-tight">{task.title}</div>
                           {task.attachments && task.attachments.length > 0 && (
                             <div className="flex gap-1 mb-2 items-center">
                               {task.attachments.map((attId: string, idx: number) => (
