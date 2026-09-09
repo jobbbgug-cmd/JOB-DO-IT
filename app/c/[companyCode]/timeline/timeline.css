@@ -129,6 +129,7 @@
 
 .tl-row.tl-flat {
   align-items: center;
+  min-height: 32px;
 }
 
 .tl-row.tl-flat .tl-label {
