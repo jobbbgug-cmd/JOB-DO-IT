@@ -60,14 +60,30 @@ export default function TimelinePage() {
           console.log('🔍 First task:', data[0]);
           console.log('📅 First task dueDate:', data[0].dueDate);
         }
-        const sortedTasks = (data || []).sort((a: Task, b: Task) => {
+        const getProgress = (status: string | undefined): number => {
+          switch (status) {
+            case 'todo': return 0;
+            case 'in-progress': return 25;
+            case 'testing-failed': return 50;
+            case 'wait-testing': return 75;
+            case 'done': return 100;
+            default: return 0;
+          }
+        };
+
+        const tasksWithProgress = (data || []).map((task: Task) => ({
+          ...task,
+          progress: getProgress(task.status)
+        }));
+
+        const sortedTasks = tasksWithProgress.sort((a: Task, b: Task) => {
           const dateA = new Date(a.dueDate || '').getTime();
           const dateB = new Date(b.dueDate || '').getTime();
           return dateA - dateB;
         });
         const filtered = sortedTasks.filter((t: Task) => t.dueDate);
         console.log('📋 Filtered tasks with dueDate:', filtered);
-        setTasks(data || []);
+        setTasks(tasksWithProgress);
       } else {
         console.error('❌ Response not ok:', response.status);
       }
@@ -84,6 +100,17 @@ export default function TimelinePage() {
       case 'wait-testing': return '#8A5CF6';
       case 'done': return '#0E9384';
       default: return '#999';
+    }
+  };
+
+  const getProgressFromStatus = (status: string | undefined): number => {
+    switch (status) {
+      case 'todo': return 0;
+      case 'in-progress': return 25;
+      case 'testing-failed': return 50;
+      case 'wait-testing': return 75;
+      case 'done': return 100;
+      default: return 0;
     }
   };
 
