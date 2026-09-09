@@ -408,8 +408,7 @@ export default function TimelinePage() {
                 </div>
 
                 <div className="tl-track" style={{ width: timelineWidth }}>
-                  <button
-                    type="button"
+                  <div
                     className="tl-bar"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -421,6 +420,8 @@ export default function TimelinePage() {
                       width: barPos.width,
                       '--bar': getStatusColor(task.status || 'todo')
                     } as any}
+                    role="button"
+                    tabIndex={0}
                   >
                     <span className="fill" style={{ width: `${(task.progress || 0)}%` }}></span>
                     <span className="tl-holders" title={assigneeNames.join(', ')}>
@@ -432,7 +433,7 @@ export default function TimelinePage() {
                     </span>
                     <span className="txt">{task.title}</span>
                     <span className="pct">{task.progress || 0}%</span>
-                  </button>
+                  </div>
                 </div>
               </div>
             );
@@ -495,21 +496,27 @@ export default function TimelinePage() {
                               </div>
 
                               <div className="tl-track" style={{ width: timelineWidth }}>
-                                <button
-                                  type="button"
+                                <div
                                   className="tl-bar pct-in"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    console.log('🖱️ Employee task bar clicked:', task);
+                                    setSelectedTask(task);
+                                  }}
                                   style={{
                                     left: typeof barPos.width === 'string' ? 0 : barPos.left,
                                     width: typeof barPos.width === 'string' ? barPos.width : barPos.width,
                                     '--bar': getStatusColor(task.status || 'todo')
                                   } as any}
+                                  role="button"
+                                  tabIndex={0}
                                 >
                                   <span className="fill" style={{ width: `${(task.progress || 0)}%` }}></span>
                                   <span className="txt" style={{ maxWidth: timelineWidth - 100 }}>{task.title}</span>
                                   <span className="pct in" style={{ left: (typeof barPos.width === 'string' ? 880 : barPos.left + barPos.width - 30) }}>
                                     {task.progress || 0}%
                                   </span>
-                                </button>
+                                </div>
                               </div>
                             </div>
                           );
