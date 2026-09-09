@@ -44,19 +44,33 @@ export default function TimelinePage() {
   };
 
   const fetchTasks = async () => {
+    console.log('🚀 fetchTasks called, companyCode:', companyCode);
     try {
-      const response = await fetch(`/api/tasks/${companyCode}`);
+      const url = `/api/tasks/${companyCode}`;
+      console.log('📍 Fetching from:', url);
+      const response = await fetch(url);
+      console.log('📡 Response status:', response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Tasks fetched:', data);
+        console.log('📊 Total tasks:', data?.length);
+        if (data && data.length > 0) {
+          console.log('🔍 First task:', data[0]);
+          console.log('📅 First task dueDate:', data[0].dueDate);
+        }
         const sortedTasks = (data || []).sort((a: Task, b: Task) => {
           const dateA = new Date(a.dueDate || '').getTime();
           const dateB = new Date(b.dueDate || '').getTime();
           return dateA - dateB;
         });
-        setTasks(sortedTasks.filter((t: Task) => t.dueDate));
+        const filtered = sortedTasks.filter((t: Task) => t.dueDate);
+        console.log('📋 Filtered tasks with dueDate:', filtered);
+        setTasks(data || []);
+      } else {
+        console.error('❌ Response not ok:', response.status);
       }
     } catch (error) {
-      console.error('Failed to fetch tasks:', error);
+      console.error('❌ Failed to fetch tasks:', error);
     }
   };
 
@@ -286,8 +300,6 @@ export default function TimelinePage() {
           </div>
         </div>
 
-        {/* Today Line */}
-        <div className="tl-today" style={{ left: `calc(${labelWidth}px + 36px)` }}></div>
 
         {/* Rows */}
         {viewType === 'overview' ? (
