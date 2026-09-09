@@ -56,6 +56,7 @@ export default function BoardPage() {
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+    console.log('🔐 Loading user from localStorage:', { token: !!token, userId });
     if (!token) {
       router.push('/login');
     } else {
@@ -64,7 +65,7 @@ export default function BoardPage() {
       fetchTasks();
       fetchEmployees();
     }
-  }, [router]);
+  }, []);
 
   const fetchTasks = async () => {
     try {
