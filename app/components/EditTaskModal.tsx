@@ -18,6 +18,7 @@ interface Employee {
 export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdated }: EditTaskModalProps) {
   const [taskName, setTaskName] = useState('');
   const [description, setDescription] = useState('');
+  const [status, setStatus] = useState<'todo' | 'in-progress' | 'in-review' | 'done'>('todo');
   const [visibility, setVisibility] = useState<'all' | 'self'>('all');
   const [assignees, setAssignees] = useState<string[]>([]);
   const [type, setType] = useState<'routine' | 'urgent'>('routine');
@@ -96,6 +97,7 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
 
       setTaskName(task.title || '');
       setDescription(task.description || '');
+      setStatus((task.status || 'todo') as 'todo' | 'in-progress' | 'in-review' | 'done');
       const taskAssignees = task?.assignees && Array.isArray(task.assignees) ? task.assignees : (task?.assignee ? [task.assignee] : []);
       setAssignees(taskAssignees);
       setType(task.lane || 'routine');
@@ -248,6 +250,7 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
       const formData = new FormData();
       formData.append('title', taskName);
       formData.append('description', description);
+      formData.append('status', status);
       formData.append('lane', type);
       formData.append('priority', priorityMap[priority] || 'medium');
       formData.append('assignees', JSON.stringify(visibility === 'self' ? [task.createdBy] : assignees));
@@ -312,6 +315,7 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
   const handleClose = () => {
     setTaskName('');
     setDescription('');
+    setStatus('todo');
     setVisibility('all');
     setAssignees([]);
     setType('routine');
@@ -433,6 +437,27 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
             >
               <span className="d"></span>จิกปะทะ
             </button>
+          </div>
+        </div>
+
+        <div className="field">
+          <label>สถานะงาน</label>
+          <div className="seg" role="group" aria-label="สถานะงาน">
+            {[
+              { id: 'todo', name: 'ยังไม่เริ่ม', color: '#5B7FB0' },
+              { id: 'in-progress', name: 'กำลังทำ', color: '#C98A0E' },
+              { id: 'in-review', name: 'รอรีวิว', color: '#8A5CF6' },
+              { id: 'done', name: 'เสร็จ', color: '#0E9384' },
+            ].map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                className={status === s.id ? 'on' : ''}
+                onClick={() => setStatus(s.id as 'todo' | 'in-progress' | 'in-review' | 'done')}
+              >
+                <span className="d" style={{ background: s.color }}></span>{s.name}
+              </button>
+            ))}
           </div>
         </div>
 
