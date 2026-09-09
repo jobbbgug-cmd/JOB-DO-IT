@@ -83,7 +83,19 @@ export async function POST(req: NextRequest) {
     const progress = parseInt(formData.get('progress') as string) || 0;
     const createdBy = formData.get('createdBy') as string;
     const assigneesStr = formData.get('assignees') as string;
-    const assignees = assigneesStr ? JSON.parse(assigneesStr) : [];
+    let assignees: any[] = [];
+
+    if (assigneesStr) {
+      const assigneeIds = JSON.parse(assigneesStr);
+      // Convert string IDs to MongoDB ObjectIds
+      assignees = assigneeIds.map((id: string) => {
+        try {
+          return new (require('mongoose')).Types.ObjectId(id);
+        } catch {
+          return id; // fallback to string if not a valid ObjectId
+        }
+      });
+    }
 
     console.log('DEBUG API - companyCode:', companyCode, 'createdBy:', createdBy, 'has createdBy key:', keys.includes('createdBy'));
 
