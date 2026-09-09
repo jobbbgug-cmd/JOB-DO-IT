@@ -220,6 +220,11 @@
   filter: brightness(1.1);
 }
 
+.tl-row.tl-task .tl-bar {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 .tl-bar .fill {
   position: absolute;
   top: 0;
