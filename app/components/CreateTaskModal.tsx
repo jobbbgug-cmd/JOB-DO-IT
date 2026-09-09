@@ -139,36 +139,18 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json();
 
-          // Save to DB immediately
-          const saveResponse = await fetch('/api/attachments/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              dataUrl: uploadData.attachment,
-              fileName: file.name,
-              fileType: file.type,
-              fileSize: file.size,
-              companyCode: companyCode,
-            }),
-          });
+          // Store attachment ID and preview
+          setAttachments((prev) => [...prev, {
+            id: uploadData.id,
+            dataUrl: uploadData.attachment,
+            fileName: file.name,
+          }]);
+          setAttachmentPreviews((prev) => [...prev, uploadData.attachment]);
 
-          if (saveResponse.ok) {
-            const saveData = await saveResponse.json();
-
-            // Store attachment ID and preview
-            setAttachments((prev) => [...prev, {
-              id: saveData.attachmentId,
-              dataUrl: uploadData.attachment,
-              fileName: file.name,
-            }]);
-            setAttachmentPreviews((prev) => [...prev, uploadData.attachment]);
-
-            console.log('File saved to DB:', file.name, 'ID:', saveData.attachmentId);
-          } else {
-            console.error('Save to DB failed for', file.name);
-          }
+          console.log('File uploaded successfully:', file.name, 'ID:', uploadData.id);
         } else {
-          console.error('Upload failed for', file.name);
+          const errorData = await uploadResponse.json().catch(() => ({}));
+          console.error('Upload failed for', file.name, 'Status:', uploadResponse.status, 'Error:', errorData);
         }
       } catch (error) {
         console.error('Error uploading file:', error);
