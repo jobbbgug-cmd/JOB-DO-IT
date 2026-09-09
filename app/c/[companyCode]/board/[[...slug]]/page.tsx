@@ -171,6 +171,10 @@ export default function BoardPage() {
   console.log('🔍 DEBUG - Assignee Filter:', assigneeFilter);
   console.log('📋 DEBUG - All Tasks Count:', tasks.length);
   console.log('📋 DEBUG - All Tasks:', tasks);
+  if (tasks.length > 0) {
+    console.log('📋 DEBUG - First Task Sample:', tasks[0]);
+    console.log('📋 DEBUG - First Task Status:', tasks[0].status);
+  }
   console.log('✅ DEBUG - Filtered Tasks Count:', filteredTasks.length);
   console.log('✅ DEBUG - Filtered Tasks:', filteredTasks);
 
