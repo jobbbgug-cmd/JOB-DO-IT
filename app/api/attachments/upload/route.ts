@@ -9,12 +9,12 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get('file') as File;
-    const taskId = formData.get('taskId') as string;
+    const taskId = formData.get('taskId') as string | null;
     const companyCode = formData.get('companyCode') as string;
 
-    if (!file || !taskId || !companyCode) {
+    if (!file) {
       return NextResponse.json(
-        { error: 'Missing file, taskId, or companyCode' },
+        { error: 'Missing file' },
         { status: 400 }
       );
     }
@@ -26,29 +26,36 @@ export async function POST(req: NextRequest) {
     const dataUrl = `data:${mimeType};base64,${base64}`;
 
     // Create attachment document
-    const attachment = await Attachment.create({
+    const attachmentData: any = {
       dataUrl,
       fileName: file.name,
       fileType: file.type,
       fileSize: file.size,
-      companyCode,
-    });
+    };
+
+    if (companyCode) {
+      attachmentData.companyCode = companyCode;
+    }
+
+    const attachment = await Attachment.create(attachmentData);
 
     const attachmentId = String(attachment._id);
 
-    // Add attachment ID to task
-    await Task.findByIdAndUpdate(
-      taskId,
-      { $push: { attachments: attachmentId } },
-      { new: true }
-    );
+    // Add attachment ID to task if taskId provided
+    if (taskId) {
+      await Task.findByIdAndUpdate(
+        taskId,
+        { $push: { attachments: attachmentId } },
+        { new: true }
+      );
+    }
 
     console.log('Attachment uploaded:', file.name, 'ID:', attachmentId);
 
     return NextResponse.json(
       {
         id: attachmentId,
-        dataUrl,
+        attachment: dataUrl,
         fileName: file.name,
         fileType: file.type,
         fileSize: file.size,
