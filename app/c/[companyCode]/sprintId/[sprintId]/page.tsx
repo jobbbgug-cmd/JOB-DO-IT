@@ -324,7 +324,7 @@ export default function SprintPage() {
                     card.routineTasks.map((task: any) => {
                       console.log('📌 Rendering task:', task.title, '| attachments:', task.attachments, '| has attachments:', !!task.attachments?.length);
                       return (
-                      <div key={task.id} className="group relative bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md cursor-pointer">
+                      <div key={task.id} className="group relative bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md cursor-pointer min-h-auto">
                         <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={(e) => {
@@ -444,7 +444,7 @@ export default function SprintPage() {
                     </div>
                   ) : (
                     card.urgentTasks.map((task: any) => (
-                      <div key={task.id} className="group relative bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md cursor-pointer">
+                      <div key={task.id} className="group relative bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md cursor-pointer min-h-auto">
                         <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={(e) => {
