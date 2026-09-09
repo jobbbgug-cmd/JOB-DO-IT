@@ -20,6 +20,7 @@ interface EmployeeCard {
   employee: Employee;
   routineTasks: Task[];
   urgentTasks: Task[];
+  doingCount?: number;
 }
 
 const COLORS = ['#0E9384', '#E4572E', '#5B7FB0', '#B4479A', '#C98A0E', '#3F6E4B', '#8A5CF6', '#D2504F'];
@@ -75,6 +76,10 @@ export default function SprintPage() {
             return taskAssignees.some((assigneeId: unknown) => String(assigneeId) === String(empId));
           });
           console.log(`Tasks for employee ${empId} (${emp.name}):`, empTasks);
+          const routineTasks = empTasks.filter((t: any) => t.lane === 'routine');
+          const urgentTasks = empTasks.filter((t: any) => t.lane === 'urgent');
+          const doingCount = empTasks.filter((t: any) => t.status === 'in-progress').length;
+
           return {
             employee: {
               id: empId,
@@ -82,8 +87,9 @@ export default function SprintPage() {
               role: emp.role,
               color: emp.color || COLORS[0],
             },
-            routineTasks: empTasks.filter((t: any) => t.lane === 'routine'),
-            urgentTasks: empTasks.filter((t: any) => t.lane === 'urgent'),
+            routineTasks,
+            urgentTasks,
+            doingCount,
           };
         });
 
@@ -233,6 +239,26 @@ export default function SprintPage() {
                 <div className="text-right mr-2 text-base font-bold text-gray-400 border border-gray-600 rounded-lg px-3 py-1">
                   {card.routineTasks.length + card.urgentTasks.length} งาน
                 </div>
+                {(card.doingCount ?? 0) > 0 && (
+                  <div
+                    title="งานที่กำลังทำอยู่"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.375rem 0.75rem',
+                      backgroundColor: 'rgba(200, 138, 14, 0.15)',
+                      border: '1px solid rgb(200, 138, 14)',
+                      borderRadius: '9999px',
+                      fontSize: '0.75rem',
+                      color: 'rgb(200, 138, 14)',
+                      fontWeight: '500',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {card.doingCount} กำลังทำ
+                  </div>
+                )}
                 <button
                   onClick={() => router.push(`/c/${companyCode}/board/${card.employee.id}`)}
                   className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-cyan-400 transition-colors flex-shrink-0"
