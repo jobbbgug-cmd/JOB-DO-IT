@@ -385,7 +385,14 @@ export default function TimelinePage() {
           <div className="tl-label tl-corner">
             {viewType === 'employee' ? 'ผู้รับผิดชอบ / งาน' : 'โปรเจค / งาน (เรียงตามวันเสร็จ)'}
           </div>
-          <div className="tl-track" style={{ width: timelineWidth }}>
+          <div className="tl-track" style={{
+            width: timelineWidth,
+            '--divider-lines': view === 'month'
+              ? 'repeating-linear-gradient(90deg, transparent 0, transparent 138.5px, rgb(75, 85, 99) 138.5px, rgb(75, 85, 99) 138.6px)'
+              : view === 'week'
+              ? 'repeating-linear-gradient(90deg, transparent 0, transparent 90.5px, rgb(75, 85, 99) 90.5px, rgb(75, 85, 99) 91px)'
+              : 'none'
+          } as any}>
             {view === 'month' ? (
               <>
                 <div className="tl-majors">
