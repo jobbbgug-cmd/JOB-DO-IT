@@ -570,7 +570,6 @@ export default function TimelinePage() {
                     <span className="who">
                       {task.title}
                       <span className="role">
-                        {task.projectName && `${task.projectName} · `}
                         {getEmployeeNames(task.assignees)}
                       </span>
                     </span>
