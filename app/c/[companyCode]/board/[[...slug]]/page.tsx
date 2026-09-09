@@ -22,7 +22,7 @@ export default function BoardPage() {
   const searchParams = useSearchParams();
   const companyCode = params.companyCode as string;
   const { user } = useAuthStore();
-  const currentUserId = user?.id || '';
+  const [currentUserId, setCurrentUserId] = useState('');
 
   // Extract assignee ID from URL path: /c/CONCEPTX/board/assigneeId
   const assigneeFilter = Array.isArray(params.slug) ? params.slug[0] : (params.slug || '') as string;
@@ -37,6 +37,13 @@ export default function BoardPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [userCache, setUserCache] = useState<Record<string, string>>({});
+
+  // Sync currentUserId from useAuthStore
+  useEffect(() => {
+    if (user?.id) {
+      setCurrentUserId(user.id);
+    }
+  }, [user?.id]);
 
   // Check if viewing filtered tasks (read-only) or all tasks (editable)
   // read-only only if: assigneeFilter exists AND it's NOT current user AND currentUserId is loaded
