@@ -15,7 +15,7 @@
 
 .tl-label {
   width: var(--tl-label);
-  padding: 12px;
+  padding: 6px 8px;
   border-right: 1px solid rgb(55, 65, 81);
   flex-shrink: 0;
 }
@@ -23,7 +23,7 @@
 .tl-corner {
   font-weight: 600;
   color: rgb(229, 231, 235);
-  font-size: 13px;
+  font-size: 11px;
   display: flex;
   align-items: center;
 }
@@ -65,7 +65,7 @@
 
 .tl-majors {
   position: relative;
-  height: 24px;
+  height: 20px;
   border-bottom: 1px solid rgb(55, 65, 81);
   display: flex;
 }
@@ -82,7 +82,7 @@
 }
 
 .tl-ticks {
-  height: 28px;
+  height: 22px;
   display: flex;
   position: relative;
   border-top: 1px solid rgb(55, 65, 81);
