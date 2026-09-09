@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Task } from '@/app/types/index';
+import TaskDetailModal from '@/app/components/TaskDetailModal';
 import './timeline.css';
 
 export default function TimelinePage() {
@@ -17,6 +18,7 @@ export default function TimelinePage() {
   const [showAll, setShowAll] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [expandedEmployees, setExpandedEmployees] = useState<Record<string, boolean>>({});
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -409,6 +411,7 @@ export default function TimelinePage() {
                   <button
                     type="button"
                     className="tl-bar"
+                    onClick={() => setSelectedTask(task)}
                     style={{
                       left: barPos.left,
                       width: barPos.width,
@@ -516,6 +519,14 @@ export default function TimelinePage() {
           })
         )}
       </div>
+
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          isOpen={!!selectedTask}
+          onClose={() => setSelectedTask(null)}
+        />
+      )}
     </div>
   );
 }
