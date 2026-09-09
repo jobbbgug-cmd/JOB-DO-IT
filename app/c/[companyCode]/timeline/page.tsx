@@ -465,12 +465,59 @@ export default function TimelinePage() {
               </>
             ) : (
               <>
-                <div className="tl-months">
-                  {visibleTasks.length > 0 && (
-                    <span className="tl-month" style={{ left: 0, width: timelineWidth }}>
-                      {getMonthDisplay(new Date(visibleTasks[0].dueDate || new Date()))}
-                    </span>
-                  )}
+                <div className="tl-majors">
+                  {(() => {
+                    const months = getMonthsInRange();
+                    const monthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+
+                    if (view === 'day') {
+                      // For day view, calculate positions
+                      const { start } = getDateRange();
+                      let leftPos = 0;
+
+                      return months.map((m, idx) => {
+                        const monthStart = new Date(m.date.getFullYear(), m.date.getMonth(), 1);
+                        const monthEnd = new Date(m.date.getFullYear(), m.date.getMonth() + 1, 0);
+
+                        // Count days in this month that are in our range
+                        const rangeStart = new Date(start);
+                        const dayStart = Math.max(monthStart.getDate(), rangeStart.getDate());
+                        const dayEnd = monthEnd.getDate();
+                        const daysInRange = dayEnd - dayStart + 1;
+
+                        const monthWidth = daysInRange * 30;
+                        const result = (
+                          <span key={idx} className="tl-major" style={{ left: leftPos, width: monthWidth }}>
+                            <span>{monthNames[m.month]} {m.year}</span>
+                          </span>
+                        );
+
+                        leftPos += monthWidth;
+                        return result;
+                      });
+                    } else {
+                      // For week view
+                      const weeks = getWeeksInRange();
+                      const monthGroups: Record<string, { start: number; count: number }> = {};
+
+                      weeks.forEach((w, idx) => {
+                        const monthKey = `${w.date.getFullYear()}-${w.date.getMonth()}`;
+                        if (!monthGroups[monthKey]) {
+                          monthGroups[monthKey] = { start: idx, count: 0 };
+                        }
+                        monthGroups[monthKey].count++;
+                      });
+
+                      return Object.entries(monthGroups).map(([key, info]) => {
+                        const [year, month] = key.split('-');
+                        return (
+                          <span key={key} className="tl-major" style={{ left: info.start * 91, width: info.count * 91 }}>
+                            <span>{monthNames[parseInt(month)]} {year}</span>
+                          </span>
+                        );
+                      });
+                    }
+                  })()}
                 </div>
                 <div className="tl-ticks">
                   {view === 'day' && (() => {
@@ -487,6 +534,14 @@ export default function TimelinePage() {
                     }
                     return ticks;
                   })()}
+                  {view === 'week' && getWeeksInRange().map((w, idx) => {
+                    const isMonthStart = idx === 0 || w.date.getDate() <= 7;
+                    return (
+                      <span key={idx} className={`tl-tick ${isMonthStart ? 'strong' : ''}`} style={{ left: idx * 91 }}>
+                        {w.monthYear}
+                      </span>
+                    );
+                  })}
                 </div>
               </>
             )}
