@@ -524,11 +524,17 @@ export default function TimelinePage() {
       </div>
 
       {selectedTask && (
-        <TaskDetailModal
-          task={selectedTask}
-          isOpen={!!selectedTask}
-          onClose={() => setSelectedTask(null)}
-        />
+        <>
+          {console.log('📋 Rendering TaskDetailModal:', selectedTask)}
+          <TaskDetailModal
+            task={selectedTask}
+            isOpen={!!selectedTask}
+            onClose={() => {
+              console.log('❌ Closing TaskDetailModal');
+              setSelectedTask(null);
+            }}
+          />
+        </>
       )}
     </div>
   );

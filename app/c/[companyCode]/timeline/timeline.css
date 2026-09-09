@@ -202,6 +202,7 @@
   background: var(--bar);
   opacity: 0.3;
   border-radius: 4px;
+  pointer-events: none;
 }
 
 .tl-bar .tl-holders {
@@ -209,6 +210,7 @@
   z-index: 2;
   display: flex;
   gap: 4px;
+  pointer-events: none;
 }
 
 .tl-bar .av {
@@ -239,6 +241,7 @@
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
+  pointer-events: none;
 }
 
 .tl-bar .pct {
@@ -249,6 +252,7 @@
   flex-shrink: 0;
   margin-left: auto;
   padding-right: 4px;
+  pointer-events: none;
 }
 
 .tl-row.tl-done .tl-bar {
