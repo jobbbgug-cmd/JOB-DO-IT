@@ -22,7 +22,8 @@ export default function BoardPage() {
   const searchParams = useSearchParams();
   const companyCode = params.companyCode as string;
   const { user } = useAuthStore();
-  const [currentUserId, setCurrentUserId] = useState('');
+  const [authUserId, setAuthUserId] = useState(''); // userId from auth system
+  const [currentEmployeeId, setCurrentEmployeeId] = useState(''); // employees._id
 
   // Extract assignee ID from URL path: /c/CONCEPTX/board/assigneeId
   const assigneeFilter = Array.isArray(params.slug) ? params.slug[0] : (params.slug || '') as string;
@@ -39,7 +40,7 @@ export default function BoardPage() {
   const [userCache, setUserCache] = useState<Record<string, string>>({});
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Sync currentUserId from useAuthStore or localStorage
+  // Sync authUserId from useAuthStore or localStorage
   useEffect(() => {
     let userId = user?.id || '';
 
@@ -59,37 +60,51 @@ export default function BoardPage() {
     console.log('🔐 User sync:', { authStoreUser: user?.id, localStorageUser: userId });
 
     if (userId) {
-      setCurrentUserId(userId);
-      setIsInitialized(true);
+      setAuthUserId(userId);
     } else {
       // No user ID found - redirect to login
       router.push('/login');
     }
   }, [user?.id, user, router]);
 
+  // Map authUserId to currentEmployeeId from employees array
+  useEffect(() => {
+    if (authUserId && employees.length > 0) {
+      const currentEmployee = employees.find(emp => emp.userId === authUserId);
+      if (currentEmployee) {
+        setCurrentEmployeeId(currentEmployee.id);
+        setIsInitialized(true);
+        console.log('🔗 Mapped authUserId to employeeId:', { authUserId, employeeId: currentEmployee.id });
+      } else {
+        console.warn('⚠️ Current employee not found for userId:', authUserId);
+      }
+    }
+  }, [authUserId, employees]);
+
   // Check if viewing filtered tasks (read-only) or all tasks (editable)
-  // read-only only if: assigneeFilter exists AND it's NOT current user AND currentUserId is loaded
-  const isReadOnly = assigneeFilter ? (assigneeFilter !== currentUserId && currentUserId !== '') : false;
+  // read-only only if: assigneeFilter exists AND it's NOT current employee AND currentEmployeeId is loaded
+  const isReadOnly = assigneeFilter ? (assigneeFilter !== currentEmployeeId && currentEmployeeId !== '') : false;
   const viewingUserName = employees.find(u => u.id === assigneeFilter)?.name || assigneeFilter || 'ผู้ใช้';
 
   // Debug logging
   useEffect(() => {
     console.log('🔍 DEBUG:', {
-      currentUserId,
+      authUserId,
+      currentEmployeeId,
       assigneeFilter,
       isReadOnly,
       shouldShowButtons: !isReadOnly,
       isInitialized
     });
-  }, [assigneeFilter, currentUserId, isReadOnly, isInitialized]);
+  }, [assigneeFilter, currentEmployeeId, isReadOnly, isInitialized, authUserId]);
 
   // Fetch data when initialized
   useEffect(() => {
-    if (isInitialized && currentUserId) {
+    if (currentEmployeeId) {
       fetchTasks();
       fetchEmployees();
     }
-  }, [isInitialized, currentUserId]);
+  }, [currentEmployeeId]);
 
   const fetchTasks = async () => {
     try {
@@ -128,7 +143,7 @@ export default function BoardPage() {
     }
   };
 
-  if (!currentUserId) {
+  if (!currentEmployeeId) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
