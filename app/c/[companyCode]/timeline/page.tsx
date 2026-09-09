@@ -690,7 +690,7 @@ export default function TimelinePage() {
                                 >
                                   <span className="fill" style={{ width: `${(task.progress || 0)}%` }}></span>
                                   <span className="txt" style={{ maxWidth: timelineWidth - 100 }}>{task.title}</span>
-                                  <span className="pct in" style={{ left: (typeof barPos.width === 'string' ? 880 : barPos.left + barPos.width - 30) }}>
+                                  <span className="pct in" style={{ right: 4 }}>
                                     {task.progress || 0}%
                                   </span>
                                 </div>
