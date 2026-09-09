@@ -1,0 +1,13 @@
+.load.doing {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  background-color: rgba(200, 138, 14, 0.15);
+  border: 1px solid rgb(200, 138, 14);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: rgb(200, 138, 14);
+  font-weight: 500;
+  white-space: nowrap;
+}

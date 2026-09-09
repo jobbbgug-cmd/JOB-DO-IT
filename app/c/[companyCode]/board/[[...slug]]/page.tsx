@@ -8,6 +8,7 @@ import CreateTaskModal from '@/app/components/CreateTaskModal';
 import TaskDetailModal from '@/app/components/TaskDetailModal';
 import EditTaskModal from '@/app/components/EditTaskModal';
 import type { Task } from '@/app/types/index';
+import './board.css';
 
 const STATUS_CONFIG = [
   { id: 'todo' as const, name: 'ยังไม่เริ่ม', color: '#5B7FB0' },
@@ -192,6 +193,7 @@ export default function BoardPage() {
   };
 
   const pendingCount = getTasksByStatus('todo').length + getTasksByStatus('in-progress').length;
+  const doingCount = getTasksByStatus('in-progress').length;
 
   // Using shared Task type from @/app/types/index
   const TaskCard = ({ task, statusColor, isReadOnly: cardIsReadOnly, attachmentPreviews: previews }: { task: Task; statusColor: string; isReadOnly: boolean; attachmentPreviews: Record<string, string> }) => (
@@ -402,7 +404,12 @@ export default function BoardPage() {
             <span className="text-xs text-gray-400 bg-gray-700/50 px-2.5 py-1.5 rounded-full">
               ค้างอยู่ {pendingCount} งาน
             </span>
-            
+            {doingCount > 0 && (
+              <div className="load doing" title="งานที่กำลังทำอยู่">
+                {doingCount} กำลังทำ
+              </div>
+            )}
+
             {/* Tools - Compact */}
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 px-2 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-xs">
