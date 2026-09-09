@@ -112,7 +112,9 @@ export default function CompanyPage() {
       const response = await fetch(`/api/employees/${params.companyCode}`);
       if (response.ok) {
         const data = await response.json();
+        console.log('🟠 DEBUG - Fetched employees:', data);
         if (data.length > 0) {
+          console.log('🟠 DEBUG - First employee doingCount:', data[0].doingCount);
           setEmployees(data);
           return;
         }
