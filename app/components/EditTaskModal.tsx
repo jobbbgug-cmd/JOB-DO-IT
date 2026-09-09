@@ -8,6 +8,7 @@ interface EditTaskModalProps {
   onClose: () => void;
   companyCode?: string;
   onTaskUpdated?: () => void;
+  isReadOnly?: boolean;
 }
 
 interface Employee {
@@ -15,7 +16,7 @@ interface Employee {
   name: string;
 }
 
-export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdated }: EditTaskModalProps) {
+export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdated, isReadOnly = false }: EditTaskModalProps) {
   const [taskName, setTaskName] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'todo' | 'in-progress' | 'in-review' | 'done'>('todo');
@@ -871,24 +872,29 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
               </div>
             )}
             </div>
-          <label className="attach-btn" title="เพิ่มรูป วิดีโอ หรือเอกสาร">
-            <span className="attach-plus">+</span>
-            เพิ่มไฟล์
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,application/pdf,text/plain,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/zip,application/x-zip-compressed"
-              multiple
-              hidden
-              onChange={(e) => setAttachments([...attachments, ...Array.from(e.target.files || [])])}
-            />
-          </label>
-          <p className="note" style={{ margin: '6px 0px 0px' }}>รูป วิดีโอ และเอกสาร (Excel, Word, PowerPoint, PDF, ZIP) ไฟล์ละไม่เกิน 10 MB</p>
+          {!isReadOnly && (
+            <>
+              <label className="attach-btn" title="เพิ่มรูป วิดีโอ หรือเอกสาร">
+                <span className="attach-plus">+</span>
+                เพิ่มไฟล์
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,application/pdf,text/plain,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/zip,application/x-zip-compressed"
+                  multiple
+                  hidden
+                  onChange={(e) => setAttachments([...attachments, ...Array.from(e.target.files || [])])}
+                />
+              </label>
+              <p className="note" style={{ margin: '6px 0px 0px' }}>รูป วิดีโอ และเอกสาร (Excel, Word, PowerPoint, PDF, ZIP) ไฟล์ละไม่เกิน 10 MB</p>
+            </>
+          )}
         </div>
 
-        <button
-          className="btn-primary"
-          disabled={!isFormValid || isSubmitting}
-          onClick={handleUpdateTask}
+        {!isReadOnly && (
+          <button
+            className="btn-primary"
+            disabled={!isFormValid || isSubmitting}
+            onClick={handleUpdateTask}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: isSubmitting ? 0.6 : 1 }}
         >
           {isSubmitting ? (
@@ -902,7 +908,8 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
               </svg> บันทึกการแก้ไข
             </>
           )}
-        </button>
+          </button>
+        )}
 
         {showSuccessToast && (
           <div

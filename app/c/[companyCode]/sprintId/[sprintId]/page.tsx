@@ -132,6 +132,7 @@ export default function SprintPage() {
         task={editingTask}
         onClose={() => setEditingTask(null)}
         companyCode={companyCode}
+        isReadOnly={false}
         onTaskUpdated={() => {
           console.log('Task updated, refetching...');
           fetchDataRef.current?.();

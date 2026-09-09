@@ -522,6 +522,7 @@ export default function BoardPage() {
         task={editingTask}
         onClose={() => setEditingTask(null)}
         companyCode={companyCode}
+        isReadOnly={isReadOnly}
         onTaskUpdated={() => {
           fetchTasks();
           setEditingTask(null);
