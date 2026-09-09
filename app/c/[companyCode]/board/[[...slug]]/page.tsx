@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useAuthStore } from '@/app/store/authStore';
 import CreateTaskModal from '@/app/components/CreateTaskModal';
 import TaskDetailModal from '@/app/components/TaskDetailModal';
 import EditTaskModal from '@/app/components/EditTaskModal';
@@ -20,12 +21,13 @@ export default function BoardPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const companyCode = params.companyCode as string;
+  const { user } = useAuthStore();
+  const currentUserId = user?.id || '';
 
   // Extract assignee ID from URL path: /c/CONCEPTX/board/assigneeId
   const assigneeFilter = Array.isArray(params.slug) ? params.slug[0] : (params.slug || '') as string;
 
   console.log('✅ Assignee Filter from path:', assigneeFilter);
-  const [isHydrated, setIsHydrated] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,7 +36,6 @@ export default function BoardPage() {
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string>('');
   const [userCache, setUserCache] = useState<Record<string, string>>({});
 
   // Check if viewing filtered tasks (read-only) or all tasks (editable)
@@ -45,41 +46,21 @@ export default function BoardPage() {
   // Debug logging
   useEffect(() => {
     console.log('🔍 DEBUG:', {
-      isHydrated,
-      assigneeFilter,
       currentUserId,
+      assigneeFilter,
       isReadOnly,
       shouldShowButtons: !isReadOnly
     });
-  }, [isHydrated, assigneeFilter, currentUserId, isReadOnly]);
+  }, [assigneeFilter, currentUserId, isReadOnly]);
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-    let userId = '';
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        userId = user.id || user._id || '';
-      } catch (e) {
-        console.error('Failed to parse user from localStorage');
-      }
-    }
-    console.log('🔐 Loading user from localStorage:', { token: !!token, userId });
-    if (!token) {
+    if (!currentUserId) {
       router.push('/login');
     } else {
-      setCurrentUserId(userId);
-      setIsHydrated(true);
-    }
-  }, [router]);
-
-  useEffect(() => {
-    if (isHydrated) {
       fetchTasks();
       fetchEmployees();
     }
-  }, [isHydrated]);
+  }, [currentUserId, router]);
 
   const fetchTasks = async () => {
     try {
