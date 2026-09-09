@@ -193,7 +193,7 @@ export default function BoardPage() {
   const pendingCount = getTasksByStatus('todo').length + getTasksByStatus('in-progress').length;
 
   // Using shared Task type from @/app/types/index
-  const TaskCard = ({ task, statusColor, isReadOnly: cardIsReadOnly }: { task: Task; statusColor: string; isReadOnly: boolean }) => (
+  const TaskCard = ({ task, statusColor, isReadOnly: cardIsReadOnly, attachmentPreviews: previews }: { task: Task; statusColor: string; isReadOnly: boolean; attachmentPreviews: Record<string, string> }) => (
     <div
       onClick={() => setSelectedTask(task)}
       className="group relative bg-gradient-to-br from-gray-800/60 to-gray-900/40 rounded-lg p-3 text-xs text-gray-200 hover:from-gray-800/80 hover:to-gray-900/60 transition-all border border-gray-700/50 shadow-sm hover:shadow-md cursor-pointer"
@@ -232,7 +232,7 @@ export default function BoardPage() {
             ))}
             {(() => {
               // Count non-image attachments (PDF, docs, etc)
-              const nonImageCount = Object.values(attachmentPreviews).filter(preview => {
+              const nonImageCount = Object.values(previews).filter(preview => {
                 if (!preview) return false;
                 // Check if it's NOT an image by MIME type
                 return !preview.startsWith('data:image/');
@@ -379,7 +379,7 @@ export default function BoardPage() {
                     </div>
                   ) : (
                     statusTasks.map((task) => (
-                      <TaskCard key={task.id} task={task} statusColor={status.color} isReadOnly={isReadOnly} />
+                      <TaskCard key={task.id} task={task} statusColor={status.color} isReadOnly={isReadOnly} attachmentPreviews={attachmentPreviews} />
                     ))
                   )}
                 </div>
@@ -490,7 +490,7 @@ export default function BoardPage() {
                   </div>
                 ) : (
                   statusTasks.map((task) => (
-                    <TaskCard key={task.id} task={task} statusColor={status.color} isReadOnly={isReadOnly} />
+                    <TaskCard key={task.id} task={task} statusColor={status.color} isReadOnly={isReadOnly} attachmentPreviews={attachmentPreviews} />
                   ))
                 )}
               </div>
