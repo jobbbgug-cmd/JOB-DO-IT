@@ -379,14 +379,14 @@ export default function BoardPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 grid-cols-1 xl:grid-cols-4">
+        <div className="grid gap-3 grid-cols-1 xl:grid-cols-5">
           {STATUS_CONFIG.map((status) => {
             const statusTasks = getTasksByStatus(status.id);
             return (
               <div
                 key={status.id}
                 className="bg-gray-800/30 rounded-lg border border-gray-700 flex flex-col overflow-hidden"
-                style={{ 
+                style={{
                   borderTopColor: status.color,
                   borderTopWidth: '3px'
                 }}
