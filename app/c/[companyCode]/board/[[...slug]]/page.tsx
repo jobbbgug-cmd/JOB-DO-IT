@@ -41,7 +41,7 @@ export default function BoardPage() {
   const [isInitialized, setIsInitialized] = useState(false);
   const fetchedRef = useRef(false);
 
-  // Sync authUserId from useAuthStore or localStorage
+  // Sync authUserId from useAuthStore or localStorage, then fetch employees
   useEffect(() => {
     let userId = user?.id || '';
 
@@ -62,6 +62,8 @@ export default function BoardPage() {
 
     if (userId) {
       setAuthUserId(userId);
+      // Fetch employees immediately to map userId -> employeeId
+      fetchEmployees();
     } else {
       // No user ID found - redirect to login
       router.push('/login');
