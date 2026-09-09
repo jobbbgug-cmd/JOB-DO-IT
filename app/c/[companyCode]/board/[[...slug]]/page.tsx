@@ -39,6 +39,7 @@ export default function BoardPage() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [userCache, setUserCache] = useState<Record<string, string>>({});
   const [isInitialized, setIsInitialized] = useState(false);
+  const fetchedRef = useRef(false);
 
   // Sync authUserId from useAuthStore or localStorage
   useEffect(() => {
@@ -98,9 +99,10 @@ export default function BoardPage() {
     });
   }, [assigneeFilter, currentEmployeeId, isReadOnly, isInitialized, authUserId]);
 
-  // Fetch data when initialized
+  // Fetch data once when initialized
   useEffect(() => {
-    if (currentEmployeeId) {
+    if (currentEmployeeId && !fetchedRef.current) {
+      fetchedRef.current = true;
       fetchTasks();
       fetchEmployees();
     }
