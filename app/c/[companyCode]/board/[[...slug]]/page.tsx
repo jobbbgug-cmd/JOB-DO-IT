@@ -61,11 +61,11 @@ export default function BoardPage() {
     if (userId) {
       setCurrentUserId(userId);
       setIsInitialized(true);
-    } else if (isInitialized) {
-      // User was initialized but now logged out
+    } else {
+      // No user ID found - redirect to login
       router.push('/login');
     }
-  }, [user?.id, user, router, isInitialized]);
+  }, [user?.id, user, router]);
 
   // Check if viewing filtered tasks (read-only) or all tasks (editable)
   // read-only only if: assigneeFilter exists AND it's NOT current user AND currentUserId is loaded
