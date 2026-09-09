@@ -191,7 +191,7 @@
 .tl-bar {
   position: absolute;
   height: 24px;
-  top: 55%;
+  top: 60%;
   transform: translateY(-50%);
   display: flex;
   align-items: center;
