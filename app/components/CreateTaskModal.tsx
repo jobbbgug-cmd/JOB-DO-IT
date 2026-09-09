@@ -657,7 +657,7 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
                     aria-expanded={showReminderDatePicker}
                     data-state={showReminderDatePicker ? 'open' : 'closed'}
                     onClick={() => setShowReminderDatePicker(!showReminderDatePicker)}
-                    style={{ minHeight: '44px', display: 'flex', alignItems: 'center', backgroundColor: '#2d3748', border: 'none', width: '100%' }}
+                    style={{ minHeight: '28px', display: 'flex', alignItems: 'center', backgroundColor: '#2d3748', border: 'none', width: '100%' }}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar date-trigger-icon" aria-hidden="true">
                       <path d="M8 2v4"></path>
