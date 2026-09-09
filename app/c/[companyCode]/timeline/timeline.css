@@ -323,6 +323,7 @@
 .tl-row.tl-emp {
   background: rgba(55, 65, 81, 0.2);
   align-items: center;
+  min-height: 32px;
 }
 
 .tl-row.tl-emp .tl-label {
