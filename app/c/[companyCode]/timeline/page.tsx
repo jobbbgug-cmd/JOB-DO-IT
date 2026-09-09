@@ -132,6 +132,8 @@ export default function TimelinePage() {
     const start = new Date(Math.min(...dates.map(d => d.getTime())));
     const end = new Date(Math.max(...dates.map(d => d.getTime())));
 
+    console.log('📅 getDateRange:', { start: start.toLocaleDateString('th-TH'), end: end.toLocaleDateString('th-TH'), taskCount: tasks.length });
+
     const diffTime = Math.abs(end.getTime() - start.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
