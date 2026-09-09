@@ -70,8 +70,35 @@ export default function TimelinePage() {
     }
   };
 
+  const getDateRange = () => {
+    if (visibleTasks.length === 0) {
+      const today = new Date();
+      return { start: today, end: today, days: 1 };
+    }
+
+    const dates = visibleTasks
+      .filter(t => t.dueDate)
+      .map(t => new Date(t.dueDate || new Date()));
+
+    if (dates.length === 0) {
+      const today = new Date();
+      return { start: today, end: today, days: 1 };
+    }
+
+    const start = new Date(Math.min(...dates.map(d => d.getTime())));
+    const end = new Date(Math.max(...dates.map(d => d.getTime())));
+
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+    return { start, end, days: diffDays };
+  };
+
   const getTimelineWidth = () => {
-    if (view === 'day') return 80;
+    if (view === 'day') {
+      const { days } = getDateRange();
+      return Math.max(30 * days, 900);
+    }
     if (view === 'week') return 120;
     return 135; // month
   };
@@ -79,6 +106,19 @@ export default function TimelinePage() {
   const getMonthDisplay = (date: Date): string => {
     const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'สค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
     return `${months[date.getMonth()]} ${date.getFullYear()}`;
+  };
+
+  const getTaskBarPosition = (task: Task) => {
+    if (view !== 'day' || !task.dueDate) return { left: 0, width: '100%' };
+
+    const { start } = getDateRange();
+    const taskDate = new Date(task.dueDate);
+    const daysFromStart = Math.ceil((taskDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+    return {
+      left: daysFromStart * 30,
+      width: Math.max(30, 30)
+    };
   };
 
   const getInitials = (name?: string) => {
@@ -205,7 +245,22 @@ export default function TimelinePage() {
                 </span>
               )}
             </div>
-            <div className="tl-ticks"></div>
+            <div className="tl-ticks">
+              {view === 'day' && (() => {
+                const { start, days } = getDateRange();
+                const ticks = [];
+                for (let i = 0; i < days; i++) {
+                  const date = new Date(start);
+                  date.setDate(date.getDate() + i);
+                  ticks.push(
+                    <span key={i} className="tl-tick" style={{ left: i * 30 }}>
+                      {date.getDate()}
+                    </span>
+                  );
+                }
+                return ticks;
+              })()}
+            </div>
           </div>
         </div>
 
@@ -215,6 +270,8 @@ export default function TimelinePage() {
         {/* Rows */}
         {visibleTasks.map((task) => {
           const assigneeNames = task.assignees?.map(id => employees.find(e => e.id === id)?.name || id) || [];
+          const barPos = getTaskBarPosition(task);
+
           return (
             <div key={task.id} className={`tl-row tl-flat ${task.status === 'done' ? 'tl-done' : ''}`}>
               <div className="tl-label">
@@ -232,17 +289,27 @@ export default function TimelinePage() {
               </div>
 
               <div className="tl-track" style={{ width: timelineWidth }}>
-                <button type="button" className="tl-bar" style={{ left: 0, width: timelineWidth, '--bar': getStatusColor(task.status || 'todo') } as any}>
+                <button
+                  type="button"
+                  className="tl-bar pct-in"
+                  style={{
+                    left: typeof barPos.width === 'string' ? 0 : barPos.left,
+                    width: typeof barPos.width === 'string' ? barPos.width : barPos.width,
+                    '--bar': getStatusColor(task.status || 'todo')
+                  } as any}
+                >
                   <span className="fill" style={{ width: `${(task.progress || 0)}%` }}></span>
-                  <span className="tl-holders">
+                  <span className="tl-holders" title={assigneeNames.join(', ')}>
                     {assigneeNames.slice(0, 2).map((name, i) => (
                       <span key={i} className="av" style={{ background: getAvatarColor(name) }}>
                         {getInitials(name)}
                       </span>
                     ))}
                   </span>
-                  <span className="txt">{task.title}</span>
-                  <span className="pct">{task.progress || 0}%</span>
+                  <span className="txt" style={{ maxWidth: timelineWidth - 100 }}>{task.title}</span>
+                  <span className="pct in" style={{ left: (typeof barPos.width === 'string' ? 880 : barPos.left + barPos.width - 30) }}>
+                    {task.progress || 0}%
+                  </span>
                 </button>
               </div>
             </div>
