@@ -130,6 +130,9 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
         // First, upload to get base64
         const formData = new FormData();
         formData.append('file', file);
+        if (companyCode) {
+          formData.append('companyCode', companyCode);
+        }
 
         const uploadResponse = await fetch('/api/attachments/upload', {
           method: 'POST',
