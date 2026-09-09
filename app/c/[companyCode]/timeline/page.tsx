@@ -573,17 +573,16 @@ export default function TimelinePage() {
       </div>
 
       {selectedTask && (
-        <>
-          {console.log('📋 Rendering TaskDetailModal:', selectedTask)}
-          <TaskDetailModal
-            task={selectedTask}
-            isOpen={!!selectedTask}
-            onClose={() => {
-              console.log('❌ Closing TaskDetailModal');
-              setSelectedTask(null);
-            }}
-          />
-        </>
+        <TaskDetailModal
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+          employees={employees}
+          companyCode={companyCode}
+          onTaskUpdated={() => {
+            fetchTasks();
+            fetchEmployees();
+          }}
+        />
       )}
     </div>
   );
