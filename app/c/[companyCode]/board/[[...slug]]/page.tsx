@@ -246,7 +246,7 @@ export default function BoardPage() {
 
       <div onClick={() => setSelectedTask(task)}>
         {/* Title */}
-        <div className="font-semibold text-gray-100 mb-2 line-clamp-2 text-sm leading-tight">
+        <div className="font-semibold text-gray-100 mb-2 text-sm leading-tight break-words overflow-visible" style={{whiteSpace: 'normal'}}>
           {task.title}
         </div>
 
