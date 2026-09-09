@@ -126,6 +126,7 @@ export default function SprintPage() {
         }}
         employees={employees}
         companyCode={companyCode}
+        isReadOnly={false}
       />
       <EditTaskModal
         task={editingTask}
