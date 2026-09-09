@@ -71,10 +71,15 @@ export default function BoardPage() {
     } else {
       setCurrentUserId(userId);
       setIsHydrated(true);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (isHydrated) {
       fetchTasks();
       fetchEmployees();
     }
-  }, []);
+  }, [isHydrated]);
 
   const fetchTasks = async () => {
     try {
