@@ -342,7 +342,7 @@ export default function TimelinePage() {
           // Employee view
           employees.map((emp) => {
             const empTasks = getEmployeeTasks()[emp.id] || [];
-            const isExpanded = expandedEmployees[emp.id] !== false;
+            const isExpanded = expandedEmployees[emp.id] === true;
 
             return (
               <div key={emp.id} className="tl-group">
