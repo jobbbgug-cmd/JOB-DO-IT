@@ -411,7 +411,8 @@ export default function TimelinePage() {
                   <button
                     type="button"
                     className="tl-bar"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       console.log('🖱️ Task bar clicked:', task);
                       setSelectedTask(task);
                     }}
