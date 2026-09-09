@@ -55,12 +55,21 @@ export default function BoardPage() {
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+    const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+    let userId = '';
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        userId = user.id || user._id || '';
+      } catch (e) {
+        console.error('Failed to parse user from localStorage');
+      }
+    }
     console.log('🔐 Loading user from localStorage:', { token: !!token, userId });
     if (!token) {
       router.push('/login');
     } else {
-      setCurrentUserId(userId || '');
+      setCurrentUserId(userId);
       setIsHydrated(true);
       fetchTasks();
       fetchEmployees();
