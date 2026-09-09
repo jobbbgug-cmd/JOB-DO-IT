@@ -13,8 +13,10 @@ import './board.css';
 const STATUS_CONFIG = [
   { id: 'todo' as const, name: 'ยังไม่เริ่ม', color: '#5B7FB0' },
   { id: 'in-progress' as const, name: 'กำลังทำ', color: '#C98A0E' },
-  { id: 'in-review' as const, name: 'รอรีวิว', color: '#8A5CF6' },
+  { id: 'testing-failed' as const, name: 'เทสไม่ผ่าน', color: '#D2504F' },
+  { id: 'wait-testing' as const, name: 'รอเทส', color: '#8A5CF6' },
   { id: 'done' as const, name: 'เสร็จ', color: '#0E9384' },
+  { id: 'in-review' as const, name: 'รอรีวิว', color: '#8A5CF6' }, // Backward compatibility
 ];
 
 export default function BoardPage() {
