@@ -55,6 +55,7 @@ export async function PUT(
     const selectedMonthDay = parseInt(formData.get('selectedMonthDay') as string) || 15;
     const repeatTime = formData.get('repeatTime') as string;
     const resetCard = (formData.get('resetCard') as string) === 'true';
+    const status = formData.get('status') as string;
 
     // Parse dates - convert Thai date string to Date
     const parseThaiDate = (dateStr: string): Date | null => {
@@ -150,6 +151,7 @@ export async function PUT(
         lane: lane || 'routine',
         priority: priority || 'medium',
         assignees: assignees || [],
+        status: status || 'todo',
         startDate,
         endDate,
         attachments,
