@@ -109,13 +109,35 @@ export default function TimelinePage() {
     return { start, end, days: diffDays };
   };
 
+  const getMonthsInRange = () => {
+    const { start, end } = getDateRange();
+    const months: Array<{ date: Date; year: number; month: number }> = [];
+    const current = new Date(start.getFullYear(), start.getMonth(), 1);
+
+    while (current <= end) {
+      months.push({
+        date: new Date(current),
+        year: current.getFullYear(),
+        month: current.getMonth()
+      });
+      current.setMonth(current.getMonth() + 1);
+    }
+
+    return months;
+  };
+
   const getTimelineWidth = () => {
     if (view === 'day') {
       const { days } = getDateRange();
       return Math.max(30 * days, 900);
     }
-    if (view === 'week') return 120;
-    return 135; // month
+    if (view === 'week') {
+      const { days } = getDateRange();
+      return Math.max(120 * (days / 7), 900);
+    }
+    // month view
+    const months = getMonthsInRange();
+    return Math.max(months.length * 138.6, 900);
   };
 
   const getMonthDisplay = (date: Date): string => {
@@ -274,29 +296,66 @@ export default function TimelinePage() {
             {viewType === 'employee' ? 'ผู้รับผิดชอบ / งาน' : 'โปรเจค / งาน (เรียงตามวันเสร็จ)'}
           </div>
           <div className="tl-track" style={{ width: timelineWidth }}>
-            <div className="tl-months">
-              {visibleTasks.length > 0 && (
-                <span className="tl-month" style={{ left: 0, width: timelineWidth }}>
-                  {getMonthDisplay(new Date(visibleTasks[0].dueDate || new Date()))}
-                </span>
-              )}
-            </div>
-            <div className="tl-ticks">
-              {view === 'day' && (() => {
-                const { start, days } = getDateRange();
-                const ticks = [];
-                for (let i = 0; i < days; i++) {
-                  const date = new Date(start);
-                  date.setDate(date.getDate() + i);
-                  ticks.push(
-                    <span key={i} className="tl-tick" style={{ left: i * 30 }}>
-                      {date.getDate()}
+            {view === 'month' ? (
+              <>
+                <div className="tl-majors">
+                  {(() => {
+                    const months = getMonthsInRange();
+                    const yearGroups: Record<number, { start: number; count: number }> = {};
+
+                    months.forEach((m, idx) => {
+                      if (!yearGroups[m.year]) {
+                        yearGroups[m.year] = { start: idx, count: 0 };
+                      }
+                      yearGroups[m.year].count++;
+                    });
+
+                    return Object.entries(yearGroups).map(([year, info]) => (
+                      <span key={year} className="tl-major" style={{ left: info.start * 138.6, width: info.count * 138.6 }}>
+                        <span>{year}</span>
+                      </span>
+                    ));
+                  })()}
+                </div>
+                <div className="tl-ticks">
+                  {getMonthsInRange().map((m, idx) => {
+                    const monthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+                    const isYearStart = idx === 0 || m.month === 0;
+                    return (
+                      <span key={idx} className={`tl-tick ${isYearStart ? 'strong' : ''}`} style={{ left: idx * 138.6 }}>
+                        {monthNames[m.month]}
+                      </span>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="tl-months">
+                  {visibleTasks.length > 0 && (
+                    <span className="tl-month" style={{ left: 0, width: timelineWidth }}>
+                      {getMonthDisplay(new Date(visibleTasks[0].dueDate || new Date()))}
                     </span>
-                  );
-                }
-                return ticks;
-              })()}
-            </div>
+                  )}
+                </div>
+                <div className="tl-ticks">
+                  {view === 'day' && (() => {
+                    const { start, days } = getDateRange();
+                    const ticks = [];
+                    for (let i = 0; i < days; i++) {
+                      const date = new Date(start);
+                      date.setDate(date.getDate() + i);
+                      ticks.push(
+                        <span key={i} className="tl-tick" style={{ left: i * 30 }}>
+                          {date.getDate()}
+                        </span>
+                      );
+                    }
+                    return ticks;
+                  })()}
+                </div>
+              </>
+            )}
           </div>
         </div>
 

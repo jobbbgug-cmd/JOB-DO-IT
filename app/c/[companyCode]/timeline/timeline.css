@@ -50,6 +50,24 @@
   border-right: 1px solid rgb(55, 65, 81);
 }
 
+.tl-majors {
+  position: relative;
+  height: 24px;
+  border-bottom: 1px solid rgb(55, 65, 81);
+  display: flex;
+}
+
+.tl-major {
+  position: absolute;
+  font-size: 12px;
+  color: rgb(156, 163, 175);
+  font-weight: 500;
+  padding: 4px 8px;
+  border-right: 1px solid rgb(75, 85, 99);
+  display: flex;
+  align-items: center;
+}
+
 .tl-ticks {
   height: 28px;
   display: flex;
