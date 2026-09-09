@@ -155,6 +155,28 @@ export default function TimelinePage() {
     return months;
   };
 
+  const getWeeksInRange = () => {
+    const { start, end } = getDateRange();
+    const weeks: Array<{ date: Date; monthYear: string }> = [];
+    const current = new Date(start);
+
+    // Move to first Monday
+    const day = current.getDay();
+    const diff = current.getDate() - day + (day === 0 ? -6 : 1);
+    current.setDate(diff);
+
+    while (current <= end) {
+      const monthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      weeks.push({
+        date: new Date(current),
+        monthYear: `${current.getDate()} ${monthNames[current.getMonth()]}`
+      });
+      current.setDate(current.getDate() + 7);
+    }
+
+    return weeks;
+  };
+
   const getTimelineWidth = () => {
     if (view === 'day') {
       const { days } = getDateRange();
@@ -186,8 +208,27 @@ export default function TimelinePage() {
         left: daysFromStart * 30,
         width: Math.max(30, 30)
       };
-    } else if (view === 'month') {
-      // Calculate month position
+    } else if (view === 'week') {
+      // Calculate week position
+      const weeks = getWeeksInRange();
+      let weekIndex = 0;
+
+      weeks.forEach((w, idx) => {
+        const weekStart = new Date(w.date);
+        const weekEnd = new Date(w.date);
+        weekEnd.setDate(weekEnd.getDate() + 7);
+
+        if (taskDate >= weekStart && taskDate < weekEnd) {
+          weekIndex = idx;
+        }
+      });
+
+      return {
+        left: weekIndex * 91,
+        width: 91
+      };
+    } else {
+      // month view
       const months = getMonthsInRange();
       let monthIndex = 0;
 
@@ -205,9 +246,6 @@ export default function TimelinePage() {
         width: 138.6
       };
     }
-
-    // week view
-    return { left: 0, width: 100 };
   };
 
   const getEmployeeTasks = () => {
@@ -376,6 +414,43 @@ export default function TimelinePage() {
                     return (
                       <span key={idx} className={`tl-tick ${isYearStart ? 'strong' : ''}`} style={{ left: idx * 138.6 }}>
                         {monthNames[m.month]}
+                      </span>
+                    );
+                  })}
+                </div>
+              </>
+            ) : view === 'week' ? (
+              <>
+                <div className="tl-majors">
+                  {(() => {
+                    const weeks = getWeeksInRange();
+                    const monthGroups: Record<string, { start: number; count: number }> = {};
+
+                    weeks.forEach((w, idx) => {
+                      const monthKey = `${w.date.getFullYear()}-${w.date.getMonth()}`;
+                      if (!monthGroups[monthKey]) {
+                        monthGroups[monthKey] = { start: idx, count: 0 };
+                      }
+                      monthGroups[monthKey].count++;
+                    });
+
+                    const monthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+                    return Object.entries(monthGroups).map(([key, info]) => {
+                      const [year, month] = key.split('-');
+                      return (
+                        <span key={key} className="tl-major" style={{ left: info.start * 91, width: info.count * 91 }}>
+                          <span>{monthNames[parseInt(month)]} {year}</span>
+                        </span>
+                      );
+                    });
+                  })()}
+                </div>
+                <div className="tl-ticks">
+                  {getWeeksInRange().map((w, idx) => {
+                    const isMonthStart = idx === 0 || w.date.getDate() <= 7;
+                    return (
+                      <span key={idx} className={`tl-tick ${isMonthStart ? 'strong' : ''}`} style={{ left: idx * 91 }}>
+                        {w.monthYear}
                       </span>
                     );
                   })}
