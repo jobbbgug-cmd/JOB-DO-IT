@@ -303,7 +303,7 @@ export default function SprintPage() {
             </div>
 
             {/* Task Lanes */}
-            <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto pr-2 min-h-0">
+            <div className="grid grid-cols-2 gap-4 flex-1 pr-2">
               {/* Routine Lane */}
               <div className="space-y-2 border-2 rounded-lg px-2 py-2 transition-colors border-transparent">
                 <div className="flex items-center justify-between mb-3 flex-shrink-0">
