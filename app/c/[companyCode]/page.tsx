@@ -12,6 +12,7 @@ interface Employee {
   role: string;
   presence: boolean;
   taskCount: number;
+  doingCount?: number;
   tasks: Array<{
     id: string;
     title: string;
@@ -390,6 +391,26 @@ export default function CompanyPage() {
                   <div className="text-right mr-2 text-base font-bold text-gray-400 border border-gray-600 rounded-lg px-3 py-1">
                     {emp.taskCount} งาน
                   </div>
+                  {(emp.doingCount ?? 0) > 0 && (
+                    <div
+                      title="งานที่กำลังทำอยู่"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.375rem 0.75rem',
+                        backgroundColor: 'rgba(200, 138, 14, 0.15)',
+                        border: '1px solid rgb(200, 138, 14)',
+                        borderRadius: '9999px',
+                        fontSize: '0.75rem',
+                        color: 'rgb(200, 138, 14)',
+                        fontWeight: '500',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {emp.doingCount} กำลังทำ
+                    </div>
+                  )}
 
                   {/* Board Button */}
                   <button

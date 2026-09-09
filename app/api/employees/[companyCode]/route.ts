@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Employee from '@/lib/models/Employee';
+import Task from '@/lib/models/Task';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ companyCode: string }> }) {
   try {
@@ -11,15 +12,30 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comp
     const employees = await Employee.find({ companyCode } as any);
     console.log('Found employees:', employees.length);
 
-    const transformedEmployees = employees.map(emp => {
+    const transformedEmployees = await Promise.all(employees.map(async (emp) => {
       const empObj = emp.toObject ? emp.toObject() : emp;
+
+      // Count total tasks and doing tasks for this employee
+      const empId = String(empObj._id);
+      const allTasks = await Task.countDocuments({
+        companyCode,
+        assignees: empId
+      });
+      const doingTasks = await Task.countDocuments({
+        companyCode,
+        assignees: empId,
+        status: 'in-progress'
+      });
+
       return {
         ...empObj,
-        id: String(empObj._id),
+        id: empId,
         isActive: empObj.isActive !== undefined ? empObj.isActive : true,
         permissionLevel: empObj.permissionLevel || 'self',
+        taskCount: allTasks,
+        doingCount: doingTasks,
       };
-    });
+    }));
 
     return NextResponse.json(transformedEmployees);
   } catch (error) {
