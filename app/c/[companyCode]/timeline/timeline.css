@@ -246,3 +246,136 @@
   top: auto;
   left: auto;
 }
+
+/* Employee View Styles */
+.tl-group {
+  border-bottom: 1px solid rgb(55, 65, 81);
+}
+
+.tl-group:last-child {
+  border-bottom: none;
+}
+
+.tl-row.tl-emp {
+  background: rgba(55, 65, 81, 0.2);
+  align-items: center;
+}
+
+.tl-row.tl-emp .tl-label {
+  display: flex;
+  align-items: center;
+}
+
+.tl-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: none;
+  border: none;
+  color: rgb(229, 231, 235);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 0;
+}
+
+.tl-toggle:hover {
+  color: rgb(34, 197, 238);
+}
+
+.caret {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+  color: rgb(107, 114, 128);
+}
+
+.caret.open {
+  transform: rotate(90deg);
+}
+
+.tl-toggle .mini {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: white;
+  flex-shrink: 0;
+}
+
+.tl-toggle .who {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  flex: 1;
+}
+
+.tl-toggle .who b {
+  font-weight: 600;
+  color: rgb(229, 231, 235);
+}
+
+.tl-toggle .who .role {
+  font-size: 11px;
+  color: rgb(107, 114, 128);
+  font-weight: 400;
+}
+
+.tl-toggle .n {
+  font-size: 12px;
+  color: rgb(107, 114, 128);
+  flex-shrink: 0;
+  padding-left: 8px;
+}
+
+.tl-block {
+  background: rgba(31, 41, 55, 0.5);
+}
+
+.tl-row.tl-loose {
+  background: rgba(31, 41, 55, 0.8);
+  border-bottom: 1px solid rgb(55, 65, 81);
+}
+
+.tl-row.tl-loose .tl-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tl-row.tl-loose .who.muted {
+  color: rgb(107, 114, 128);
+  font-size: 12px;
+}
+
+.tl-row.tl-loose .n {
+  margin-left: auto;
+  color: rgb(107, 114, 128);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.tl-row.tl-task {
+  border-bottom: 1px solid rgb(55, 65, 81);
+}
+
+.tl-row.tl-task:last-child {
+  border-bottom: none;
+}
+
+.tl-label.indent {
+  padding-left: 40px;
+}
+
+.tl-row.tl-task .tl-label {
+  display: flex;
+  align-items: center;
+}

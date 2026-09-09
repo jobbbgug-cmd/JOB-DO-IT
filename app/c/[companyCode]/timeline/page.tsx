@@ -16,6 +16,7 @@ export default function TimelinePage() {
   const [viewType, setViewType] = useState('overview');
   const [showAll, setShowAll] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [expandedEmployees, setExpandedEmployees] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -119,6 +120,25 @@ export default function TimelinePage() {
       left: daysFromStart * 30,
       width: Math.max(30, 30)
     };
+  };
+
+  const getEmployeeTasks = () => {
+    const grouped: Record<string, Task[]> = {};
+
+    employees.forEach(emp => {
+      grouped[emp.id] = visibleTasks.filter(task =>
+        task.assignees && task.assignees.includes(emp.id)
+      );
+    });
+
+    return grouped;
+  };
+
+  const toggleEmployee = (empId: string) => {
+    setExpandedEmployees(prev => ({
+      ...prev,
+      [empId]: !prev[empId]
+    }));
   };
 
   const getInitials = (name?: string) => {
@@ -236,7 +256,9 @@ export default function TimelinePage() {
       <div className="tl-body" style={{ width: `calc(${labelWidth}px + ${timelineWidth}px)`, '--tl-label': `${labelWidth}px`, '--tl-grid': `${timelineWidth}px` } as any}>
         {/* Header */}
         <div className="tl-head">
-          <div className="tl-label tl-corner">โปรเจค / งาน (เรียงตามวันเสร็จ)</div>
+          <div className="tl-label tl-corner">
+            {viewType === 'employee' ? 'ผู้รับผิดชอบ / งาน' : 'โปรเจค / งาน (เรียงตามวันเสร็จ)'}
+          </div>
           <div className="tl-track" style={{ width: timelineWidth }}>
             <div className="tl-months">
               {visibleTasks.length > 0 && (
@@ -268,53 +290,139 @@ export default function TimelinePage() {
         <div className="tl-today" style={{ left: `calc(${labelWidth}px + 36px)` }}></div>
 
         {/* Rows */}
-        {visibleTasks.map((task) => {
-          const assigneeNames = task.assignees?.map(id => employees.find(e => e.id === id)?.name || id) || [];
-          const barPos = getTaskBarPosition(task);
+        {viewType === 'overview' ? (
+          visibleTasks.map((task) => {
+            const assigneeNames = task.assignees?.map(id => employees.find(e => e.id === id)?.name || id) || [];
+            const barPos = getTaskBarPosition(task);
 
-          return (
-            <div key={task.id} className={`tl-row tl-flat ${task.status === 'done' ? 'tl-done' : ''}`}>
-              <div className="tl-label">
-                <button className="tl-task-name" title="ดูรายละเอียดงาน">
-                  <span className="dot" style={{ background: getStatusColor(task.status || 'todo') }}></span>
-                  <span className="who">
-                    {task.title}
-                    <span className="role">
-                      {task.projectName && `${task.projectName} · `}
-                      {getEmployeeNames(task.assignees)}
-                    </span>
-                  </span>
-                  <span className="tl-pct muted">{task.progress || 0}%</span>
-                </button>
-              </div>
-
-              <div className="tl-track" style={{ width: timelineWidth }}>
-                <button
-                  type="button"
-                  className="tl-bar pct-in"
-                  style={{
-                    left: typeof barPos.width === 'string' ? 0 : barPos.left,
-                    width: typeof barPos.width === 'string' ? barPos.width : barPos.width,
-                    '--bar': getStatusColor(task.status || 'todo')
-                  } as any}
-                >
-                  <span className="fill" style={{ width: `${(task.progress || 0)}%` }}></span>
-                  <span className="tl-holders" title={assigneeNames.join(', ')}>
-                    {assigneeNames.slice(0, 2).map((name, i) => (
-                      <span key={i} className="av" style={{ background: getAvatarColor(name) }}>
-                        {getInitials(name)}
+            return (
+              <div key={task.id} className={`tl-row tl-flat ${task.status === 'done' ? 'tl-done' : ''}`}>
+                <div className="tl-label">
+                  <button className="tl-task-name" title="ดูรายละเอียดงาน">
+                    <span className="dot" style={{ background: getStatusColor(task.status || 'todo') }}></span>
+                    <span className="who">
+                      {task.title}
+                      <span className="role">
+                        {task.projectName && `${task.projectName} · `}
+                        {getEmployeeNames(task.assignees)}
                       </span>
-                    ))}
-                  </span>
-                  <span className="txt" style={{ maxWidth: timelineWidth - 100 }}>{task.title}</span>
-                  <span className="pct in" style={{ left: (typeof barPos.width === 'string' ? 880 : barPos.left + barPos.width - 30) }}>
-                    {task.progress || 0}%
-                  </span>
-                </button>
+                    </span>
+                    <span className="tl-pct muted">{task.progress || 0}%</span>
+                  </button>
+                </div>
+
+                <div className="tl-track" style={{ width: timelineWidth }}>
+                  <button
+                    type="button"
+                    className="tl-bar pct-in"
+                    style={{
+                      left: typeof barPos.width === 'string' ? 0 : barPos.left,
+                      width: typeof barPos.width === 'string' ? barPos.width : barPos.width,
+                      '--bar': getStatusColor(task.status || 'todo')
+                    } as any}
+                  >
+                    <span className="fill" style={{ width: `${(task.progress || 0)}%` }}></span>
+                    <span className="tl-holders" title={assigneeNames.join(', ')}>
+                      {assigneeNames.slice(0, 2).map((name, i) => (
+                        <span key={i} className="av" style={{ background: getAvatarColor(name) }}>
+                          {getInitials(name)}
+                        </span>
+                      ))}
+                    </span>
+                    <span className="txt" style={{ maxWidth: timelineWidth - 100 }}>{task.title}</span>
+                    <span className="pct in" style={{ left: (typeof barPos.width === 'string' ? 880 : barPos.left + barPos.width - 30) }}>
+                      {task.progress || 0}%
+                    </span>
+                  </button>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        ) : (
+          // Employee view
+          employees.map((emp) => {
+            const empTasks = getEmployeeTasks()[emp.id] || [];
+            const isExpanded = expandedEmployees[emp.id] !== false;
+
+            return (
+              <div key={emp.id} className="tl-group">
+                {/* Employee Row */}
+                <div className="tl-row tl-emp">
+                  <div className="tl-label">
+                    <button
+                      className="tl-toggle"
+                      onClick={() => toggleEmployee(emp.id)}
+                      aria-expanded={isExpanded}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`caret ${isExpanded ? 'open' : ''}`}>
+                        <path d="m9 5 7 7-7 7"></path>
+                      </svg>
+                      <span className="mini" style={{ background: getAvatarColor(emp.name) }}>
+                        {getInitials(emp.name)}
+                      </span>
+                      <span className="who">
+                        <b>{emp.name}</b>
+                        <span className="role">{emp.position || emp.department || 'Member'}</span>
+                      </span>
+                      <span className="n">{empTasks.length}</span>
+                    </button>
+                  </div>
+                  <div className="tl-track" style={{ width: timelineWidth }}></div>
+                </div>
+
+                {/* Tasks Block */}
+                {isExpanded && (
+                  <div className="tl-block">
+                    {empTasks.length > 0 && (
+                      <>
+                        <div className="tl-row tl-loose">
+                          <div className="tl-label">
+                            <span className="who muted">งานลอย (ไม่อยู่ในโปรเจค)</span>
+                            <span className="n">{empTasks.length}</span>
+                          </div>
+                          <div className="tl-track" style={{ width: timelineWidth }}></div>
+                        </div>
+
+                        {empTasks.map((task) => {
+                          const barPos = getTaskBarPosition(task);
+                          return (
+                            <div key={task.id} className={`tl-row tl-task ${task.status === 'done' ? 'tl-done' : ''}`}>
+                              <div className="tl-label indent">
+                                <button className="tl-task-name" title="ดูรายละเอียดงาน">
+                                  <span className="dot" style={{ background: getStatusColor(task.status || 'todo') }}></span>
+                                  <span className="who">{task.title}</span>
+                                  <span className="tl-pct muted">{task.progress || 0}%</span>
+                                </button>
+                              </div>
+
+                              <div className="tl-track" style={{ width: timelineWidth }}>
+                                <button
+                                  type="button"
+                                  className="tl-bar pct-in"
+                                  style={{
+                                    left: typeof barPos.width === 'string' ? 0 : barPos.left,
+                                    width: typeof barPos.width === 'string' ? barPos.width : barPos.width,
+                                    '--bar': getStatusColor(task.status || 'todo')
+                                  } as any}
+                                >
+                                  <span className="fill" style={{ width: `${(task.progress || 0)}%` }}></span>
+                                  <span className="txt" style={{ maxWidth: timelineWidth - 100 }}>{task.title}</span>
+                                  <span className="pct in" style={{ left: (typeof barPos.width === 'string' ? 880 : barPos.left + barPos.width - 30) }}>
+                                    {task.progress || 0}%
+                                  </span>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );
