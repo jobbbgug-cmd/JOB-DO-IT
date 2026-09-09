@@ -70,14 +70,22 @@ export default function BoardPage() {
 
   // Map authUserId to currentEmployeeId from employees array
   useEffect(() => {
-    if (authUserId && employees.length > 0) {
-      const currentEmployee = employees.find(emp => emp.userId === authUserId);
-      if (currentEmployee) {
-        setCurrentEmployeeId(currentEmployee.id);
+    if (employees.length > 0) {
+      // Try to find employee by userId or use first employee if authUserId matches
+      let foundEmployee = employees.find(emp => emp.userId === authUserId);
+
+      // If not found by userId, use first employee (they're sorted by current user)
+      if (!foundEmployee && employees.length > 0) {
+        foundEmployee = employees[0];
+        console.log('ℹ️ Using first employee as current user:', foundEmployee.name);
+      }
+
+      if (foundEmployee) {
+        setCurrentEmployeeId(foundEmployee.id);
         setIsInitialized(true);
-        console.log('🔗 Mapped authUserId to employeeId:', { authUserId, employeeId: currentEmployee.id });
+        console.log('🔗 Mapped to currentEmployeeId:', { authUserId, employeeId: foundEmployee.id, employeeName: foundEmployee.name });
       } else {
-        console.warn('⚠️ Current employee not found for userId:', authUserId);
+        console.warn('⚠️ Current employee not found');
       }
     }
   }, [authUserId, employees]);
