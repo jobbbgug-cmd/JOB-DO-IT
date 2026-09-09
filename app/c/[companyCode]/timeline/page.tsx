@@ -13,7 +13,7 @@ export default function TimelinePage() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
-  const [view, setView] = useState('month');
+  const [view, setView] = useState('day');
   const [viewType, setViewType] = useState('overview');
   const [showAll, setShowAll] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
