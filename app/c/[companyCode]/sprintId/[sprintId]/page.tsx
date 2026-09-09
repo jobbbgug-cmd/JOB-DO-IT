@@ -355,7 +355,7 @@ export default function SprintPage() {
                         <div onClick={() => setSelectedTask(task)}>
                           <div className="font-semibold text-gray-100 mb-2 line-clamp-3 text-sm leading-tight">{task.title}</div>
                           {task.attachments && task.attachments.length > 0 && (
-                            <div className="flex gap-1 mb-2 items-center">
+                            <div className="grid grid-cols-3 gap-1 mb-2">
                               {console.log(`Task ${task.id} has ${task.attachments.length} attachments:`, task.attachments)}
                               {task.attachments.map((attId: string, idx: number) => (
                                 <AttachmentThumbnail
@@ -377,7 +377,7 @@ export default function SprintPage() {
                                 />
                               ))}
                               {nonImageFileIds[task.id] && nonImageFileIds[task.id].length > 0 && (
-                                <div className="relative w-6 h-6">
+                                <div className="relative col-start-1 w-6 h-6">
                                   <span className="text-lg">📎</span>
                                   <span className="absolute -top-1 -right-1 bg-gray-600 text-white text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center text-[10px]">
                                     {nonImageFileIds[task.id].length}
