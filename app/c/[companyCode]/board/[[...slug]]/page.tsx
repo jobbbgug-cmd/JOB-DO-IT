@@ -16,7 +16,6 @@ const STATUS_CONFIG = [
   { id: 'testing-failed' as const, name: 'เทสไม่ผ่าน', color: '#D2504F' },
   { id: 'wait-testing' as const, name: 'รอเทส', color: '#8A5CF6' },
   { id: 'done' as const, name: 'เสร็จ', color: '#0E9384' },
-  { id: 'in-review' as const, name: 'รอรีวิว', color: '#8A5CF6' }, // Backward compatibility
 ];
 
 export default function BoardPage() {
