@@ -115,12 +115,12 @@ export default function TimelinePage() {
   };
 
   const getDateRange = () => {
-    if (visibleTasks.length === 0) {
+    if (tasks.length === 0) {
       const today = new Date();
       return { start: today, end: today, days: 1 };
     }
 
-    const dates = visibleTasks
+    const dates = tasks
       .filter(t => t.dueDate)
       .map(t => new Date(t.dueDate || new Date()));
 
