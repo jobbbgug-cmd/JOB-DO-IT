@@ -39,13 +39,30 @@ export default function BoardPage() {
   const [userCache, setUserCache] = useState<Record<string, string>>({});
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Sync currentUserId from useAuthStore
+  // Sync currentUserId from useAuthStore or localStorage
   useEffect(() => {
-    if (user?.id) {
-      setCurrentUserId(user.id);
+    let userId = user?.id || '';
+
+    // Fallback to localStorage if useAuthStore.user doesn't have id
+    if (!userId && typeof window !== 'undefined') {
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const storedUser = JSON.parse(userStr);
+          userId = storedUser.id || storedUser._id || '';
+        }
+      } catch (e) {
+        console.error('Failed to parse user from localStorage:', e);
+      }
+    }
+
+    console.log('🔐 User sync:', { authStoreUser: user?.id, localStorageUser: userId });
+
+    if (userId) {
+      setCurrentUserId(userId);
       setIsInitialized(true);
-    } else if (!user && isInitialized) {
-      // User logged out after initialization
+    } else if (isInitialized) {
+      // User was initialized but now logged out
       router.push('/login');
     }
   }, [user?.id, user, router, isInitialized]);
