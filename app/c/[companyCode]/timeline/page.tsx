@@ -146,16 +146,39 @@ export default function TimelinePage() {
   };
 
   const getTaskBarPosition = (task: Task) => {
-    if (view !== 'day' || !task.dueDate) return { left: 0, width: '100%' };
+    if (!task.dueDate) return { left: 0, width: 100 };
 
     const { start } = getDateRange();
     const taskDate = new Date(task.dueDate);
-    const daysFromStart = Math.ceil((taskDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 
-    return {
-      left: daysFromStart * 30,
-      width: Math.max(30, 30)
-    };
+    if (view === 'day') {
+      const daysFromStart = Math.ceil((taskDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      return {
+        left: daysFromStart * 30,
+        width: Math.max(30, 30)
+      };
+    } else if (view === 'month') {
+      // Calculate month position
+      const months = getMonthsInRange();
+      let monthIndex = 0;
+
+      months.forEach((m, idx) => {
+        const monthStart = new Date(m.date.getFullYear(), m.date.getMonth(), 1);
+        const monthEnd = new Date(m.date.getFullYear(), m.date.getMonth() + 1, 0);
+
+        if (taskDate >= monthStart && taskDate <= monthEnd) {
+          monthIndex = idx;
+        }
+      });
+
+      return {
+        left: monthIndex * 138.6,
+        width: 138.6
+      };
+    }
+
+    // week view
+    return { left: 0, width: 100 };
   };
 
   const getEmployeeTasks = () => {
@@ -385,10 +408,10 @@ export default function TimelinePage() {
                 <div className="tl-track" style={{ width: timelineWidth }}>
                   <button
                     type="button"
-                    className="tl-bar pct-in"
+                    className="tl-bar"
                     style={{
-                      left: typeof barPos.width === 'string' ? 0 : barPos.left,
-                      width: typeof barPos.width === 'string' ? barPos.width : barPos.width,
+                      left: barPos.left,
+                      width: barPos.width,
                       '--bar': getStatusColor(task.status || 'todo')
                     } as any}
                   >
@@ -400,10 +423,8 @@ export default function TimelinePage() {
                         </span>
                       ))}
                     </span>
-                    <span className="txt" style={{ maxWidth: timelineWidth - 100 }}>{task.title}</span>
-                    <span className="pct in" style={{ left: (typeof barPos.width === 'string' ? 880 : barPos.left + barPos.width - 30) }}>
-                      {task.progress || 0}%
-                    </span>
+                    <span className="txt">{task.title}</span>
+                    <span className="pct">{task.progress || 0}%</span>
                   </button>
                 </div>
               </div>
