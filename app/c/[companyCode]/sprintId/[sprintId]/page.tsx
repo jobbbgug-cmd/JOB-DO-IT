@@ -219,6 +219,7 @@ export default function SprintPage() {
             className="bg-gray-900 border-2 border-cyan-600/40 hover:border-cyan-500/60 rounded-xl p-5 transition-all hover:shadow-lg hover:shadow-cyan-900/20 flex flex-col"
             style={{
               width: '450px',
+              minHeight: 'auto',
               cursor: 'grab',
               userSelect: 'none',
             }}
