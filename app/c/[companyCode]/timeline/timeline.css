@@ -169,6 +169,13 @@
   min-width: 0;
   flex: 1;
   text-align: left;
+  overflow: hidden;
+}
+
+.who > :first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .who .role {
