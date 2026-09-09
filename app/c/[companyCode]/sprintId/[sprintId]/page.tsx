@@ -27,8 +27,8 @@ const COLORS = ['#0E9384', '#E4572E', '#5B7FB0', '#B4479A', '#C98A0E', '#3F6E4B'
 export default function SprintPage() {
   const router = useRouter();
   const params = useParams();
-  const companyCode = params.companyCode as string;
-  const sprintId = params.sprintId as string;
+  const companyCode = (params?.companyCode || '') as string;
+  const sprintId = (params?.sprintId || '') as string;
 
   const [cards, setCards] = useState<EmployeeCard[]>([]);
   const [loading, setLoading] = useState(true);
