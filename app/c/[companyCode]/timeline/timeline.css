@@ -108,6 +108,12 @@
   color: rgb(229, 231, 235);
 }
 
+/* Month view ticks */
+.tl-majors + .tl-ticks .tl-tick {
+  width: 138.6px;
+  justify-content: center;
+}
+
 .tl-today {
   position: absolute;
   top: 0;
