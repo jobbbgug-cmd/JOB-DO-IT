@@ -38,6 +38,7 @@ export default function BoardPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [userCache, setUserCache] = useState<Record<string, string>>({});
+  const [attachmentPreviews, setAttachmentPreviews] = useState<Record<string, string>>({});
   const [isInitialized, setIsInitialized] = useState(false);
   const fetchedRef = useRef(false);
 
