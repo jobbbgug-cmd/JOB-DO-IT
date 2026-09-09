@@ -195,6 +195,8 @@ export default function BoardPage() {
   const pendingCount = getTasksByStatus('todo').length + getTasksByStatus('in-progress').length;
   const doingCount = getTasksByStatus('in-progress').length;
 
+  console.log('🟠 DEBUG - doingCount:', doingCount, 'pendingCount:', pendingCount, 'total tasks:', tasks.length);
+
   // Using shared Task type from @/app/types/index
   const TaskCard = ({ task, statusColor, isReadOnly: cardIsReadOnly, attachmentPreviews: previews }: { task: Task; statusColor: string; isReadOnly: boolean; attachmentPreviews: Record<string, string> }) => (
     <div
@@ -404,11 +406,24 @@ export default function BoardPage() {
             <span className="text-xs text-gray-400 bg-gray-700/50 px-2.5 py-1.5 rounded-full">
               ค้างอยู่ {pendingCount} งาน
             </span>
-            {doingCount > 0 && (
-              <div className="load doing" title="งานที่กำลังทำอยู่">
-                {doingCount} กำลังทำ
-              </div>
-            )}
+            <div
+              title="งานที่กำลังทำอยู่"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.375rem 0.75rem',
+                backgroundColor: doingCount > 0 ? 'rgba(200, 138, 14, 0.15)' : 'rgba(107, 114, 128, 0.15)',
+                border: doingCount > 0 ? '1px solid rgb(200, 138, 14)' : '1px solid rgb(107, 114, 128)',
+                borderRadius: '9999px',
+                fontSize: '0.75rem',
+                color: doingCount > 0 ? 'rgb(200, 138, 14)' : 'rgb(107, 114, 128)',
+                fontWeight: '500',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {doingCount} กำลังทำ
+            </div>
 
             {/* Tools - Compact */}
             <div className="flex items-center gap-2">
