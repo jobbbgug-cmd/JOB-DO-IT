@@ -429,6 +429,7 @@
 
 .tl-row.tl-task {
   border-bottom: 1px solid rgb(55, 65, 81);
+  min-height: 28px;
 }
 
 .tl-row.tl-task:last-child {
