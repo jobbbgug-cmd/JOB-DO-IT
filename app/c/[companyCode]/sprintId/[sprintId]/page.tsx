@@ -305,7 +305,7 @@ export default function SprintPage() {
             {/* Task Lanes */}
             <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto pr-2 min-h-0">
               {/* Routine Lane */}
-              <div className="space-y-2 overflow-y-auto border-2 rounded-lg px-2 py-2 transition-colors border-transparent">
+              <div className="space-y-2 border-2 rounded-lg px-2 py-2 transition-colors border-transparent">
                 <div className="flex items-center justify-between mb-3 flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
@@ -427,7 +427,7 @@ export default function SprintPage() {
               </div>
 
               {/* Urgent Lane */}
-              <div className="space-y-2 overflow-y-auto border-2 rounded-lg px-2 py-2 transition-colors border-transparent bg-transparent">
+              <div className="space-y-2 border-2 rounded-lg px-2 py-2 transition-colors border-transparent bg-transparent">
                 <div className="flex items-center justify-between mb-3 flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-red-500"></span>
