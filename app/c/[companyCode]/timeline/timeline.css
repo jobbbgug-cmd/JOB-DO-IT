@@ -1,0 +1,226 @@
+.tl-body {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgb(55, 65, 81);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(31, 41, 55, 0.3);
+}
+
+.tl-head {
+  display: flex;
+  border-bottom: 1px solid rgb(55, 65, 81);
+  background: rgba(55, 65, 81, 0.3);
+}
+
+.tl-label {
+  width: var(--tl-label);
+  padding: 12px;
+  border-right: 1px solid rgb(55, 65, 81);
+  flex-shrink: 0;
+}
+
+.tl-corner {
+  font-weight: 600;
+  color: rgb(229, 231, 235);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+}
+
+.tl-track {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgb(55, 65, 81);
+}
+
+.tl-months {
+  position: relative;
+  height: 28px;
+  border-bottom: 1px solid rgb(55, 65, 81);
+  display: flex;
+}
+
+.tl-month {
+  position: absolute;
+  font-size: 12px;
+  color: rgb(156, 163, 175);
+  padding: 4px 8px;
+  border-right: 1px solid rgb(55, 65, 81);
+}
+
+.tl-ticks {
+  height: 4px;
+  display: flex;
+  border-top: 1px solid rgb(55, 65, 81);
+}
+
+.tl-today {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgb(6, 182, 212);
+  z-index: 10;
+}
+
+.tl-row {
+  display: flex;
+  border-bottom: 1px solid rgb(55, 65, 81);
+  min-height: 60px;
+}
+
+.tl-row:last-child {
+  border-bottom: none;
+}
+
+.tl-row.tl-flat {
+  align-items: center;
+}
+
+.tl-row.tl-flat .tl-label {
+  display: flex;
+  align-items: center;
+}
+
+.tl-task-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.tl-task-name:hover {
+  color: rgb(34, 197, 238);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.who {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+}
+
+.who .role {
+  font-size: 11px;
+  color: rgb(107, 114, 128);
+  display: block;
+}
+
+.tl-pct {
+  font-size: 12px;
+  color: rgb(107, 114, 128);
+  margin-left: auto;
+  flex-shrink: 0;
+  padding-left: 8px;
+}
+
+.tl-pct.muted {
+  color: rgb(107, 114, 128);
+}
+
+.tl-bar {
+  position: absolute;
+  height: 100%;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-size: 12px;
+  white-space: nowrap;
+  transition: filter 0.2s;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.tl-bar:hover {
+  filter: brightness(1.1);
+}
+
+.tl-bar .fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--bar);
+  opacity: 0.3;
+  border-radius: 4px;
+}
+
+.tl-bar .tl-holders {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 4px;
+}
+
+.tl-bar .av {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.tl-bar .txt {
+  position: relative;
+  z-index: 2;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tl-bar .pct {
+  position: relative;
+  z-index: 2;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  flex-shrink: 0;
+}
+
+.tl-row.tl-done .tl-bar {
+  opacity: 0.6;
+}
+
+.tl-flat {
+  position: relative;
+}
+
+.tl-flat .tl-track {
+  position: relative;
+}
+
+.tl-flat .tl-bar {
+  position: relative;
+  top: auto;
+  left: auto;
+}
