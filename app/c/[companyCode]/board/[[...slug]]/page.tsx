@@ -37,13 +37,18 @@ export default function BoardPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [userCache, setUserCache] = useState<Record<string, string>>({});
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Sync currentUserId from useAuthStore
   useEffect(() => {
     if (user?.id) {
       setCurrentUserId(user.id);
+      setIsInitialized(true);
+    } else if (!user && isInitialized) {
+      // User logged out after initialization
+      router.push('/login');
     }
-  }, [user?.id]);
+  }, [user?.id, user, router, isInitialized]);
 
   // Check if viewing filtered tasks (read-only) or all tasks (editable)
   // read-only only if: assigneeFilter exists AND it's NOT current user AND currentUserId is loaded
@@ -56,18 +61,18 @@ export default function BoardPage() {
       currentUserId,
       assigneeFilter,
       isReadOnly,
-      shouldShowButtons: !isReadOnly
+      shouldShowButtons: !isReadOnly,
+      isInitialized
     });
-  }, [assigneeFilter, currentUserId, isReadOnly]);
+  }, [assigneeFilter, currentUserId, isReadOnly, isInitialized]);
 
+  // Fetch data when initialized
   useEffect(() => {
-    if (!currentUserId) {
-      router.push('/login');
-    } else {
+    if (isInitialized && currentUserId) {
       fetchTasks();
       fetchEmployees();
     }
-  }, [currentUserId, router]);
+  }, [isInitialized, currentUserId]);
 
   const fetchTasks = async () => {
     try {
