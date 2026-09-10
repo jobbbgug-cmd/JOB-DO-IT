@@ -15,7 +15,7 @@ interface AuthStore {
   token: string | null;
   loading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string; companyCode?: string }>;
   register: (name: string, email: string, password: string, role: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   setUser: (user: User | null) => void;
@@ -46,8 +46,8 @@ export const useAuthStore = create<AuthStore>((set) => {
     set({ loading: true });
     try {
       const response = await axios.post('/api/auth/login', { email, password });
-      const { user, token } = response.data;
-      console.log('✅ Login response:', { user, token });
+      const { user, token, companyCode } = response.data;
+      console.log('✅ Login response:', { user, token, companyCode });
       if (typeof window !== 'undefined') {
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
@@ -55,7 +55,7 @@ export const useAuthStore = create<AuthStore>((set) => {
       }
       set({ user, token, error: null });
       console.log('✅ User state updated in store');
-      return { success: true };
+      return { success: true, companyCode };
     } catch (error: any) {
       console.error('❌ Login error:', error);
       const data = error.response?.data;
@@ -87,8 +87,8 @@ export const useAuthStore = create<AuthStore>((set) => {
 
   logout: () => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      localStorage.clear();
+      window.location.href = '/login';
     }
     set({ user: null, token: null });
   },

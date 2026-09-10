@@ -29,12 +29,13 @@ export default function LoginClient() {
 
     let result;
     if (isLogin) {
+      localStorage.removeItem('companyCode');
       result = await login(formData.email, formData.password);
       if (result.success) {
-        const companyCode = localStorage.getItem('companyCode');
-        if (companyCode) {
-          setCompanyCode(companyCode);
-          router.push(`/c/${companyCode}/boardteam`);
+        if (result.companyCode) {
+          setCompanyCode(result.companyCode);
+          localStorage.setItem('companyCode', result.companyCode);
+          router.push(`/c/${result.companyCode}/boardteam`);
         } else {
           router.push('/boardteam');
         }
@@ -43,7 +44,7 @@ export default function LoginClient() {
       }
     } else {
       const nameFromEmail = formData.email.split('@')[0];
-      result = await register(nameFromEmail, formData.email, formData.password, 'dev');
+      result = await register(nameFromEmail, formData.email, formData.password, 'owner');
       if (result.success) {
         if (inviteCode) {
           localStorage.setItem('inviteCode', inviteCode);

@@ -1,27 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Team from '@/lib/models/Team';
+import { verifyAuth } from '@/lib/auth';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ companyCode: string }> }
 ) {
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     await connectDB();
     const { companyCode } = await params;
 
-    let teams = await Team.find({ companyCode }).lean();
-
-    // Create default team if none exist
-    if (teams.length === 0) {
-      const defaultTeam = await Team.create({
-        companyCode,
-        name: companyCode,
-        members: [],
-        isDefault: true,
-      });
-      teams = [defaultTeam];
-    }
+    const teams = await Team.find({ companyCode }).lean();
 
     const formattedTeams = teams.map((team: any) => ({
       id: team._id?.toString() || '',
@@ -42,6 +37,11 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ companyCode: string }> }
 ) {
+  const auth = await verifyAuth(req);
+  if (auth.error) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     await connectDB();
     const { companyCode } = await params;

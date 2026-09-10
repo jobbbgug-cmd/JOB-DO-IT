@@ -22,7 +22,7 @@ export default function MobileNav() {
 
   const handleNavClick = (path: string) => {
     if (!companyCode) {
-      router.push('/company');
+      router.push(`/${path}`);
       return;
     }
     router.push(`/c/${companyCode}/${path}`);

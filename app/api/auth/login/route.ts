@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import User from '@/lib/models/User';
+import Employee from '@/lib/models/Employee';
 import { SignJWT } from 'jose';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'secret');
@@ -33,11 +34,18 @@ export async function POST(req: NextRequest) {
       .setExpirationTime('7d')
       .sign(JWT_SECRET);
 
+    let companyCode = null;
+    const employee = await Employee.findOne({ userId: user._id.toString() });
+    if (employee) {
+      companyCode = employee.companyCode;
+    }
+
     const response = NextResponse.json(
       {
         success: true,
         user: { id: user._id, name: user.name, email: user.email, role: user.role },
         token,
+        companyCode,
       },
       { status: 200 }
     );

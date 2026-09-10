@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'รหัสยืนยันหมดอายุแล้ว กรุณาขอรหัสใหม่' }, { status: 400 });
     }
 
+    console.log('Creating user with role:', pending.role);
     const user = await User.create({
       name: pending.name,
       email: pending.email,

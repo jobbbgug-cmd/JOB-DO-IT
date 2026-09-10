@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname, useParams } from 'next/navigation';
+import { usePathname, useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -8,6 +8,7 @@ import axios from 'axios';
 export default function CompanyLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const pathname = usePathname();
+  const router = useRouter();
   const companyCode = params.companyCode as string;
   const [companyName, setCompanyName] = useState('');
   const [activeTab, setActiveTab] = useState('employees');
@@ -16,14 +17,18 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
   useEffect(() => {
     setIsHydrated(true);
     
-    // Fetch company name
     const fetchCompanyName = async () => {
       try {
         const response = await axios.get(`/api/company/${companyCode}`);
         setCompanyName(response.data.companyName || '');
-      } catch (error) {
+      } catch (error: any) {
+        const status = error.response?.status;
+        if (status === 401 || status === 404) {
+          router.push('/login');
+          return;
+        }
         console.error('Failed to fetch company name:', error);
-        setCompanyName(companyCode); // Fallback to companyCode
+        setCompanyName(companyCode);
       }
     };
 
@@ -40,11 +45,10 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
     } else {
       setActiveTab('employees');
     }
-  }, [pathname, companyCode]);
+  }, [pathname, companyCode, router]);
 
   return (
     <div className="space-y-8 w-full">
-      {/* Header */}
       <div className="sticky top-0 bg-gray-900 z-10">
         <h1 className="text-4xl font-bold text-white mb-2">{companyName || companyCode}</h1>
         <p className="text-gray-400">
@@ -52,7 +56,6 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
         </p>
       </div>
 
-      {/* Tabs */}
       {isHydrated && (
         <div className="flex gap-4 border-b border-gray-700">
           <Link
@@ -90,7 +93,6 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
         </div>
       )}
 
-      {/* Content */}
       <div>{children}</div>
     </div>
   );
