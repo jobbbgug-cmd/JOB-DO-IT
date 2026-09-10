@@ -74,13 +74,7 @@ export const useAuthStore = create<AuthStore>((set) => {
   register: async (name, email, password, role) => {
     set({ loading: true });
     try {
-      const response = await axios.post('/api/auth/register', { name, email, password, role });
-      const { user, token } = response.data;
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-      }
-      set({ user, token, error: null });
+      await axios.post('/api/auth/register', { name, email, password, role });
       return { success: true };
     } catch (error: any) {
       const message = error.response?.data?.error || 'Registration failed';

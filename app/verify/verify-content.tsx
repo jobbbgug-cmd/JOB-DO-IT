@@ -31,24 +31,29 @@ export default function VerifyContent() {
     setError('');
     try {
       const response = await axios.post('/api/auth/verify', { email, code });
-      const { token, userId } = response.data;
+      const { token, user } = response.data;
       localStorage.setItem('token', token);
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+      }
 
       // Create employee record if user came from invite link
       if (inviteCode) {
         try {
-          await axios.post('/api/auth/accept-invite', {
+          const inviteRes = await axios.post('/api/auth/accept-invite', {
             inviteCode,
-            userId,
+            userId: user.id,
             email,
           });
-          router.push('/c/CONCEPTX/boardteam');
+          const companyCode = inviteRes.data.companyCode;
+          localStorage.setItem('companyCode', companyCode);
+          router.push(`/c/${companyCode}/boardteam`);
         } catch (inviteErr: any) {
-          console.error('Failed to create employee:', inviteErr);
-          router.push('/company');
+          console.error('Failed to accept invite:', inviteErr);
+          router.push('/boardteam');
         }
       } else {
-        router.push('/company');
+        router.push('/boardteam');
       }
     } catch (err: any) {
       setError(err.response?.data?.error || 'ยืนยันรหัสไม่สำเร็จ');

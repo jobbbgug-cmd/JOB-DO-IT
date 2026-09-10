@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Employee from '@/lib/models/Employee';
-import crypto from 'crypto';
+import InviteLink from '@/lib/models/InviteLink';
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,6 +15,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const invite = await InviteLink.findOne({ code: inviteCode });
+    if (!invite) {
+      return NextResponse.json(
+        { error: 'Invite not found or expired' },
+        { status: 404 }
+      );
+    }
+
     const nameFromEmail = email.split('@')[0];
     const COLORS = ['#0E9384', '#E4572E', '#5B7FB0', '#B4479A', '#C98A0E', '#3F6E4B', '#8A5CF6', '#D2504F'];
     const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
@@ -24,7 +32,7 @@ export async function POST(req: NextRequest) {
       role: 'employees',
       userId,
       color: randomColor,
-      companyCode: 'CONCEPTX',
+      companyCode: invite.companyCode,
       isActive: true,
       permissionLevel: 'self',
     });
@@ -33,7 +41,7 @@ export async function POST(req: NextRequest) {
       {
         success: true,
         employee,
-        companyCode: 'CONCEPTX',
+        companyCode: invite.companyCode,
       },
       { status: 201 }
     );

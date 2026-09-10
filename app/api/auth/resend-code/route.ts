@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
-import User from '@/lib/models/User';
+import PendingRegistration from '@/lib/models/PendingRegistration';
 import { sendVerificationEmail } from '@/lib/email';
 
 const generateVerificationCode = () => {
@@ -16,21 +16,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'กรุณากรอกอีเมล' }, { status: 400 });
     }
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return NextResponse.json({ error: 'ไม่พบผู้ใช้นี้' }, { status: 404 });
-    }
-
-    if (user.isVerified) {
-      return NextResponse.json({ error: 'อีเมลนี้ได้รับการยืนยันแล้ว' }, { status: 400 });
+    const pending = await PendingRegistration.findOne({ email });
+    if (!pending) {
+      return NextResponse.json({ error: 'ไม่พบการลงทะเบียนนี้ หรือหมดอายุแล้ว' }, { status: 404 });
     }
 
     const verificationCode = generateVerificationCode();
     const verificationCodeExpiry = new Date(Date.now() + 15 * 60 * 1000);
 
-    user.verificationCode = verificationCode;
-    user.verificationCodeExpiry = verificationCodeExpiry;
-    await user.save();
+    pending.verificationCode = verificationCode;
+    pending.verificationCodeExpiry = verificationCodeExpiry;
+    await pending.save();
 
     const emailSent = await sendVerificationEmail(email, verificationCode);
     if (!emailSent) {

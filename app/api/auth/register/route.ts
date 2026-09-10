@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
-import User from '@/lib/models/User';
+import PendingRegistration from '@/lib/models/PendingRegistration';
 import { sendVerificationEmail } from '@/lib/email';
 
 const generateVerificationCode = () => {
@@ -16,20 +16,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'กรุณากรอกข้อมูลให้ครบถ้วน' }, { status: 400 });
     }
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return NextResponse.json({ error: 'อีเมลนี้ได้ถูกลงทะเบียนแล้ว' }, { status: 400 });
+    const existingPending = await PendingRegistration.findOne({ email });
+    if (existingPending) {
+      await PendingRegistration.deleteOne({ email });
     }
 
     const verificationCode = generateVerificationCode();
     const verificationCodeExpiry = new Date(Date.now() + 15 * 60 * 1000);
 
-    const user = await User.create({
+    await PendingRegistration.create({
       name,
       email,
       password,
       role: 'employees',
-      isVerified: false,
       verificationCode,
       verificationCodeExpiry,
     });
@@ -46,7 +45,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: true, email: user.email, message: 'ส่งรหัสยืนยันไปยังอีเมลของคุณแล้ว' },
+      { success: true, email, message: 'ส่งรหัสยืนยันไปยังอีเมลของคุณแล้ว' },
       { status: 201 }
     );
   } catch (error: any) {

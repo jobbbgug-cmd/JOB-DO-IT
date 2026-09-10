@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import MoreMenu from './MoreMenu';
 
@@ -8,10 +8,23 @@ export default function MobileNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [companyCode, setCompanyCode] = useState<string>('');
 
-  const companyCode = pathname?.split('/')[2] || 'CONCEPTX';
+  useEffect(() => {
+    const pathCompanyCode = pathname?.split('/')[2];
+    if (pathCompanyCode) {
+      setCompanyCode(pathCompanyCode);
+    } else {
+      const storedCompanyCode = typeof window !== 'undefined' ? localStorage.getItem('companyCode') : null;
+      setCompanyCode(storedCompanyCode || '');
+    }
+  }, [pathname]);
 
   const handleNavClick = (path: string) => {
+    if (!companyCode) {
+      router.push('/company');
+      return;
+    }
     router.push(`/c/${companyCode}/${path}`);
   };
 
@@ -78,31 +91,29 @@ export default function MobileNav() {
           }`}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-            <path d="m9 5 7 7-7 7"></path>
+            <path d="M3 12h18M3 6h18M3 18h18"></path>
           </svg>
           <span className="text-xs font-medium">ไทม์ไลน์</span>
         </button>
 
-        {/* เพิ่มเติม (More Menu) */}
+        {/* เมนูเพิ่มเติม */}
         <button
-          onClick={() => setShowMoreMenu(true)}
-          className="flex-1 flex flex-col items-center justify-center gap-1 py-3 px-2 transition-all border-t-2 text-gray-400 border-transparent hover:text-gray-300"
+          onClick={() => setShowMoreMenu(!showMoreMenu)}
+          className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 px-2 transition-all border-t-2 relative ${
+            showMoreMenu
+              ? 'text-cyan-400 border-cyan-400 bg-gray-800/50'
+              : 'text-gray-400 border-transparent'
+          }`}
         >
-          <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-            <circle cx="5" cy="12" r="1.8"></circle>
-            <circle cx="12" cy="12" r="1.8"></circle>
-            <circle cx="19" cy="12" r="1.8"></circle>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+            <circle cx="12" cy="12" r="1"></circle>
+            <circle cx="19" cy="12" r="1"></circle>
+            <circle cx="5" cy="12" r="1"></circle>
           </svg>
           <span className="text-xs font-medium">เพิ่มเติม</span>
+          {showMoreMenu && <MoreMenu />}
         </button>
       </nav>
-
-      {/* More Menu Modal */}
-      <MoreMenu
-        isOpen={showMoreMenu}
-        onClose={() => setShowMoreMenu(false)}
-        companyCode={companyCode}
-      />
     </div>
   );
 }
