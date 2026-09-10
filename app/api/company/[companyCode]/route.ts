@@ -5,7 +5,7 @@ import { verifyAuth } from '@/lib/auth';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { companyCode: string } }
+  { params }: { params: Promise<{ companyCode: string }> }
 ) {
   const auth = await verifyAuth(request);
   if (auth.error) {
@@ -14,11 +14,9 @@ export async function GET(
 
   try {
     await connectDB();
-    const companyCode = params.companyCode;
-    console.log('Looking for company code:', companyCode, 'type:', typeof companyCode);
+    const { companyCode } = await params;
 
     const company = await Company.findOne({ companyCode });
-    console.log('Company found:', company);
     if (!company) {
       return NextResponse.json(
         { error: 'Company not found' },
