@@ -10,16 +10,38 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (token) {
-      const companyCode = typeof window !== 'undefined' ? localStorage.getItem('companyCode') : null;
-      if (companyCode) {
-        router.replace(`/c/${companyCode}/boardteam`);
-      } else {
-        router.replace('/boardteam');
+    const checkUserCompany = async () => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) {
+        router.replace('/login');
+        return;
       }
-    }
-  }, [router]);
+
+      try {
+        const response = await fetch('/api/company/mine', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.company) {
+            router.replace(`/c/${data.company.code}/boardteam`);
+          } else {
+            router.replace('/company');
+          }
+        } else {
+          router.replace('/login');
+        }
+      } catch (error) {
+        console.error('Error checking company:', error);
+        router.replace('/login');
+      }
+    };
+
+    checkUserCompany();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-teal-50 to-cyan-50">

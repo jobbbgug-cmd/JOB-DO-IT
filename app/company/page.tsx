@@ -16,6 +16,7 @@ const generateRandomCode = () => {
 
 export default function CompanyPage() {
   const router = useRouter();
+  const { token } = useAuthStore();
   const [isHydrated, setIsHydrated] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showJoinForm, setShowJoinForm] = useState(false);
@@ -25,8 +26,7 @@ export default function CompanyPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!storedToken) {
+    if (!token) {
       router.push('/login');
       return;
     }
@@ -39,7 +39,7 @@ export default function CompanyPage() {
     } else {
       setIsHydrated(true);
     }
-  }, [router]);
+  }, [token, router]);
 
   if (!isHydrated) return <div className="flex items-center justify-center h-screen">Loading...</div>;
 
@@ -54,7 +54,6 @@ export default function CompanyPage() {
     if (!isCreateFormValid) return;
     setIsLoading(true);
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       const response = await fetch('/api/company/create', {
         method: 'POST',
         headers: {
@@ -66,13 +65,14 @@ export default function CompanyPage() {
 
       if (response.ok) {
         const data = await response.json();
-        // Store companyCode in localStorage
         if (typeof window !== 'undefined') {
-          localStorage.setItem('companyCode', companyCode);
+          localStorage.setItem('companyCode', data.company.code);
         }
-        router.push(`/c/${companyCode}/boardteam`);
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        router.push(`/c/${data.company.code}/boardteam`);
       } else {
-        alert('Failed to create company');
+        const error = await response.json();
+        alert(error.error || 'Failed to create company');
       }
     } catch (error) {
       console.error('Error creating company:', error);

@@ -32,13 +32,7 @@ export default function LoginClient() {
       localStorage.removeItem('companyCode');
       result = await login(formData.email, formData.password);
       if (result.success) {
-        if (result.companyCode) {
-          setCompanyCode(result.companyCode);
-          localStorage.setItem('companyCode', result.companyCode);
-          router.push(`/c/${result.companyCode}/boardteam`);
-        } else {
-          router.push('/boardteam');
-        }
+        router.push('/');
       } else {
         setError(result.message || 'เกิดข้อผิดพลาด');
       }
