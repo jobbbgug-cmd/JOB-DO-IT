@@ -20,7 +20,7 @@ export async function sendVerificationEmail(email: string, code: string) {
 
   try {
     await resendClient.emails.send({
-      from: 'JOB DO IT <onboarding@resend.dev>',
+      from: 'JOB DO IT <job.do.it99@gmail.com>',
       to: email,
       subject: 'รหัสยืนยันอีเมล | JOB DO IT',
       html: `
