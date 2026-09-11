@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     const employee = await Employee.create({
       name: nameFromEmail,
-      role: 'employees',
+      role: 'employee',
       userId,
       color: randomColor,
       companyCode: invite.companyCode,
