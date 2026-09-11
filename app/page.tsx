@@ -14,7 +14,6 @@ export default function Home() {
     const checkUserCompany = async () => {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       if (!token) {
-        router.replace('/login');
         return;
       }
 
