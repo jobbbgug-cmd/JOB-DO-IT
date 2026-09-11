@@ -61,16 +61,37 @@ export default function SprintPage() {
   const [userCache, setUserCache] = useState<Record<string, string>>({});
   const [attachmentPreviews, setAttachmentPreviews] = useState<Record<string, string>>({});
   const [nonImageFileIds, setNonImageFileIds] = useState<Record<string, string[]>>({});
+  const [teamMembers, setTeamMembers] = useState<string[]>([]);
   const fetchDataRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Fetch team members for this sprint
+        let membersToDisplay: string[] = [];
+        try {
+          const teamsRes = await fetch(`/api/company/${companyCode}/teams`);
+          const teamsList = await teamsRes.json();
+          const defaultTeam = teamsList.find((t: any) => t.isDefault);
+          if (defaultTeam?.members) {
+            membersToDisplay = defaultTeam.members;
+            setTeamMembers(defaultTeam.members);
+          }
+        } catch (error) {
+          console.error('Failed to fetch teams:', error);
+        }
+
         // Fetch employees
         const empRes = await fetch(`/api/employees/${companyCode}`);
         const employeesList = await empRes.json();
         console.log('Fetched employees:', employeesList);
-        setEmployees(employeesList);
+
+        // Filter employees by team members if team members exist
+        const filteredEmployees = membersToDisplay.length > 0
+          ? employeesList.filter((emp: any) => membersToDisplay.includes(emp.id || emp._id))
+          : employeesList;
+
+        setEmployees(filteredEmployees);
         if (employeesList.length > 0) {
           console.log('First employee:', employeesList[0]);
         }
