@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import CreateTaskModal from './CreateTaskModal';
 
@@ -8,10 +8,44 @@ export default function Dock({ onTaskCreated }: { onTaskCreated?: () => void }) 
   const pathname = usePathname();
   const [input, setInput] = useState('');
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
+  const [defaultTeamId, setDefaultTeamId] = useState<string>('');
 
   const shouldShow = pathname.includes('/boardteam') || pathname.includes('/team/') || pathname.includes('/sprintId/');
   const companyCode = pathname.match(/\/c\/([^/]+)/)?.[1] || '';
   const sprintId = pathname.match(/\/sprintId\/([^/]+)/)?.[1] || '';
+
+  useEffect(() => {
+    if (companyCode && (sprintId || pathname.includes('/boardteam'))) {
+      fetchDefaultTeam();
+    }
+  }, [companyCode, sprintId, pathname]);
+
+  const fetchDefaultTeam = async () => {
+    try {
+      console.log('fetchDefaultTeam called, companyCode:', companyCode);
+      const response = await fetch(`/api/company/${companyCode}/teams`);
+      if (response.ok) {
+        const teams = await response.json();
+        console.log('Teams fetched:', teams);
+        const defaultTeam = teams.find((t: any) => t.isDefault);
+        console.log('Default team:', defaultTeam);
+        if (defaultTeam) {
+          console.log('Setting defaultTeamId to:', defaultTeam.id);
+          setDefaultTeamId(defaultTeam.id);
+        } else {
+          console.log('No default team found, using first team');
+          if (teams.length > 0) {
+            console.log('Setting defaultTeamId to first team:', teams[0].id);
+            setDefaultTeamId(teams[0].id);
+          }
+        }
+      } else {
+        console.log('Failed to fetch teams, status:', response.status);
+      }
+    } catch (error) {
+      console.error('Failed to fetch default team:', error);
+    }
+  };
 
   const handleCreateTask = () => {
     if (input.trim()) {
@@ -94,6 +128,7 @@ export default function Dock({ onTaskCreated }: { onTaskCreated?: () => void }) 
         onClose={() => setShowCreateTaskModal(false)}
         companyCode={companyCode}
         sprintId={sprintId}
+        teamId={sprintId || defaultTeamId}
         onTaskCreated={onTaskCreated}
       />
     </>

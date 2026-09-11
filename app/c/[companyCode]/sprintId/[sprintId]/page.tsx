@@ -62,21 +62,61 @@ export default function SprintPage() {
   const [attachmentPreviews, setAttachmentPreviews] = useState<Record<string, string>>({});
   const [nonImageFileIds, setNonImageFileIds] = useState<Record<string, string[]>>({});
   const [teamMembers, setTeamMembers] = useState<string[]>([]);
+  const [teamName, setTeamName] = useState<string>(companyCode);
   const fetchDataRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch team members for this sprint
+        // Fetch sprint to get team data
         let membersToDisplay: string[] = [];
+        let displayTeamName = companyCode;
+
+        // Read URL params for teamName
+        let urlTeamName = '';
+        if (typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search);
+          urlTeamName = params.get('teamName') || '';
+          if (urlTeamName) {
+            displayTeamName = decodeURIComponent(urlTeamName);
+            console.log('Read from URL: displayTeamName=', displayTeamName);
+          }
+        }
+
+        // If no URL param, try to fetch from sprint API
+        if (!urlTeamName) {
+          try {
+            const sprintRes = await fetch(`/api/sprints/${sprintId}`);
+            if (sprintRes.ok) {
+              const sprintData = await sprintRes.json();
+              if (sprintData.teamName) {
+                displayTeamName = sprintData.teamName;
+                console.log('Got teamName from sprint API:', displayTeamName);
+              }
+            }
+          } catch (error) {
+            console.error('Failed to fetch sprint:', error);
+          }
+        }
+
+        console.log('Final displayTeamName before fetch teams:', displayTeamName);
+        setTeamName(displayTeamName);
+
+        // Fetch team members for this sprint
         try {
           const teamsRes = await fetch(`/api/company/${companyCode}/teams`);
           const teamsList = await teamsRes.json();
-          const defaultTeam = teamsList.find((t: any) => t.isDefault);
-          if (defaultTeam?.members) {
-            membersToDisplay = defaultTeam.members;
-            setTeamMembers(defaultTeam.members);
+          console.log('Teams:', teamsList);
+          const targetTeam = teamsList.find((t: any) => t.name === displayTeamName) || teamsList.find((t: any) => t.isDefault) || teamsList[0];
+          console.log('Target team:', targetTeam, 'displayTeamName=', displayTeamName);
+          console.log('Target team members:', targetTeam?.members);
+          if (targetTeam) {
+            if (targetTeam.members && targetTeam.members.length > 0) {
+              membersToDisplay = targetTeam.members;
+              setTeamMembers(targetTeam.members);
+            }
           }
+          console.log('Team members to display:', membersToDisplay);
         } catch (error) {
           console.error('Failed to fetch teams:', error);
         }
@@ -86,11 +126,14 @@ export default function SprintPage() {
         const employeesList = await empRes.json();
         console.log('Fetched employees:', employeesList);
 
-        // Filter employees by team members if team members exist
-        const filteredEmployees = membersToDisplay.length > 0
-          ? employeesList.filter((emp: any) => membersToDisplay.includes(emp.id || emp._id))
-          : employeesList;
+        // Filter employees by team members
+        // Only show employees who are in the team
+        // If team has no members, show no employees
+        const filteredEmployees = employeesList.filter((emp: any) =>
+          membersToDisplay.includes(emp.id || emp._id)
+        );
 
+        console.log('Filtered employees:', filteredEmployees);
         setEmployees(filteredEmployees);
         if (employeesList.length > 0) {
           console.log('First employee:', employeesList[0]);
@@ -104,7 +147,7 @@ export default function SprintPage() {
         console.log('Fetched tasks:', tasks);
 
         // Group tasks by employee and lane
-        const cardData: EmployeeCard[] = employeesList.map((emp: any) => {
+        const cardData: EmployeeCard[] = filteredEmployees.map((emp: any) => {
           const empId = emp.id || emp._id;
           const empTasks = tasks.filter((t: any) => {
             const taskAssignees = Array.isArray(t.assignees) && t.assignees.length > 0
@@ -229,7 +272,7 @@ export default function SprintPage() {
           </svg>
         </button>
         <span className="font-semibold text-white text-lg truncate">
-          {companyCode}
+          {teamName}
         </span>
       </div>
       <div className="flex items-start justify-start p-6 overflow-auto h-full pt-32">

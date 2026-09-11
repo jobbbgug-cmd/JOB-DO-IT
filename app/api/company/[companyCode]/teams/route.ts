@@ -24,6 +24,7 @@ export async function GET(
       description: team.description || null,
       memberCount: team.members?.length || 0,
       isDefault: team.isDefault || false,
+      members: team.members || [],
     }));
 
     return NextResponse.json(formattedTeams);

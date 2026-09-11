@@ -9,15 +9,17 @@ interface CreateTaskModalProps {
   onClose: () => void;
   companyCode?: string;
   sprintId?: string;
+  teamId?: string;
   onTaskCreated?: () => void;
 }
 
 interface Employee {
   id: string;
   name: string;
+  color?: string;
 }
 
-export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId, onTaskCreated }: CreateTaskModalProps) {
+export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId, teamId, onTaskCreated }: CreateTaskModalProps) {
   const { user } = useAuthStore();
   const [taskName, setTaskName] = useState('');
   const [description, setDescription] = useState('');
@@ -32,6 +34,8 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [allEmployees, setAllEmployees] = useState<Employee[]>([]);
+  const [teamMembers, setTeamMembers] = useState<string[]>([]);
   const [showEmpPicker, setShowEmpPicker] = useState(false);
   const [empSearchTerm, setEmpSearchTerm] = useState<string>('');
   const [reminderDate, setReminderDate] = useState<string>('');
@@ -95,24 +99,50 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
   };
 
   useEffect(() => {
-    if (isOpen && companyCode) {
-      fetchEmployees();
+    if (isOpen && companyCode && teamId) {
+      fetchData();
+    } else if (isOpen && companyCode && !teamId) {
+      console.log('Modal open but no teamId yet, waiting...');
     }
-  }, [isOpen, companyCode]);
+  }, [isOpen, companyCode, teamId]);
 
-  const fetchEmployees = async () => {
+  const fetchData = async () => {
     try {
+      console.log('fetchData called with teamId:', teamId, 'companyCode:', companyCode);
       const response = await fetch(`/api/employees/${companyCode}`);
       if (response.ok) {
         const data = await response.json();
         const transformed = data.map((emp: any) => ({
           id: emp.id || emp._id,
           name: emp.name,
+          color: emp.color || '#0E9384',
         }));
-        setEmployees(transformed);
+        setAllEmployees(transformed);
+        console.log('All employees:', transformed);
+
+        if (teamId) {
+          console.log('Fetching team data for teamId:', teamId);
+          const teamResponse = await fetch(`/api/company/${companyCode}/teams/${teamId}`);
+          if (teamResponse.ok) {
+            const team = await teamResponse.json();
+            console.log('Team data:', team);
+            const members = team.members || [];
+            console.log('Team members:', members);
+            setTeamMembers(members);
+            const filtered = transformed.filter((emp) => members.includes(emp.id));
+            console.log('Filtered employees:', filtered);
+            setEmployees(filtered);
+          } else {
+            console.log('Failed to fetch team');
+            setEmployees(transformed);
+          }
+        } else {
+          console.log('No teamId, showing all employees');
+          setEmployees(transformed);
+        }
       }
     } catch (error) {
-      console.error('Failed to fetch employees:', error);
+      console.error('Failed to fetch data:', error);
     }
   };
 
@@ -361,9 +391,7 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
                         .slice(0, 3)
                         .map((emp, idx) => {
                           const initials = emp.name.substring(0, 2).toUpperCase();
-                          const colors = ['#5B7FB0', '#E4572E', '#0E9384', '#C98A0E', '#D2504F'];
-                          const colorIndex = emp.id.charCodeAt(0) % colors.length;
-                          const bgColor = colors[colorIndex];
+                          const bgColor = emp.color || '#0E9384';
                           return (
                             <div
                               key={emp.id}
@@ -410,9 +438,7 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
                         .map((emp) => {
                           const isSelected = assignees.includes(emp.id);
                           const initials = emp.name.substring(0, 2).toUpperCase();
-                          const colors = ['#5B7FB0', '#E4572E', '#0E9384', '#C98A0E', '#D2504F'];
-                          const colorIndex = emp.id.charCodeAt(0) % colors.length;
-                          const bgColor = colors[colorIndex];
+                          const bgColor = emp.color || '#0E9384';
 
                           return (
                             <button

@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 interface ISprint extends Document {
   name: string;
   project: mongoose.Types.ObjectId;
+  teamId?: mongoose.Types.ObjectId;
   startDate: Date;
   endDate: Date;
   status: 'planning' | 'active' | 'completed';
@@ -22,6 +23,10 @@ const sprintSchema = new Schema<ISprint>(
       type: Schema.Types.ObjectId,
       ref: 'Project',
       required: true,
+    },
+    teamId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Team',
     },
     startDate: Date,
     endDate: Date,

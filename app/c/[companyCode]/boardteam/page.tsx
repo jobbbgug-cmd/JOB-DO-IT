@@ -142,8 +142,13 @@ export default function TeamBoard() {
             {teams.map((team) => (
               <button
                 key={team.id}
-                onClick={() => router.push(`/c/${companyCode}/sprintId/${team.id}`)}
-                className="text-left border border-gray-700 rounded-lg bg-gray-800/30 hover:bg-gray-800/50 transition-colors p-4 group"
+                onClick={() => {
+                  console.log('Team card clicked:', team.id, 'companyCode:', companyCode);
+                  const url = new URL(`http://localhost:3000/c/${companyCode}/sprintId/${team.id}`);
+                  url.searchParams.set('teamName', team.name);
+                  router.push(url.pathname + url.search);
+                }}
+                className="text-left border border-gray-700 rounded-lg bg-gray-800/30 hover:bg-gray-800/50 transition-colors p-4 group cursor-pointer"
               >
                 {/* Team Card Head */}
                 <div className="mb-3 flex items-start justify-between gap-2">
@@ -192,14 +197,31 @@ export default function TeamBoard() {
                       );
                     })()
                   ) : (
-                    // Other teams - show member count
-                    <div className="text-xs text-gray-500">
+                    <>
                       {team.memberCount === 0 ? (
-                        <p>ยังไม่มีสมาชิกในทีมนี้</p>
+                        <p className="text-xs text-gray-500">ยังไม่มีสมาชิกในทีมนี้</p>
                       ) : (
-                        <p>สมาชิก {team.memberCount} คน</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {employees
+                            .filter((emp: any) => (team as any).members?.includes(emp.id || emp._id))
+                            .slice(0, 5)
+                            .map((emp: any) => (
+                              <div
+                                key={emp.id}
+                                className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-colors"
+                              >
+                                <div
+                                  className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
+                                  style={{ backgroundColor: emp.color || '#0E9384' }}
+                                >
+                                  {emp.name.substring(0, 2).toUpperCase()}
+                                </div>
+                                <span>{emp.name}</span>
+                              </div>
+                            ))}
+                        </div>
                       )}
-                    </div>
+                    </>
                   )}
                 </div>
 

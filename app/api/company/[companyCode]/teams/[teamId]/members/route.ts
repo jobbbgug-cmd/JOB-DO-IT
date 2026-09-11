@@ -19,21 +19,38 @@ export async function PUT(
   try {
     await connectDB();
     const { companyCode, teamId } = await params;
-    const { members } = await request.json();
-
-    if (!Array.isArray(members)) {
-      return NextResponse.json(
-        { error: 'Members must be an array' },
-        { status: 400 }
-      );
-    }
+    const body = await request.json();
+    const { members, name, description } = body;
 
     const team = await Team.findOne({ _id: teamId, companyCode });
     if (!team) {
       return NextResponse.json({ error: 'Team not found' }, { status: 404 });
     }
 
-    team.members = members;
+    if (members !== undefined) {
+      if (!Array.isArray(members)) {
+        return NextResponse.json(
+          { error: 'Members must be an array' },
+          { status: 400 }
+        );
+      }
+      team.members = members;
+    }
+
+    if (name !== undefined) {
+      if (!name || !name.trim()) {
+        return NextResponse.json(
+          { error: 'Team name required' },
+          { status: 400 }
+        );
+      }
+      team.name = name;
+    }
+
+    if (description !== undefined) {
+      team.description = description || null;
+    }
+
     await team.save();
 
     return NextResponse.json(
@@ -42,6 +59,7 @@ export async function PUT(
         team: {
           id: team._id,
           name: team.name,
+          description: team.description,
           members: team.members,
           memberCount: team.members.length,
         },
@@ -49,9 +67,9 @@ export async function PUT(
       { status: 200 }
     );
   } catch (error) {
-    console.error('Update team members error:', error);
+    console.error('Update team error:', error);
     return NextResponse.json(
-      { error: 'Failed to update team members' },
+      { error: 'Failed to update team' },
       { status: 500 }
     );
   }

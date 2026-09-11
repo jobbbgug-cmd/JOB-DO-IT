@@ -33,9 +33,14 @@ export default function TeamsPage() {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showEditMembersModal, setShowEditMembersModal] = useState(false);
+  const [showEditTeamModal, setShowEditTeamModal] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [teamForm, setTeamForm] = useState({
+    name: '',
+    description: '',
+  });
+  const [editTeamForm, setEditTeamForm] = useState({
     name: '',
     description: '',
   });
@@ -136,6 +141,45 @@ export default function TeamsPage() {
     }
   };
 
+  const handleEditTeam = (team: Team) => {
+    setSelectedTeam(team);
+    setEditTeamForm({
+      name: team.name,
+      description: team.description || '',
+    });
+    setShowEditTeamModal(true);
+  };
+
+  const handleSaveEditTeam = async () => {
+    if (!selectedTeam || !editTeamForm.name.trim()) {
+      alert('กรุณากรอกชื่อทีม');
+      return;
+    }
+    setLoading(true);
+    try {
+      await axios.put(
+        `/api/company/${companyCode}/teams/${selectedTeam.id}`,
+        {
+          name: editTeamForm.name,
+          description: editTeamForm.description || null,
+        }
+      );
+      setTeams(teams.map(t =>
+        t.id === selectedTeam.id
+          ? { ...t, name: editTeamForm.name, description: editTeamForm.description || null }
+          : t
+      ));
+      setShowEditTeamModal(false);
+      setSelectedTeam(null);
+      setEditTeamForm({ name: '', description: '' });
+    } catch (error) {
+      console.error('Failed to update team:', error);
+      alert('แก้ไขทีมไม่สำเร็จ');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Teams Section */}
@@ -171,7 +215,10 @@ export default function TeamsPage() {
                     >
                       แก้ไขสมาชิก
                     </button>
-                    <button className="text-cyan-400 hover:text-cyan-300 transition-colors">
+                    <button
+                      onClick={() => handleEditTeam(team)}
+                      className="text-cyan-400 hover:text-cyan-300 transition-colors"
+                    >
                       แก้ไข
                     </button>
                     {!team.isDefault && (
@@ -216,14 +263,31 @@ export default function TeamsPage() {
                     );
                   })()
                 ) : (
-                  // Other teams - show member count
-                  <div className="text-xs text-gray-500">
+                  <>
                     {team.memberCount === 0 ? (
-                      <p>ยังไม่มีสมาชิกในทีมนี้</p>
+                      <p className="text-xs text-gray-500">ยังไม่มีสมาชิกในทีมนี้</p>
                     ) : (
-                      <p>สมาชิก {team.memberCount} คน</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {employees
+                          .filter((emp: any) => (team as any).members?.includes(emp.id || emp._id))
+                          .slice(0, 5)
+                          .map((emp: any) => (
+                            <div
+                              key={emp.id}
+                              className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-colors"
+                            >
+                              <div
+                                className="w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
+                                style={{ backgroundColor: emp.color || '#0E9384' }}
+                              >
+                                {emp.name.substring(0, 2).toUpperCase()}
+                              </div>
+                              <span>{emp.name}</span>
+                            </div>
+                          ))}
+                      </div>
                     )}
-                  </div>
+                  </>
                 )}
               </div>
             </div>
@@ -307,51 +371,117 @@ export default function TeamsPage() {
         </div>
       )}
 
-      {/* Edit Members Modal */}
+      {/* Edit Members Inline - shown in team card */}
       {showEditMembersModal && selectedTeam && canManageTeams && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full space-y-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => {
+          setShowEditMembersModal(false);
+          setSelectedTeam(null);
+          setSelectedMembers([]);
+        }}>
+          <div className="bg-gray-800 rounded-lg p-6 max-w-3xl w-full space-y-4" onClick={e => e.stopPropagation()}>
             <h1 className="text-xl font-bold text-white">แก้ไขสมาชิก: {selectedTeam.name}</h1>
-
-            <div className="bg-gray-700/30 rounded p-4">
-              <p className="text-sm text-gray-300 mb-4">เลือกสมาชิกที่จะอยู่ในทีมนี้</p>
-              <div className="flex flex-wrap gap-2">
-                {employees.map(emp => (
-                  <button
-                    key={emp.id}
-                    onClick={() => toggleMember(emp.id)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded transition-all ${
-                      selectedMembers.includes(emp.id)
-                        ? 'bg-cyan-600 text-white'
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    }`}
+            <p className="text-sm text-gray-400">คลิกเพื่อเพิ่ม/นำออกจากทีม</p>
+            <div className="flex flex-wrap gap-2 bg-gray-700/30 rounded p-4">
+              {employees.map(emp => (
+                <button
+                  key={emp.id}
+                  onClick={() => toggleMember(emp.id)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded transition-all ${
+                    selectedMembers.includes(emp.id)
+                      ? 'bg-cyan-600 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
+                    style={{ backgroundColor: emp.color || '#0E9384' }}
                   >
-                    <div
-                      className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-                      style={{ backgroundColor: emp.color || '#0E9384' }}
-                    >
-                      {emp.name.substring(0, 2).toUpperCase()}
-                    </div>
-                    <span className="text-sm">{emp.name}</span>
-                  </button>
-                ))}
-              </div>
+                    {emp.name.substring(0, 2).toUpperCase()}
+                  </div>
+                  <span className="text-sm">{emp.name}</span>
+                </button>
+              ))}
             </div>
-
-            <div className="flex gap-2 justify-end pt-4">
+            <div className="flex gap-2 justify-end">
               <button
                 onClick={() => {
                   setShowEditMembersModal(false);
                   setSelectedTeam(null);
                   setSelectedMembers([]);
                 }}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm font-medium"
+              >
+                ปิด
+              </button>
+              <button
+                onClick={handleSaveMembers}
+                disabled={loading}
+                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 text-white rounded text-sm font-medium"
+              >
+                {loading ? 'บันทึก...' : 'บันทึก'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Team Modal */}
+      {showEditTeamModal && selectedTeam && canManageTeams && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => {
+          setShowEditTeamModal(false);
+          setSelectedTeam(null);
+        }}>
+          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <h1 className="text-xl font-bold text-white">แก้ไขทีม: {selectedTeam.name}</h1>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-400 block mb-2">
+                  ชื่อทีม
+                </label>
+                <input
+                  type="text"
+                  maxLength={80}
+                  placeholder="ชื่อทีม"
+                  value={editTeamForm.name}
+                  onChange={(e) =>
+                    setEditTeamForm({ ...editTeamForm, name: e.target.value })
+                  }
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-400 block mb-2">
+                  รายละเอียดทีม{' '}
+                  <span className="text-gray-500">(ไม่บังคับ)</span>
+                </label>
+                <textarea
+                  rows={4}
+                  maxLength={500}
+                  placeholder="รายละเอียดทีม…"
+                  value={editTeamForm.description}
+                  onChange={(e) =>
+                    setEditTeamForm({ ...editTeamForm, description: e.target.value })
+                  }
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-vertical"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end pt-4">
+              <button
+                onClick={() => {
+                  setShowEditTeamModal(false);
+                  setSelectedTeam(null);
+                }}
                 className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm font-medium transition-colors"
               >
                 ยกเลิก
               </button>
               <button
-                onClick={handleSaveMembers}
-                disabled={loading}
+                onClick={handleSaveEditTeam}
+                disabled={loading || !editTeamForm.name.trim()}
                 className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors"
               >
                 {loading ? 'บันทึก...' : 'บันทึก'}
