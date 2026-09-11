@@ -38,7 +38,8 @@ export default function LoginClient() {
       }
     } else {
       const nameFromEmail = formData.email.split('@')[0];
-      result = await register(nameFromEmail, formData.email, formData.password, 'owner');
+      const role = inviteCode ? 'employee' : 'owner';
+      result = await register(nameFromEmail, formData.email, formData.password, role);
       if (result.success) {
         if (inviteCode) {
           localStorage.setItem('inviteCode', inviteCode);
