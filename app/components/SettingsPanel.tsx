@@ -13,6 +13,8 @@ export default function SettingsPanel() {
   const [email, setEmail] = useState('');
   const [theme, setTheme] = useState('system');
   const [zoom, setZoom] = useState(150);
+  const [isSaving, setIsSaving] = useState(false);
+  const [displayNameChanged, setDisplayNameChanged] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -21,7 +23,54 @@ export default function SettingsPanel() {
     }
   }, [user]);
 
+  useEffect(() => {
+    // Load theme and zoom from localStorage
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme') || 'system';
+      const savedZoom = parseInt(localStorage.getItem('zoom') || '150');
+      setTheme(savedTheme);
+      setZoom(savedZoom);
+    }
+  }, []);
+
   if (!settingsOpen) return null;
+
+  const handleSaveName = async () => {
+    if (!displayName.trim() || displayName === user?.name) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: displayName.trim() }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update auth store if needed
+        alert('บันทึกชื่อสำเร็จ');
+        setDisplayNameChanged(false);
+      }
+    } catch (error) {
+      console.error('Save name error:', error);
+      alert('บันทึกชื่อไม่สำเร็จ');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleThemeChange = (newTheme: string) => {
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  };
+
+  const handleZoomChange = (delta: number) => {
+    const newZoom = Math.max(100, Math.min(200, zoom + delta));
+    setZoom(newZoom);
+    localStorage.setItem('zoom', newZoom.toString());
+    document.documentElement.style.zoom = `${newZoom}%`;
+  };
 
   const handleLogout = () => {
     logout();
@@ -95,11 +144,18 @@ export default function SettingsPanel() {
                   type="text"
                   placeholder="ชื่อที่แสดง"
                   value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
+                  onChange={(e) => {
+                    setDisplayName(e.target.value);
+                    setDisplayNameChanged(e.target.value !== user?.name);
+                  }}
                   className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none text-sm"
                 />
-                <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-medium rounded-lg transition-colors text-sm" disabled>
-                  บันทึก
+                <button
+                  onClick={handleSaveName}
+                  disabled={!displayNameChanged || isSaving}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-medium rounded-lg transition-colors text-sm"
+                >
+                  {isSaving ? 'กำลัง...' : 'บันทึก'}
                 </button>
               </div>
             </div>
@@ -136,7 +192,7 @@ export default function SettingsPanel() {
               {['light', 'dark', 'system'].map((t) => (
                 <button
                   key={t}
-                  onClick={() => setTheme(t)}
+                  onClick={() => handleThemeChange(t)}
                   className={`flex-1 px-3 py-2 rounded-lg font-medium text-sm transition-colors ${
                     theme === t
                       ? 'bg-blue-600 text-white'
@@ -157,14 +213,14 @@ export default function SettingsPanel() {
             </div>
             <div className="flex items-center justify-center gap-4 bg-gray-700 rounded-lg p-3">
               <button
-                onClick={() => setZoom(Math.max(100, zoom - 10))}
+                onClick={() => handleZoomChange(-10)}
                 className="px-3 py-1 hover:text-white text-gray-400 transition-colors"
               >
                 −
               </button>
               <div className="w-16 text-center text-sm font-semibold text-white">{zoom}%</div>
               <button
-                onClick={() => setZoom(Math.min(200, zoom + 10))}
+                onClick={() => handleZoomChange(10)}
                 className="px-3 py-1 hover:text-white text-gray-400 transition-colors"
               >
                 +

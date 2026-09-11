@@ -16,6 +16,7 @@ interface TaskDetailModalProps {
 const COLORS = ['#0E9384', '#E4572E', '#5B7FB0', '#B4479A', '#C98A0E', '#3F6E4B', '#8A5CF6', '#D2504F'];
 
 export default function TaskDetailModal({ task, onClose, onEdit, onTaskUpdated, employees = [], companyCode = '', isReadOnly = false }: TaskDetailModalProps) {
+  console.log('TaskDetailModal received props: onEdit type:', typeof onEdit, 'task:', task?.id);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachments, setAttachments] = useState<{ file: File; preview: string }[]>([]);
   const [creatorName, setCreatorName] = useState<string>('');
@@ -26,23 +27,18 @@ export default function TaskDetailModal({ task, onClose, onEdit, onTaskUpdated, 
       return;
     }
 
-    const fetchCreator = async () => {
-      try {
-        const res = await fetch(`/api/users/${task.createdBy}`);
-        if (res.ok) {
-          const user = await res.json();
-          setCreatorName(user.name || task.createdBy);
-        } else {
-          setCreatorName(task.createdBy);
-        }
-      } catch (error) {
-        console.error('Failed to fetch creator:', error);
-        setCreatorName(task.createdBy);
-      }
-    };
+    // หาชื่อผู้สร้างจาก employees array
+    const creator = employees.find((emp: any) =>
+      String(emp.userId || emp.id || emp._id) === String(task.createdBy) ||
+      String(emp.id || emp._id) === String(task.createdBy)
+    );
 
-    fetchCreator();
-  }, [task?.createdBy]);
+    if (creator) {
+      setCreatorName(creator.name);
+    } else {
+      setCreatorName(task.createdBy);
+    }
+  }, [task?.createdBy, employees]);
 
   useEffect(() => {
     if (task?.attachments && Array.isArray(task.attachments) && task.attachments.length > 0) {
@@ -377,6 +373,7 @@ export default function TaskDetailModal({ task, onClose, onEdit, onTaskUpdated, 
 
           {!isReadOnly && (
             <>
+              {console.log('TaskDetailModal: Buttons section rendered, isReadOnly:', isReadOnly)}
               <div className="mb-4">
                 <button
                   onClick={handleFileAttach}
@@ -405,9 +402,17 @@ export default function TaskDetailModal({ task, onClose, onEdit, onTaskUpdated, 
                   เสร็จ
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
+                    console.log('===== Edit button CLICKED =====');
+                    console.log('onEdit exists:', !!onEdit);
+                    console.log('task exists:', !!task);
+                    console.log('task.id:', task?.id);
+                    console.log('Calling onEdit now...');
                     onEdit?.(task);
+                    console.log('Calling onClose now...');
                     onClose();
+                    console.log('===== Edit button handler finished =====');
                   }}
                   className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition"
                 >

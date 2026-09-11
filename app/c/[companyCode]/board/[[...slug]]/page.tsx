@@ -231,7 +231,7 @@ export default function BoardPage() {
       {/* Edit/Delete Buttons - Top Right (Only if editable) */}
       {!cardIsReadOnly && (
         <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-          <button onClick={() => setSelectedTask(task)} className="p-1 hover:bg-gray-700/60 rounded transition-colors" title="แก้ไข">
+          <button onClick={(e) => { e.stopPropagation(); setEditingTask(task); }} className="p-1 hover:bg-gray-700/60 rounded transition-colors" title="แก้ไข">
             <svg className="w-4 h-4 text-gray-300 hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
             </svg>
@@ -326,15 +326,17 @@ export default function BoardPage() {
       <div className="hidden lg:block space-y-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-start gap-4">
-            <button
-              onClick={() => router.push(`/c/${companyCode}/sprintId/6a98521598e246e523adb0ea`)}
-              className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-cyan-400 transition-colors mt-1"
-              title="กลับ"
-            >
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 12H5M12 19l-7-7 7-7"></path>
-              </svg>
-            </button>
+            {assigneeFilter && (
+              <button
+                onClick={() => router.push(`/c/${companyCode}/boardteam`)}
+                className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-cyan-400 transition-colors mt-1"
+                title="กลับ"
+              >
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 19l-7-7 7-7"></path>
+                </svg>
+              </button>
+            )}
             <div className="space-y-2">
               <h1 className="text-2xl sm:text-3xl font-bold text-white">
                 {assigneeFilter ? `บอร์ดงานของ ${viewingUserName}` : 'บอร์ดงาน'}
@@ -551,6 +553,7 @@ export default function BoardPage() {
         task={selectedTask}
         onClose={() => setSelectedTask(null)}
         onEdit={(editTask: any) => {
+          console.log('onEdit callback received, task:', editTask?.id);
           setEditingTask(editTask);
           setSelectedTask(null);
         }}
@@ -562,6 +565,7 @@ export default function BoardPage() {
         companyCode={companyCode}
         isReadOnly={isReadOnly}
       />
+      {selectedTask && console.log('TaskDetailModal shown, isReadOnly:', isReadOnly, 'selectedTask:', selectedTask?.id)}
 
       {/* Edit Task Modal */}
       <EditTaskModal

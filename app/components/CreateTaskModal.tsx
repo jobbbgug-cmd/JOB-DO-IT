@@ -108,36 +108,43 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
 
   const fetchData = async () => {
     try {
-      console.log('fetchData called with teamId:', teamId, 'companyCode:', companyCode);
+      console.log('=== CreateTaskModal fetchData ===');
+      console.log('teamId:', teamId, '| companyCode:', companyCode);
+
       const response = await fetch(`/api/employees/${companyCode}`);
       if (response.ok) {
         const data = await response.json();
+        console.log('All employees count:', data.length);
+
         const transformed = data.map((emp: any) => ({
           id: emp.id || emp._id,
           name: emp.name,
           color: emp.color || '#0E9384',
         }));
         setAllEmployees(transformed);
-        console.log('All employees:', transformed);
 
         if (teamId) {
-          console.log('Fetching team data for teamId:', teamId);
+          console.log('Fetching team for teamId:', teamId);
           const teamResponse = await fetch(`/api/company/${companyCode}/teams/${teamId}`);
           if (teamResponse.ok) {
             const team = await teamResponse.json();
-            console.log('Team data:', team);
+            console.log('Team members array:', team.members);
             const members = team.members || [];
-            console.log('Team members:', members);
             setTeamMembers(members);
-            const filtered = transformed.filter((emp) => members.includes(emp.id));
-            console.log('Filtered employees:', filtered);
+
+            const filtered = transformed.filter((emp) => {
+              const isIncluded = members.includes(emp.id);
+              console.log(`Employee ${emp.name} (${emp.id}) - included: ${isIncluded}`);
+              return isIncluded;
+            });
+            console.log('Final filtered count:', filtered.length);
             setEmployees(filtered);
           } else {
-            console.log('Failed to fetch team');
+            console.log('Team fetch failed, status:', teamResponse.status);
             setEmployees(transformed);
           }
         } else {
-          console.log('No teamId, showing all employees');
+          console.log('No teamId, showing all');
           setEmployees(transformed);
         }
       }

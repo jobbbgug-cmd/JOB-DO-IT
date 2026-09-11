@@ -417,7 +417,18 @@ export default function SprintPage() {
                           </button>
                         </div>
                         <div onClick={() => setSelectedTask(task)}>
-                          <div style={{fontWeight: '600', color: '#f3f4f6', marginBottom: '0.5rem', fontSize: '0.875rem', width: '100%', wordBreak: 'break-word', overflow: 'visible', whiteSpace: 'normal'}}>{task.title}</div>
+                          <div className="flex items-start gap-2 mb-2">
+                            <div style={{fontWeight: '600', color: '#f3f4f6', fontSize: '0.875rem', flex: 1, wordBreak: 'break-word', overflow: 'visible', whiteSpace: 'normal'}}>{task.title}</div>
+                            {task.assignees && task.assignees.length === 1 && (
+                              <span className="task-private-chip" title="งานส่วนตัว — เห็นเฉพาะผู้ถืองานกับเจ้าของบริษัท" style={{display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.125rem 0.5rem', backgroundColor: '#374151', color: '#9CA3AF', borderRadius: '0.25rem', fontSize: '0.625rem', fontWeight: 500, flexShrink: 0}}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink: 0}}>
+                                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+                                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                                ส่วนตัว
+                              </span>
+                            )}
+                          </div>
                           {task.attachments && task.attachments.length > 0 && (
                             <div className="grid grid-cols-3 gap-1 mb-2">
                               {console.log(`Task ${task.id} has ${task.attachments.length} attachments:`, task.attachments)}
@@ -537,7 +548,18 @@ export default function SprintPage() {
                           </button>
                         </div>
                         <div onClick={() => setSelectedTask(task)}>
-                          <div style={{fontWeight: '600', color: '#f3f4f6', marginBottom: '0.5rem', fontSize: '0.875rem', width: '100%', wordBreak: 'break-word', overflow: 'visible', whiteSpace: 'normal'}}>{task.title}</div>
+                          <div className="flex items-start gap-2 mb-2">
+                            <div style={{fontWeight: '600', color: '#f3f4f6', fontSize: '0.875rem', flex: 1, wordBreak: 'break-word', overflow: 'visible', whiteSpace: 'normal'}}>{task.title}</div>
+                            {task.assignees && task.assignees.length === 1 && (
+                              <span className="task-private-chip" title="งานส่วนตัว — เห็นเฉพาะผู้ถืองานกับเจ้าของบริษัท" style={{display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.125rem 0.5rem', backgroundColor: '#374151', color: '#9CA3AF', borderRadius: '0.25rem', fontSize: '0.625rem', fontWeight: 500, flexShrink: 0}}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink: 0}}>
+                                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+                                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                                ส่วนตัว
+                              </span>
+                            )}
+                          </div>
                           {task.attachments && task.attachments.length > 0 && (
                             <div className="flex gap-1 mb-2 items-center">
                               {task.attachments.map((attId: string, idx: number) => (

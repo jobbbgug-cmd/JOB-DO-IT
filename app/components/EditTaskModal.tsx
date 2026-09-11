@@ -328,7 +328,11 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
     onClose();
   };
 
-  if (!task) return null;
+  console.log('EditTaskModal render, task:', task?.id);
+  if (!task) {
+    console.log('EditTaskModal: task is null, returning null');
+    return null;
+  }
 
   const isFormValid = taskName.trim().length > 0;
 
