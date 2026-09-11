@@ -1,4 +1,5 @@
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
@@ -107,7 +108,7 @@ export default function EmployeesPage() {
 
   const fetchMembers = async () => {
     try {
-      const response = await fetch(`/api/company/${companyCode}/members`);
+      const response = await fetch(getApiUrl(`/api/company/${companyCode}/members`));
       if (response.ok) {
         const data = await response.json();
         setMembers(data);
@@ -119,7 +120,7 @@ export default function EmployeesPage() {
 
   const fetchEmployees = async () => {
     try {
-      const response = await fetch(`/api/employees/${companyCode}`);
+      const response = await fetch(getApiUrl(`/api/employees/${companyCode}`));
       if (response.ok) {
         const data = await response.json();
         console.log('Fetched employees:', data);
@@ -149,7 +150,7 @@ export default function EmployeesPage() {
 
   const fetchEmployeeOptions = async () => {
     try {
-      const response = await fetch(`/api/employees/${companyCode}/list`);
+      const response = await fetch(getApiUrl(`/api/employees/${companyCode}/list`));
       if (response.ok) {
         const data = await response.json();
         setEmployeeOptions(data);

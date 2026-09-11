@@ -1,4 +1,5 @@
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
@@ -23,7 +24,7 @@ export default function Dock({ onTaskCreated }: { onTaskCreated?: () => void }) 
   const fetchDefaultTeam = async () => {
     try {
       console.log('fetchDefaultTeam called, companyCode:', companyCode);
-      const response = await fetch(`/api/company/${companyCode}/teams`);
+      const response = await fetch(getApiUrl(`/api/company/${companyCode}/teams`));
       if (response.ok) {
         const teams = await response.json();
         console.log('Teams fetched:', teams);

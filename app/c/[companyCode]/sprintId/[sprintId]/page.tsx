@@ -1,4 +1,5 @@
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -86,7 +87,7 @@ export default function SprintPage() {
         // If no URL param, try to fetch from sprint API
         if (!urlTeamName) {
           try {
-            const sprintRes = await fetch(`/api/sprints/${sprintId}`);
+            const sprintRes = await fetch(getApiUrl(`/api/sprints/${sprintId}`));
             if (sprintRes.ok) {
               const sprintData = await sprintRes.json();
               if (sprintData.teamName) {
@@ -104,7 +105,7 @@ export default function SprintPage() {
 
         // Fetch team members for this sprint
         try {
-          const teamsRes = await fetch(`/api/company/${companyCode}/teams`);
+          const teamsRes = await fetch(getApiUrl(`/api/company/${companyCode}/teams`));
           const teamsList = await teamsRes.json();
           console.log('Teams:', teamsList);
           const targetTeam = teamsList.find((t: any) => t.name === displayTeamName) || teamsList.find((t: any) => t.isDefault) || teamsList[0];
@@ -122,7 +123,7 @@ export default function SprintPage() {
         }
 
         // Fetch employees
-        const empRes = await fetch(`/api/employees/${companyCode}`);
+        const empRes = await fetch(getApiUrl(`/api/employees/${companyCode}`));
         const employeesList = await empRes.json();
         console.log('Fetched employees:', employeesList);
 
@@ -140,7 +141,7 @@ export default function SprintPage() {
         }
 
         // Fetch tasks for sprint
-        const tasksRes = await fetch(`/api/tasks?sprintId=${sprintId}&companyCode=${companyCode}`);
+        const tasksRes = await fetch(getApiUrl(`/api/tasks?sprintId=${sprintId}&companyCode=${companyCode}`));
         const tasks = await tasksRes.json();
         console.log('📋 Sprint tasks loaded:', tasks.length, 'tasks');
         console.log('First 3 tasks attachments:', tasks.slice(0, 3).map((t: any) => ({ title: t.title, attachments: t.attachments })));
@@ -238,7 +239,7 @@ export default function SprintPage() {
           if (!deleteTaskId || !deletingEmployeeId) return;
           setDeletingTaskId(deleteTaskId);
           try {
-            const res = await fetch(`/api/tasks/delete/${deleteTaskId}?employeeId=${deletingEmployeeId}`, {
+            const res = await fetch(getApiUrl(`/api/tasks/delete/${deleteTaskId}?employeeId=${deletingEmployeeId}`), {
               method: 'DELETE',
             });
             if (res.ok) {
@@ -478,7 +479,7 @@ export default function SprintPage() {
                                     return userCache[task.createdBy];
                                   }
                                   if (!userCache.hasOwnProperty(task.createdBy)) {
-                                    fetch(`/api/users/${task.createdBy}`)
+                                    fetch(getApiUrl(`/api/users/${task.createdBy}`))
                                       .then(res => res.json())
                                       .then(user => setUserCache(prev => ({ ...prev, [task.createdBy]: user.name || task.createdBy })))
                                       .catch(() => setUserCache(prev => ({ ...prev, [task.createdBy]: task.createdBy })));
@@ -608,7 +609,7 @@ export default function SprintPage() {
                                     return userCache[task.createdBy];
                                   }
                                   if (!userCache.hasOwnProperty(task.createdBy)) {
-                                    fetch(`/api/users/${task.createdBy}`)
+                                    fetch(getApiUrl(`/api/users/${task.createdBy}`))
                                       .then(res => res.json())
                                       .then(user => setUserCache(prev => ({ ...prev, [task.createdBy]: user.name || task.createdBy })))
                                       .catch(() => setUserCache(prev => ({ ...prev, [task.createdBy]: task.createdBy })));
@@ -712,7 +713,7 @@ function AttachmentThumbnail({ attId, onLoad }: { attId: string; onLoad?: (isIma
         }
 
         // Handle API ID format (MongoDB attachment ID)
-        const res = await fetch('/api/attachments/get', {
+        const res = await fetch(getApiUrl('/api/attachments/get'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: attId })

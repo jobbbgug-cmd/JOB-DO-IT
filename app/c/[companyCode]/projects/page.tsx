@@ -1,4 +1,5 @@
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -52,7 +53,7 @@ export default function ProjectsPage() {
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch(`/api/projects/${companyCode}`);
+      const response = await fetch(getApiUrl(`/api/projects/${companyCode}`));
       if (response.ok) {
         const data = await response.json();
         setProjects(data);
@@ -71,7 +72,7 @@ export default function ProjectsPage() {
     }
 
     try {
-      const response = await fetch(`/api/projects/${companyCode}`, {
+      const response = await fetch(getApiUrl(`/api/projects/${companyCode}`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

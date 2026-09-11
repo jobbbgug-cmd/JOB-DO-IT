@@ -1,4 +1,5 @@
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -52,7 +53,7 @@ export default function TeamsPage() {
 
   const fetchTeams = async () => {
     try {
-      const response = await fetch(`/api/company/${companyCode}/teams`);
+      const response = await fetch(getApiUrl(`/api/company/${companyCode}/teams`));
       if (response.ok) {
         const data = await response.json();
         setTeams(data);
@@ -64,7 +65,7 @@ export default function TeamsPage() {
 
   const fetchEmployees = async () => {
     try {
-      const response = await fetch(`/api/employees/${companyCode}`);
+      const response = await fetch(getApiUrl(`/api/employees/${companyCode}`));
       if (response.ok) {
         const data = await response.json();
         const transformed = data.map((emp: any) => ({

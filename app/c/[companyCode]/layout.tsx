@@ -1,4 +1,5 @@
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -21,7 +22,7 @@ export default function CompanyLayout({ children }: { children: React.ReactNode 
       }
 
       try {
-        const response = await fetch(`/api/company/${params.companyCode}`, {
+        const response = await fetch(getApiUrl(`/api/company/${params.companyCode}`), {
           headers: {
             Authorization: `Bearer ${token}`,
           },

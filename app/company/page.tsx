@@ -1,4 +1,5 @@
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -54,7 +55,7 @@ export default function CompanyPage() {
     if (!isCreateFormValid) return;
     setIsLoading(true);
     try {
-      const response = await fetch('/api/company/create', {
+      const response = await fetch(getApiUrl('/api/company/create'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

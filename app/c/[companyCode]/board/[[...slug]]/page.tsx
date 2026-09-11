@@ -1,5 +1,6 @@
 // @ts-nocheck
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -123,7 +124,7 @@ export default function BoardPage() {
 
   const fetchTasks = async () => {
     try {
-      const response = await fetch(`/api/tasks/${companyCode}`);
+      const response = await fetch(getApiUrl(`/api/tasks/${companyCode}`));
       if (response.ok) {
         const data = await response.json();
         setTasks(data || []);
@@ -135,7 +136,7 @@ export default function BoardPage() {
 
   const fetchEmployees = async () => {
     try {
-      const response = await fetch(`/api/employees/${companyCode}`);
+      const response = await fetch(getApiUrl(`/api/employees/${companyCode}`));
       if (response.ok) {
         const data = await response.json();
         setEmployees(data || []);
@@ -148,7 +149,7 @@ export default function BoardPage() {
   const handleDeleteTask = async (taskId: string) => {
     if (confirm('แน่ใจหรือว่าต้องการลบงานนี้?')) {
       try {
-        await fetch(`/api/tasks/${companyCode}/${taskId}`, {
+        await fetch(getApiUrl(`/api/tasks/${companyCode}/${taskId}`), {
           method: 'DELETE',
         });
         setTasks(tasks.filter(t => t.id !== taskId));
@@ -301,7 +302,7 @@ export default function BoardPage() {
                   return userCache[task.createdBy];
                 }
                 if (!userCache.hasOwnProperty(task.createdBy)) {
-                  fetch(`/api/users/${task.createdBy}`)
+                  fetch(getApiUrl(`/api/users/${task.createdBy}`))
                     .then(res => res.json())
                     .then(user => setUserCache(prev => ({ ...prev, [task.createdBy]: user.name || task.createdBy })))
                     .catch(() => setUserCache(prev => ({ ...prev, [task.createdBy]: task.createdBy })));
@@ -611,7 +612,7 @@ function AttachmentThumbnail({ attId }: { attId: string }) {
           return;
         }
 
-        const res = await fetch('/api/attachments/get', {
+        const res = await fetch(getApiUrl('/api/attachments/get'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: attId })

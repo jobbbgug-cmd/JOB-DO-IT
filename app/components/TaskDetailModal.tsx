@@ -1,4 +1,5 @@
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 import { useState, useRef, useEffect } from 'react';
 import type { Task } from '@/app/types/index';
@@ -69,7 +70,7 @@ export default function TaskDetailModal({ task, onClose, onEdit, onTaskUpdated, 
 
             // ถ้า ID เรียก API
             try {
-              const res = await fetch(`/api/attachments/${att}`);
+              const res = await fetch(getApiUrl(`/api/attachments/${att}`));
               if (res.ok) {
                 const data = await res.json();
                 return {
@@ -109,7 +110,7 @@ export default function TaskDetailModal({ task, onClose, onEdit, onTaskUpdated, 
           formData.append('taskId', task.id);
           formData.append('companyCode', companyCode);
 
-          const response = await fetch('/api/attachments/upload', {
+          const response = await fetch(getApiUrl('/api/attachments/upload'), {
             method: 'POST',
             body: formData,
           });
@@ -147,7 +148,7 @@ export default function TaskDetailModal({ task, onClose, onEdit, onTaskUpdated, 
 
     try {
       const attachmentToDelete = task.attachments[index];
-      await fetch(`/api/tasks/edit/${task.id}`, {
+      await fetch(getApiUrl(`/api/tasks/edit/${task.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

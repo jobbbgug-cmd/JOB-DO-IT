@@ -1,4 +1,5 @@
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 import { useState, useEffect } from 'react';
 import './CreateTaskModal.css';
@@ -162,7 +163,7 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
               }
 
               try {
-                const res = await fetch(`/api/attachments/${attId}`);
+                const res = await fetch(getApiUrl(`/api/attachments/${attId}`));
                 if (res.ok) {
                   const data = await res.json();
                   return {
@@ -212,7 +213,7 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
 
   const fetchEmployees = async () => {
     try {
-      const response = await fetch(`/api/employees/${companyCode}`);
+      const response = await fetch(getApiUrl(`/api/employees/${companyCode}`));
       if (response.ok) {
         const data = await response.json();
         const transformed = data.map((emp: any) => ({
@@ -293,7 +294,7 @@ export default function EditTaskModal({ task, onClose, companyCode, onTaskUpdate
 
       console.log('Form data keys:', Array.from(formData.keys()));
       
-      const response = await fetch(`/api/tasks/edit/${task.id}`, {
+      const response = await fetch(getApiUrl(`/api/tasks/edit/${task.id}`), {
         method: 'PUT',
         body: formData,
       });

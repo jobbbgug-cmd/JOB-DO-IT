@@ -1,4 +1,5 @@
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -33,11 +34,11 @@ export default function TeamPage() {
     const fetchData = async () => {
       try {
         // Fetch employees
-        const empRes = await fetch(`/api/employees/${companyCode}`);
+        const empRes = await fetch(getApiUrl(`/api/employees/${companyCode}`));
         const employees = await empRes.json();
 
         // Fetch tasks
-        const tasksRes = await fetch(`/api/tasks?teamId=${teamId}&companyCode=${companyCode}`);
+        const tasksRes = await fetch(getApiUrl(`/api/tasks?teamId=${teamId}&companyCode=${companyCode}`));
         const tasks = await tasksRes.json();
 
         // Group tasks by employee and lane

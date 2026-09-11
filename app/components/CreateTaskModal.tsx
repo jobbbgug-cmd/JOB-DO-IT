@@ -1,4 +1,5 @@
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/app/store/authStore';
@@ -111,7 +112,7 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
       console.log('=== CreateTaskModal fetchData ===');
       console.log('teamId:', teamId, '| companyCode:', companyCode);
 
-      const response = await fetch(`/api/employees/${companyCode}`);
+      const response = await fetch(getApiUrl(`/api/employees/${companyCode}`));
       if (response.ok) {
         const data = await response.json();
         console.log('All employees count:', data.length);
@@ -125,7 +126,7 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
 
         if (teamId) {
           console.log('Fetching team for teamId:', teamId);
-          const teamResponse = await fetch(`/api/company/${companyCode}/teams/${teamId}`);
+          const teamResponse = await fetch(getApiUrl(`/api/company/${companyCode}/teams/${teamId}`));
           if (teamResponse.ok) {
             const team = await teamResponse.json();
             console.log('Team members array:', team.members);
@@ -171,7 +172,7 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
           formData.append('companyCode', companyCode);
         }
 
-        const uploadResponse = await fetch('/api/attachments/upload', {
+        const uploadResponse = await fetch(getApiUrl('/api/attachments/upload'), {
           method: 'POST',
           body: formData,
         });
@@ -280,7 +281,7 @@ export default function CreateTaskModal({ isOpen, onClose, companyCode, sprintId
         formData.append('attachmentIds', JSON.stringify(attachmentIds));
       }
 
-      const response = await fetch('/api/tasks', {
+      const response = await fetch(getApiUrl('/api/tasks'), {
         method: 'POST',
         body: formData,
       });

@@ -1,4 +1,5 @@
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 
 import Link from 'next/link';
@@ -18,7 +19,7 @@ export default function Home() {
       }
 
       try {
-        const response = await fetch('/api/company/mine', {
+        const response = await fetch(getApiUrl('/api/company/mine'), {
           headers: {
             'Authorization': `Bearer ${token}`,
           },

@@ -1,4 +1,5 @@
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useParams, usePathname } from 'next/navigation';
@@ -109,7 +110,7 @@ export default function CompanyPage() {
 
   const fetchEmployees = async () => {
     try {
-      const response = await fetch(`/api/employees/${params.companyCode}`);
+      const response = await fetch(getApiUrl(`/api/employees/${params.companyCode}`));
       if (response.ok) {
         const data = await response.json();
         console.log('🟠 DEBUG - Fetched employees:', data);

@@ -1,4 +1,5 @@
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -50,7 +51,7 @@ export default function NotesPage() {
 
   const fetchNotes = async () => {
     try {
-      const response = await fetch(`/api/notes/${companyCode}`);
+      const response = await fetch(getApiUrl(`/api/notes/${companyCode}`));
       if (response.ok) {
         const data = await response.json();
         setNotes(data);
@@ -69,7 +70,7 @@ export default function NotesPage() {
     console.log('Before create - formData:', formData);
 
     try {
-      const response = await fetch(`/api/notes/${companyCode}`, {
+      const response = await fetch(getApiUrl(`/api/notes/${companyCode}`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -111,7 +112,7 @@ export default function NotesPage() {
     console.log('Before update - formData:', formData);
 
     try {
-      const response = await fetch(`/api/notes/${companyCode}/${editingNote.id}`, {
+      const response = await fetch(getApiUrl(`/api/notes/${companyCode}/${editingNote.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -147,7 +148,7 @@ export default function NotesPage() {
     if (!confirm('แน่ใจหรือว่าต้องการลบโน้ตนี้?')) return;
 
     try {
-      await fetch(`/api/notes/${companyCode}/${noteId}`, {
+      await fetch(getApiUrl(`/api/notes/${companyCode}/${noteId}`), {
         method: 'DELETE',
       });
       setNotes(notes.filter(n => n.id !== noteId));

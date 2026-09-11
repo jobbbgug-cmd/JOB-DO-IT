@@ -1,4 +1,5 @@
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -40,7 +41,7 @@ export default function SettingsPanel() {
 
     setIsSaving(true);
     try {
-      const response = await fetch('/api/auth/profile', {
+      const response = await fetch(getApiUrl('/api/auth/profile'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: displayName.trim() }),

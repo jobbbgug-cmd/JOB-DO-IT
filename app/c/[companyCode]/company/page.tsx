@@ -1,4 +1,5 @@
 'use client';
+import { getApiUrl } from '@/lib/api';
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
@@ -56,7 +57,7 @@ export default function CompanyPage() {
 
   const fetchEmployees = async () => {
     try {
-      const response = await fetch(`/api/employees/${companyCode}`);
+      const response = await fetch(getApiUrl(`/api/employees/${companyCode}`));
       if (response.ok) {
         const data = await response.json();
         const transformed = data.map((emp: any) => ({
@@ -75,7 +76,7 @@ export default function CompanyPage() {
 
   const fetchEmployeeOptions = async () => {
     try {
-      const response = await fetch(`/api/employees/${companyCode}/list`);
+      const response = await fetch(getApiUrl(`/api/employees/${companyCode}/list`));
       if (response.ok) {
         const data = await response.json();
         setEmployeeOptions(data);
@@ -182,7 +183,7 @@ export default function CompanyPage() {
                   if (!addName.trim()) return;
 
                   try {
-                    const response = await fetch(`/api/employees/${companyCode}`, {
+                    const response = await fetch(getApiUrl(`/api/employees/${companyCode}`), {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
@@ -295,7 +296,7 @@ export default function CompanyPage() {
                 onClick={async () => {
                   setCreatingLink(true);
                   try {
-                    const response = await fetch(`/api/invites/${companyCode}`, {
+                    const response = await fetch(getApiUrl(`/api/invites/${companyCode}`), {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
